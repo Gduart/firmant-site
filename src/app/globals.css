@@ -1,0 +1,258 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --navy-950: #0A1628;
+  --navy-900: #0F1D32;
+  --navy-800: #1A365D;
+  --navy-700: #1E4076;
+  --navy-600: #2A5298;
+  --navy-500: #3B6DB5;
+  --navy-400: #5A8FD4;
+  --navy-300: #89B4E8;
+  --navy-200: #B8D4F2;
+  --navy-100: #E0EDFB;
+  --navy-50: #F0F6FD;
+  --accent-gold: #C9A84C;
+  --accent-gold-light: #E8D48B;
+  --accent-cyan: #22D3EE;
+  --accent-cyan-light: #67E8F9;
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --text-tertiary: #64748B;
+  --text-muted: #475569;
+  --bg-primary: #0A1628;
+  --bg-secondary: #0F1D32;
+  --bg-card: #132240;
+  --bg-card-hover: #1A2D52;
+  --border-primary: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(255, 255, 255, 0.15);
+  --border-accent: rgba(201, 168, 76, 0.3);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 40px rgba(42, 82, 152, 0.15);
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-smooth: 700ms cubic-bezier(0.16, 1, 0.3, 1);
+  --font-heading: "Syne", sans-serif;
+  --font-body: "Plus Jakarta Sans", sans-serif;
+  --background: var(--bg-primary);
+  --foreground: var(--text-primary);
+  --card: var(--bg-card);
+  --card-foreground: var(--text-primary);
+  --popover: var(--bg-secondary);
+  --popover-foreground: var(--text-primary);
+  --primary: var(--accent-gold);
+  --primary-foreground: var(--navy-950);
+  --secondary: var(--navy-700);
+  --secondary-foreground: var(--text-primary);
+  --muted: var(--navy-800);
+  --muted-foreground: var(--text-secondary);
+  --accent: var(--navy-700);
+  --accent-foreground: var(--text-primary);
+  --destructive: #EF4444;
+  --destructive-foreground: var(--text-primary);
+  --border: var(--border-primary);
+  --input: var(--border-primary);
+  --ring: var(--accent-gold);
+  --radius: 0.75rem;
+}
+
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  cursor: none;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  overflow-x: hidden;
+  line-height: 1.6;
+  cursor: none;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+h1 { font-size: clamp(3rem, 7vw, 5.5rem); }
+h2 { font-size: clamp(2.2rem, 5vw, 4rem); }
+h3 { font-size: clamp(1.5rem, 3vw, 2rem); }
+
+p {
+  color: var(--text-secondary);
+  line-height: 1.8;
+  font-size: 1.05rem;
+}
+
+a { color: inherit; text-decoration: none; cursor: none; }
+button { cursor: none; }
+
+::selection {
+  background-color: var(--accent-gold);
+  color: var(--navy-950);
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--navy-600); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--navy-500); }
+
+.text-gradient {
+  background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-light) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.glass {
+  background: rgba(10, 22, 40, 0.7);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(60px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(201, 168, 76, 0.2); }
+  50% { box-shadow: 0 0 40px rgba(201, 168, 76, 0.4); }
+}
+
+/* ── Navbar ─────────────────────────────────────────── */
+.nav-links-desktop {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+  justify-content: center;
+}
+
+.nav-link-item {
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  font-family: var(--font-body);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 250ms ease;
+  border-radius: 6px;
+}
+
+.nav-link-item:hover {
+  color: var(--text-primary);
+}
+
+.nav-cta-desktop {
+  flex-shrink: 0;
+}
+
+.nav-hamburger {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .nav-links-desktop,
+  .nav-cta-desktop {
+    display: none !important;
+  }
+  .nav-hamburger {
+    display: block !important;
+  }
+}
+
+/* ── Footer responsivo ──────────────────────────────── */
+.footer-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 64px;
+  margin-bottom: 64px;
+}
+
+@media (max-width: 900px) {
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+  }
+}
+
+@media (max-width: 600px) {
+  .footer-grid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .footer-inner {
+    padding: 56px 24px 48px !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .footer-inner {
+    padding: 64px 40px 56px !important;
+  }
+}
+
+/* ── Wizard Monte Seu Pacote ────────────────────────── */
+/* inputs e textareas recebem foco com borda ouro */
+input:focus, textarea:focus, select:focus {
+  border-color: rgba(201,168,76,0.5) !important;
+  box-shadow: 0 0 0 3px rgba(201,168,76,0.08);
+}
+
+/* Grid principal do wizard — 2 colunas em desktop, 1 em mobile */
+@media (max-width: 960px) {
+  .wizard-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Step contact grid — 2 col em desktop, 1 em mobile */
+@media (max-width: 600px) {
+  .contact-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ── Hover nos cards de serviço ─────────────────────── */
+
+/* Hover nos cards de serviço */
+.service-card-link:hover .service-title {
+  transform: translateX(12px);
+  color: var(--accent-gold) !important;
+}
+
+.service-card-link:hover .service-arrow {
+  border-color: var(--accent-gold) !important;
+  background-color: var(--accent-gold) !important;
+}
+
+.service-card-link:hover .service-arrow-icon {
+  color: var(--navy-950) !important;
+  transform: rotate(45deg);
+}

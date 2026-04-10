@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
 import Link from "next/link";
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
@@ -108,9 +108,11 @@ const categories: Category[] = [
 const fmt = (n: number) =>
   n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0 });
 
-const fadeUp = {
+const easeCurve: [number, number, number, number] = [0.16, 1, 0.3, 1];
+
+const fadeUp: Variants = {
   hidden: { opacity: 0, y: 28 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.16, 1, 0.3, 1] } },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: easeCurve } },
 };
 
 function rgbFromColor(c: string) {
@@ -697,7 +699,7 @@ export default function MonteSeuPacotePage() {
   if (submitted) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "var(--bg-primary)", padding: "120px 48px 80px" }}>
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6, ease: easeCurve }}
           style={{ maxWidth: "520px", textAlign: "center" }}>
           <div style={{ width: "72px", height: "72px", borderRadius: "50%", backgroundColor: "rgba(201,168,76,0.15)", border: "1.5px solid var(--accent-gold)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 32px" }}>
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent-gold)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -774,7 +776,7 @@ export default function MonteSeuPacotePage() {
 
             {/* Step content */}
             <AnimatePresence mode="wait">
-              <motion.div key={step} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}>
+              <motion.div key={step} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3, ease: easeCurve }}>
                 {step === 1 && <StepCategories selected={selectedCats} onToggle={toggleCat} />}
                 {step === 2 && <StepServices activeCategoryIds={selectedCats} selections={selections} onToggle={toggleSvc} onQty={handleQty} />}
                 {step === 3 && <StepContact data={clientData} onChange={setClientData} />}

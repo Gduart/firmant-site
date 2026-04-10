@@ -4,12 +4,14 @@ import { motion, type Variants, useInView, AnimatePresence } from "framer-motion
 import { useRef, useState } from "react";
 import Link from "next/link";
 
+const easeCurve: [number, number, number, number] = [0.16, 1, 0.3, 1];
+
 const fadeInUp: Variants = {
   hidden: { opacity: 0, y: 60 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 1, ease: [0.16, 1, 0.3, 1] },
+    transition: { duration: 1, ease: easeCurve },
   },
 };
 
@@ -18,7 +20,15 @@ const stagger: Variants = {
   visible: { transition: { staggerChildren: 0.15 } },
 };
 
-function AnimatedSection({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+function AnimatedSection({
+  children,
+  className = "",
+  style,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+}) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-80px" });
   return (
@@ -28,6 +38,7 @@ function AnimatedSection({ children, className = "" }: { children: React.ReactNo
       animate={isInView ? "visible" : "hidden"}
       variants={stagger}
       className={className}
+      style={style}
     >
       {children}
     </motion.div>
@@ -239,7 +250,7 @@ function ServicesSection() {
     <section style={{ backgroundColor: "var(--bg-primary)", paddingTop: "160px", paddingBottom: "160px" }}>
       <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 48px" }}>
 
-        <AnimatedSection style={{ marginBottom: "80px" } as React.CSSProperties}>
+        <AnimatedSection style={{ marginBottom: "80px" }}>
           <motion.span
             variants={fadeInUp}
             style={{
@@ -606,7 +617,7 @@ function FAQSection() {
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                    transition={{ duration: 0.4, ease: easeCurve }}
                     style={{ overflow: "hidden" }}
                   >
                     <p

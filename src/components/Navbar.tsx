@@ -7,7 +7,7 @@ import Link from "next/link";
 // "Monte Seu Pacote" removido daqui — já é o botão CTA separado
 const navLinks = [
   { href: "/gestao-redes-sociais", label: "Redes Sociais" },
-  { href: "/edicao-video-ugc", label: "Vídeo & UGC" },
+  { href: "/edicao-video-ugc", label: "Vídeos & UGC" },
   { href: "/desenvolvimento", label: "Desenvolvimento" },
   { href: "/blog", label: "Blog" },
   { href: "/contato", label: "Contato" },

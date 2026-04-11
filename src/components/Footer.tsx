@@ -5,7 +5,7 @@ import Link from "next/link";
 const footerLinks = {
   servicos: [
     { href: "/gestao-redes-sociais", label: "Gestão de Redes Sociais" },
-    { href: "/edicao-video-ugc", label: "Vídeo & UGC" },
+    { href: "/edicao-video-ugc", label: "Vídeos para Negócios & UGC" },
     { href: "/desenvolvimento", label: "Desenvolvimento Web/Mobile" },
     { href: "/monte-seu-pacote", label: "Monte Seu Pacote" },
   ],
@@ -59,7 +59,7 @@ export function Footer() {
                 fontFamily: "var(--font-body)",
               }}
             >
-              Tecnologia invisível, resultados visíveis. Gestão de redes sociais, edição de vídeo, conteúdo UGC com IA e desenvolvimento web/mobile para negócios que querem crescer.
+              Tecnologia invisível, resultados visíveis. Gestão de redes sociais, vídeos para negócios, conteúdo UGC com IA e desenvolvimento web/mobile para negócios que querem crescer.
             </p>
             {/* Ícones sociais */}
             <div style={{ marginTop: "32px", display: "flex", gap: "12px" }}>

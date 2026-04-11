@@ -399,7 +399,7 @@ function StepContact({ data, onChange }: { data: ClientData; onChange: (d: Clien
   return (
     <motion.div initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.08 } } }}>
       <motion.p variants={fadeUp} style={{ marginBottom: "40px", fontSize: "15px", color: "var(--text-secondary)", lineHeight: 1.7 }}>
-        Quase lá! Preencha seus dados para finalizarmos o pedido e configurarmos o pagamento.
+        Quase lá! Preencha seus dados para prepararmos o resumo e iniciarmos o atendimento.
       </motion.p>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
         <motion.div variants={fadeUp}>{field("name", "Nome completo", "Seu nome", true)}</motion.div>
@@ -470,8 +470,8 @@ function StepSummary({ selections, clientData, total, onEdit }: { selections: Se
   );
 }
 
-// ─── Step 5: Pagamento ────────────────────────────────────────────────────────
-function StepPayment({ total, clientData, selections, onConfirm }: {
+// ─── Step 5: Finalização ──────────────────────────────────────────────────────
+function StepFinalization({ total, clientData, selections, onConfirm }: {
   total: number;
   clientData: ClientData;
   selections: Selection[];
@@ -487,10 +487,10 @@ function StepPayment({ total, clientData, selections, onConfirm }: {
           <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
         </svg>
       ),
-      label: "Pix",
-      badge: "5% de desconto",
+      label: "Quero pagar por Pix",
+      badge: "preferencial",
       badgeColor: "#34D399",
-      description: "Aprovação instantânea. Desconto de 5% aplicado automaticamente.",
+      description: "Nossa equipe confirma o pedido e envia os dados para pagamento via Pix.",
       priceLabel: fmt(Math.round(total * 0.95)),
     },
     {
@@ -500,10 +500,10 @@ function StepPayment({ total, clientData, selections, onConfirm }: {
           <rect x="1" y="4" width="22" height="16" rx="2" ry="2" /><line x1="1" y1="10" x2="23" y2="10" />
         </svg>
       ),
-      label: "Cartão de crédito",
+      label: "Quero pagar por cartão",
       badge: "Até 12×",
       badgeColor: "#22D3EE",
-      description: "Visa, Mastercard, Elo, Amex. Parcelamento sem juros em até 3×.",
+      description: "Nossa equipe confirma o pedido e envia o link seguro de pagamento.",
       priceLabel: `${fmt(total)} ou 12× de ${fmt(Math.round(total / 12))}`,
     },
     {
@@ -513,10 +513,10 @@ function StepPayment({ total, clientData, selections, onConfirm }: {
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="8" y1="13" x2="16" y2="13" /><line x1="8" y1="17" x2="13" y2="17" />
         </svg>
       ),
-      label: "Boleto bancário",
+      label: "Quero pagar por boleto",
       badge: "3 dias úteis",
       badgeColor: "#C9A84C",
-      description: "Compensação em até 3 dias úteis. Disponível para pagamento à vista.",
+      description: "Nossa equipe confirma o pedido e envia o boleto para pagamento à vista.",
       priceLabel: fmt(total),
     },
     {
@@ -527,9 +527,9 @@ function StepPayment({ total, clientData, selections, onConfirm }: {
         </svg>
       ),
       label: "Confirmar pelo WhatsApp",
-      badge: "Combinado direto",
+      badge: "Atendimento",
       badgeColor: "#25D366",
-      description: "Envie seu pedido e combine o pagamento diretamente com nossa equipe.",
+      description: "Envie o resumo agora e finalize os próximos passos com nossa equipe.",
       priceLabel: fmt(total),
     },
   ];
@@ -537,7 +537,7 @@ function StepPayment({ total, clientData, selections, onConfirm }: {
   return (
     <motion.div initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.08 } } }}>
       <motion.p variants={fadeUp} style={{ marginBottom: "40px", fontSize: "15px", color: "var(--text-secondary)", lineHeight: 1.7 }}>
-        Escolha como prefere pagar. Para recorrência mensal, o pagamento é renovado automaticamente todo mês.
+        Escolha a forma preferida para o atendimento. O pedido será enviado para a equipe da FIRMANT confirmar valores, prazos e próximos passos.
       </motion.p>
 
       {/* Total */}
@@ -546,7 +546,7 @@ function StepPayment({ total, clientData, selections, onConfirm }: {
         <span style={{ fontSize: "1.6rem", fontWeight: 800, color: "var(--accent-gold)", fontFamily: "var(--font-heading)" }}>{fmt(total)}</span>
       </motion.div>
 
-      {/* Métodos */}
+      {/* Preferência de atendimento */}
       <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "32px" }}>
         {methods.map((m) => {
           const active = selected === m.id;
@@ -583,10 +583,10 @@ function StepPayment({ total, clientData, selections, onConfirm }: {
         })}
       </div>
 
-      {/* Aviso integração */}
+      {/* Aviso de finalização */}
       <motion.div variants={fadeUp} style={{ padding: "14px 18px", borderRadius: "10px", backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", marginBottom: "8px" }}>
         <p style={{ fontSize: "12px", color: "var(--text-muted)", margin: 0, lineHeight: 1.6 }}>
-          🔒 Pagamentos via Pix, Cartão e Boleto processados por <strong style={{ color: "var(--text-secondary)" }}>Mercado Pago</strong> — integração em configuração. Por enquanto, ao clicar em "Confirmar pedido" você será redirecionado ao WhatsApp com o resumo completo.
+          Esta etapa ainda não processa pagamento automaticamente. Ao confirmar, o resumo completo será enviado pelo WhatsApp para validação final da equipe FIRMANT.
         </p>
       </motion.div>
 
@@ -605,7 +605,7 @@ function StepPayment({ total, clientData, selections, onConfirm }: {
             transition: "all 300ms ease",
           }}
         >
-          {selected ? `Confirmar pedido — ${selected === "pix" ? fmt(Math.round(total * 0.95)) + " (Pix)" : fmt(total)}` : "Selecione uma forma de pagamento"}
+          {selected ? "Enviar resumo para atendimento" : "Selecione uma preferência de atendimento"}
         </button>
       </motion.div>
     </motion.div>
@@ -671,7 +671,7 @@ export default function MonteSeuPacotePage() {
   const handleConfirm = (method: "pix" | "card" | "boleto" | "whatsapp") => {
     const finalTotal = method === "pix" ? Math.round(total * 0.95) : total;
     const discount = method === "pix" ? "\n💰 Desconto Pix (5%) aplicado!" : "";
-    const payLabel = { pix: "Pix", card: "Cartão de crédito", boleto: "Boleto bancário", whatsapp: "Combinado direto" }[method];
+    const payLabel = { pix: "Pix", card: "Cartão de crédito", boleto: "Boleto bancário", whatsapp: "Atendimento direto" }[method];
 
     const msg = encodeURIComponent(
       `Olá! Finalizei meu pacote na FIRMANT:\n\n` +
@@ -683,7 +683,7 @@ export default function MonteSeuPacotePage() {
         return `• ${svc?.label}${sel.qty > 1 ? ` × ${sel.qty}` : ""} — ${fmt(lineTotal)}`;
       }).join("\n") +
       `\n━━━━━━━━━━━━━━━━━\n` +
-      `💳 Forma de pagamento: ${payLabel}${discount}\n` +
+      `💳 Preferência informada: ${payLabel}${discount}\n` +
       `💰 Total: ${fmt(finalTotal)}\n\n` +
       `👤 ${clientData.name}${clientData.empresa ? ` — ${clientData.empresa}` : ""}\n` +
       `📧 ${clientData.email}\n` +
@@ -694,7 +694,7 @@ export default function MonteSeuPacotePage() {
     setSubmitted(true);
   };
 
-  const steps = ["Serviços", "Detalhes", "Seus dados", "Resumo", "Pagamento"];
+  const steps = ["Serviços", "Detalhes", "Seus dados", "Resumo", "Finalizar"];
 
   if (submitted) {
     return (
@@ -708,7 +708,7 @@ export default function MonteSeuPacotePage() {
           </div>
           <h2 style={{ fontFamily: "var(--font-heading)", color: "var(--text-primary)", marginBottom: "16px" }}>Pedido enviado!</h2>
           <p style={{ fontSize: "15px", color: "var(--text-secondary)", lineHeight: 1.8, marginBottom: "40px" }}>
-            O resumo completo foi enviado para o WhatsApp. Nossa equipe entrará em contato em até <strong style={{ color: "var(--text-primary)" }}>24h</strong> para confirmar e processar o pagamento.
+            O resumo completo foi enviado para o WhatsApp. Nossa equipe entrará em contato em até <strong style={{ color: "var(--text-primary)" }}>24h</strong> para validar o pedido, confirmar prazos e orientar os próximos passos.
           </p>
           <Link href="/" style={{ display: "inline-flex", alignItems: "center", gap: "8px", borderRadius: "999px", padding: "14px 32px", backgroundColor: "var(--accent-gold)", color: "var(--navy-950)", fontSize: "13px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "var(--font-body)", textDecoration: "none" }}>
             Voltar ao site
@@ -733,7 +733,7 @@ export default function MonteSeuPacotePage() {
           </motion.h1>
           <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }}
             style={{ fontSize: "16px", color: "var(--text-secondary)", lineHeight: 1.8, maxWidth: "540px", fontFamily: "var(--font-body)" }}>
-            Escolha os serviços, defina as quantidades e finalize com o método de pagamento que preferir.
+            Escolha os serviços, defina as quantidades e envie seu resumo para atendimento.
           </motion.p>
         </div>
       </div>
@@ -781,7 +781,7 @@ export default function MonteSeuPacotePage() {
                 {step === 2 && <StepServices activeCategoryIds={selectedCats} selections={selections} onToggle={toggleSvc} onQty={handleQty} />}
                 {step === 3 && <StepContact data={clientData} onChange={setClientData} />}
                 {step === 4 && <StepSummary selections={selections} clientData={clientData} total={total} onEdit={goTo} />}
-                {step === 5 && <StepPayment total={total} clientData={clientData} selections={selections} onConfirm={handleConfirm} />}
+                {step === 5 && <StepFinalization total={total} clientData={clientData} selections={selections} onConfirm={handleConfirm} />}
               </motion.div>
             </AnimatePresence>
 
@@ -796,7 +796,7 @@ export default function MonteSeuPacotePage() {
                 ) : <div />}
                 <button onClick={next} disabled={!canNext()}
                   style={{ display: "inline-flex", alignItems: "center", gap: "10px", padding: "13px 34px", borderRadius: "999px", backgroundColor: canNext() ? "var(--accent-gold)" : "rgba(255,255,255,0.08)", color: canNext() ? "var(--navy-950)" : "var(--text-muted)", fontSize: "13px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "var(--font-body)", border: "none", cursor: canNext() ? "pointer" : "not-allowed", transition: "all 250ms ease" }}>
-                  {step === 4 ? "Ir para Pagamento" : "Continuar"}
+                  {step === 4 ? "Finalizar pedido" : "Continuar"}
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
                 </button>
               </div>

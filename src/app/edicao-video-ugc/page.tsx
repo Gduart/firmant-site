@@ -44,25 +44,25 @@ const videoShowcase = [
     title: "UGC",
     label: "Creator style",
     src: "/videos/ugc/ugc.mp4",
-    poster: "/hero-poster.jpg",
+    poster: "/videos/ugc/poster-ugc.svg",
   },
   {
     title: "Influencer",
     label: "Apresentação de oferta",
     src: "/videos/ugc/influencer.mp4",
-    poster: "/hero-poster.jpg",
+    poster: "/videos/ugc/poster-influencer.svg",
   },
   {
     title: "Tecnologia IA",
     label: "Demonstração visual",
     src: "/videos/ugc/ia.mp4",
-    poster: "/hero-poster.jpg",
+    poster: "/videos/ugc/poster-ia.svg",
   },
   {
     title: "Transformers em Ação",
     label: "Impacto e retenção",
     src: "/videos/ugc/transformers.mp4",
-    poster: "/hero-poster.jpg",
+    poster: "/videos/ugc/poster-transformers.svg",
   },
 ];
 
@@ -227,17 +227,8 @@ function HeroSection() {
               {videoShowcase.map((video) => (
                 <motion.div
                   key={video.title}
+                  className="ugc-video-card"
                   variants={fadeInUp}
-                  style={{
-                    position: "relative",
-                    overflow: "hidden",
-                    borderRadius: 24,
-                    aspectRatio: "9 / 16",
-                    minHeight: 340,
-                    backgroundColor: "#06101f",
-                    border: "1px solid rgba(201,168,76,0.22)",
-                    boxShadow: "0 24px 70px rgba(0,0,0,0.32)",
-                  }}
                 >
                   <video
                     src={video.src}

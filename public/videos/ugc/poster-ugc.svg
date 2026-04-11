@@ -1,0 +1,16 @@
+<svg width="1080" height="1920" viewBox="0 0 1080 1920" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1080" height="1920" fill="#06101F"/>
+  <rect x="70" y="70" width="940" height="1780" rx="82" fill="url(#bg)" stroke="rgba(201,168,76,0.32)" stroke-width="3"/>
+  <circle cx="810" cy="310" r="250" fill="rgba(201,168,76,0.16)"/>
+  <circle cx="260" cy="1420" r="300" fill="rgba(34,211,238,0.12)"/>
+  <path d="M410 850L720 960L410 1070V850Z" fill="#C9A84C"/>
+  <text x="120" y="1550" fill="#C9A84C" font-family="Arial, sans-serif" font-size="50" font-weight="700" letter-spacing="14">UGC</text>
+  <text x="120" y="1628" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="42" font-weight="600">Video vertical 9:16</text>
+  <text x="120" y="1690" fill="#94A3B8" font-family="Arial, sans-serif" font-size="30">Substitua por ugc.mp4</text>
+  <defs>
+    <linearGradient id="bg" x1="70" y1="70" x2="1010" y2="1850" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#10213A"/>
+      <stop offset="1" stop-color="#020617"/>
+    </linearGradient>
+  </defs>
+</svg>

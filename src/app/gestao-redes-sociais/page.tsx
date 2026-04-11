@@ -104,8 +104,8 @@ function HeroSection() {
               maxWidth: 860,
             }}
           >
-            Sua marca precisa existir nas redes.{" "}
-            <span className="text-gradient">Com estratégia, não com improviso.</span>
+            Gestão de redes sociais com{" "}
+            <span className="text-gradient">estratégia, organização e acompanhamento profissional.</span>
           </motion.h1>
 
           <motion.p
@@ -119,7 +119,7 @@ function HeroSection() {
               marginBottom: 48,
             }}
           >
-            Publicações completas — da copy à arte final — planejadas, criadas e entregues com inteligência artificial. Você envia o tema, nós transformamos em conteúdo que conecta.
+            Planejamento, criação, aprovação e acompanhamento em um fluxo mais claro para sua marca comunicar com consistência, reduzir improvisos e manter mais controle sobre a presença digital.
           </motion.p>
 
           <motion.div
@@ -187,10 +187,10 @@ const priceCards = [
 ];
 
 const included = [
-  "Copy dedicada por publicação",
-  "Design profissional com identidade visual",
-  "Adaptação por plataforma",
-  "1 revisão incluída por publicação",
+  "Planejamento editorial com calendário organizado",
+  "Copy e design alinhados ao posicionamento da marca",
+  "Fluxo de aprovação simples por link, e-mail ou WhatsApp",
+  "Acompanhamento com relatórios e visão mais clara dos resultados",
 ];
 
 function PriceSection() {
@@ -214,6 +214,19 @@ function PriceSection() {
           >
             Investimento
           </motion.h2>
+          <motion.p
+            variants={fadeInUp}
+            style={{
+              maxWidth: 720,
+              fontSize: "1.05rem",
+              lineHeight: 1.85,
+              color: "var(--text-secondary)",
+              fontFamily: "var(--font-body)",
+              marginBottom: 48,
+            }}
+          >
+            Mais clareza no processo. Mais facilidade na aprovação. Mais consistência na presença digital.
+          </motion.p>
         </AnimatedSection>
 
         <AnimatedSection>
@@ -364,20 +377,20 @@ function PriceSection() {
 
 const features = [
   {
-    title: "Copy dedicada",
-    desc: "Texto escrito especificamente para o seu público, no tom da sua marca, otimizado para cada plataforma. Não é template. Não é texto genérico. É comunicação pensada para gerar conexão e engajamento real.",
+    title: "Conteúdo com direção, não no improviso",
+    desc: "Organizamos temas, cronograma e lógica de publicação para que sua marca tenha consistência e não dependa de decisões de última hora.",
   },
   {
-    title: "Criação visual completa",
-    desc: "Imagens, artes para carrossel, capas e peças gráficas criadas sob medida. Cada publicação segue a identidade visual do seu negócio, mantendo consistência profissional em todo o feed.",
+    title: "Aprovar conteúdo pode ser simples",
+    desc: "Tornamos a revisão mais prática para reduzir atrasos, acelerar respostas e manter a operação fluindo com mais naturalidade.",
   },
   {
-    title: "Adaptação por plataforma",
-    desc: "O que funciona no Instagram não funciona igual no LinkedIn ou no TikTok. Adaptamos formato, linguagem e abordagem para cada rede onde sua marca precisa estar.",
+    title: "Resultados apresentados com mais clareza",
+    desc: "Você enxerga melhor o que foi feito, o que evoluiu e o que merece atenção, sem relatórios confusos ou excesso de ruído.",
   },
   {
-    title: "Calendário e planejamento",
-    desc: "Nada é publicado no improviso. Cada conteúdo faz parte de uma estratégia pensada para construir presença, engajamento e relevância ao longo do tempo.",
+    title: "Mais visibilidade sobre a presença digital",
+    desc: "Com acompanhamento estruturado, sua marca ganha mais transparência, mais organização e uma percepção muito mais profissional do trabalho entregue.",
   },
 ];
 
@@ -413,7 +426,7 @@ function WhatWeDoSection() {
               marginBottom: 56,
             }}
           >
-            Cuidamos de tudo o que envolve a publicação nas redes sociais do seu negócio. Você nos envia o tema — uma promoção, um lançamento, um bastidor, um posicionamento — e nós devolvemos a publicação pronta. Completa. Pronta para postar.
+            Na Firmant, sua gestão de redes sociais deixa de ser desorganizada, corrida e dependente de decisões de última hora. Estruturamos o fluxo de conteúdo para que sua marca tenha publicações alinhadas ao posicionamento do negócio, aprovações mais simples, acompanhamento constante e comunicação visual coerente em cada etapa.
           </motion.p>
         </AnimatedSection>
 
@@ -465,23 +478,157 @@ function WhatWeDoSection() {
   );
 }
 
-// ─── 4. HOW IT WORKS ─────────────────────────────────────────────────────────
+// ─── 4. GESTÃO PROFISSIONAL ──────────────────────────────────────────────────
+
+const professionalAdvantages = [
+  {
+    title: "Gestão centralizada",
+    desc: "Centralizamos a operação para facilitar acompanhamento, padronização e mais clareza sobre o que está sendo produzido para a sua marca.",
+  },
+  {
+    title: "Agendamento em múltiplos formatos e redes",
+    desc: "Sua comunicação pode ser organizada com antecedência e adaptada para diferentes formatos e canais, com mais consistência e menos correria.",
+  },
+  {
+    title: "Calendário de planejamento",
+    desc: "Com um calendário estruturado, sua marca ganha ritmo de produção, alinhamento mais fácil e uma presença digital mais profissional.",
+  },
+  {
+    title: "Aprovação por e-mail ou link",
+    desc: "A validação dos conteúdos acontece de forma simples, reduzindo atrito e acelerando o andamento das publicações.",
+  },
+  {
+    title: "Aprovação via WhatsApp",
+    desc: "A aprovação entra com mais facilidade na rotina do cliente, tornando o processo mais rápido e funcional no dia a dia.",
+  },
+  {
+    title: "Relatórios personalizados",
+    desc: "Os resultados são apresentados de forma mais clara e alinhada ao contexto da sua marca, facilitando interpretação e acompanhamento.",
+  },
+  {
+    title: "Relatórios em PDF ou link",
+    desc: "Compartilhamos as informações em formatos práticos, com apresentação mais organizada e leitura mais acessível.",
+  },
+  {
+    title: "Dashboard online",
+    desc: "Uma forma mais visual e dinâmica de acompanhar a evolução da presença digital da sua marca.",
+  },
+  {
+    title: "Portal do Cliente",
+    desc: "Cada cliente pode acompanhar suas informações em um ambiente organizado, reservado e mais profissional.",
+  },
+  {
+    title: "Melhores dias e horários para postar",
+    desc: "As decisões de publicação passam a considerar janelas mais favoráveis, ajudando a dar mais direção ao planejamento.",
+  },
+];
+
+function ProfessionalManagementSection() {
+  return (
+    <section
+      style={{
+        backgroundColor: "var(--bg-primary)",
+        paddingTop: 80,
+        paddingBottom: 80,
+      }}
+    >
+      <div style={inner}>
+        <AnimatedSection>
+          <motion.h2
+            variants={fadeInUp}
+            style={{
+              fontFamily: "var(--font-heading)",
+              color: "var(--text-primary)",
+              marginBottom: 32,
+            }}
+          >
+            O que torna nossa gestão mais profissional
+          </motion.h2>
+          <motion.p
+            variants={fadeInUp}
+            style={{
+              maxWidth: 760,
+              fontSize: "1.05rem",
+              lineHeight: 1.85,
+              color: "var(--text-secondary)",
+              fontFamily: "var(--font-body)",
+              marginBottom: 56,
+            }}
+          >
+            Mais do que publicar conteúdo, o objetivo é criar uma operação que funcione com clareza, previsibilidade e acompanhamento. Isso reduz ruído, acelera decisões e melhora a percepção de profissionalismo da sua marca.
+          </motion.p>
+        </AnimatedSection>
+
+        <AnimatedSection>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))",
+              gap: 24,
+            }}
+          >
+            {professionalAdvantages.map((item) => (
+              <motion.div
+                key={item.title}
+                variants={fadeInUp}
+                style={{
+                  borderRadius: 16,
+                  border: "1px solid var(--border-primary)",
+                  backgroundColor: "var(--bg-card)",
+                  padding: "28px 24px",
+                }}
+              >
+                <h3
+                  style={{
+                    fontFamily: "var(--font-heading)",
+                    fontSize: "clamp(1rem, 1.8vw, 1.18rem)",
+                    color: "var(--text-primary)",
+                    marginBottom: 12,
+                  }}
+                >
+                  {item.title}
+                </h3>
+                <p
+                  style={{
+                    fontFamily: "var(--font-body)",
+                    fontSize: 14,
+                    lineHeight: 1.75,
+                    color: "var(--text-secondary)",
+                  }}
+                >
+                  {item.desc}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </AnimatedSection>
+      </div>
+    </section>
+  );
+}
+
+// ─── 5. HOW IT WORKS ─────────────────────────────────────────────────────────
 
 const steps = [
   {
     num: "01",
-    title: "Entendemos a sua marca",
-    desc: "Antes de criar qualquer conteúdo, mergulhamos no seu negócio — público-alvo, posicionamento, tom de voz, concorrentes, objetivos. Esse diagnóstico garante que cada publicação pareça sua, não de uma agência qualquer.",
+    title: "Diagnóstico e direcionamento",
+    desc: "Entendemos o momento da sua marca, seus objetivos, seu posicionamento e as necessidades da sua comunicação para estruturar uma linha editorial mais coerente.",
   },
   {
     num: "02",
-    title: "Você envia os temas",
-    desc: "Pode ser uma lista de assuntos do mês, uma promoção pontual, um bastidor do dia. Nós recebemos a ideia e transformamos em publicação completa — texto, arte, hashtags, horário sugerido.",
+    title: "Planejamento e produção",
+    desc: "Organizamos os temas, desenvolvemos os conteúdos, ajustamos linguagem e formato e deixamos cada publicação alinhada à proposta da sua marca.",
   },
   {
     num: "03",
-    title: "Você aprova e publica",
-    desc: "Recebe o conteúdo pronto para revisar. Ajustes? Fazemos. Aprovado? Vai pro ar. Simples assim.",
+    title: "Aprovação facilitada",
+    desc: "Você analisa os conteúdos com mais praticidade, faz observações quando necessário e mantém o processo avançando com mais fluidez.",
+  },
+  {
+    num: "04",
+    title: "Publicação e acompanhamento",
+    desc: "O conteúdo segue um planejamento organizado e a performance pode ser acompanhada com mais clareza por meio de relatórios e visualizações estruturadas.",
   },
 ];
 
@@ -566,24 +713,24 @@ function HowItWorksSection() {
   );
 }
 
-// ─── 5. WHY FIRMANT ───────────────────────────────────────────────────────────
+// ─── 6. WHY FIRMANT ───────────────────────────────────────────────────────────
 
 const reasons = [
   {
-    title: "Mais volume sem perder qualidade",
-    desc: "Enquanto um social media tradicional luta para entregar 12 posts no mês, nós entregamos mais — e cada um deles é pensado, não improvisado.",
+    title: "Processo mais claro",
+    desc: "A diferença não está apenas em produzir posts bonitos. Está em criar um fluxo que ajude sua marca a comunicar melhor, aprovar com mais facilidade e manter consistência.",
   },
   {
-    title: "Consistência visual garantida",
-    desc: "Cada peça segue o padrão da sua marca. Seu feed conta uma história visual coerente, não uma colagem de estilos diferentes.",
+    title: "Mais controle para o cliente",
+    desc: "Você acompanha o que está sendo produzido, revisa com mais praticidade e tem mais clareza sobre o andamento da operação.",
   },
   {
-    title: "Conteúdo que respeita o algoritmo",
-    desc: "Carrosséis, imagens únicas, textos otimizados — cada formato é usado de forma estratégica para maximizar alcance e engajamento.",
+    title: "Consistência visual e editorial",
+    desc: "Cada peça segue uma lógica de comunicação alinhada ao posicionamento da marca, evitando publicações soltas e desconectadas.",
   },
   {
-    title: "Você foca no seu negócio",
-    desc: "Criar conteúdo para redes sociais não deveria ser mais uma tarefa na sua lista. Deveria ser algo que funciona enquanto você cuida do que realmente importa.",
+    title: "Acompanhamento mais profissional",
+    desc: "A presença digital deixa de depender de trocas manuais e passa a ter mais organização, visibilidade e leitura clara dos próximos passos.",
   },
 ];
 
@@ -606,8 +753,21 @@ function WhyFirmantSection() {
               marginBottom: 56,
             }}
           >
-            Por que a Firmant
+            Por que a Firmant entrega uma gestão mais profissional
           </motion.h2>
+          <motion.p
+            variants={fadeInUp}
+            style={{
+              maxWidth: 760,
+              fontSize: "1.05rem",
+              lineHeight: 1.85,
+              color: "var(--text-secondary)",
+              fontFamily: "var(--font-body)",
+              marginBottom: 56,
+            }}
+          >
+            Quando a gestão é bem estruturada, a presença digital deixa de ser uma obrigação confusa e passa a funcionar como parte real da estratégia do negócio.
+          </motion.p>
         </AnimatedSection>
 
         <AnimatedSection>
@@ -656,7 +816,7 @@ function WhyFirmantSection() {
   );
 }
 
-// ─── 6. CTA ───────────────────────────────────────────────────────────────────
+// ─── 7. CTA ───────────────────────────────────────────────────────────────────
 
 function CTASection() {
   return (
@@ -678,7 +838,7 @@ function CTASection() {
               marginBottom: 24,
             }}
           >
-            Pare de improvisar nas redes sociais.
+            Pare de tratar suas redes sociais no improviso.
           </motion.h2>
           <motion.p
             variants={fadeInUp}
@@ -691,7 +851,7 @@ function CTASection() {
               fontFamily: "var(--font-body)",
             }}
           >
-            Fale com a Firmant e receba uma análise gratuita do perfil do seu negócio.
+            Tenha uma operação mais organizada, visualmente consistente e mais fácil de acompanhar. Fale com a Firmant e receba uma análise inicial da sua presença digital.
           </motion.p>
           <motion.div variants={fadeInUp}>
             <Link
@@ -730,6 +890,7 @@ export default function GestaoRedesSociaisPage() {
       <HeroSection />
       <PriceSection />
       <WhatWeDoSection />
+      <ProfessionalManagementSection />
       <HowItWorksSection />
       <WhyFirmantSection />
       <CTASection />

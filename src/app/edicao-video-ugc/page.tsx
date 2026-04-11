@@ -143,87 +143,86 @@ function HeroSection() {
               fontWeight: 600,
               textTransform: "uppercase",
               letterSpacing: "0.3em",
-              color: CYAN,
+              color: "var(--accent-gold)",
               fontFamily: "var(--font-body)",
             }}
           >
             02 — Vídeos para Negócios & UGC
           </motion.span>
 
-          <div className="ugc-hero-layout">
-            <div>
-              <motion.h1
-                variants={fadeInUp}
-                style={{
-                  fontFamily: "var(--font-heading)",
-                  color: "var(--text-primary)",
-                  marginBottom: 28,
-                  maxWidth: 760,
-                }}
-              >
-                Vídeos que chamam atenção, explicam valor e ajudam sua marca a vender.
-              </motion.h1>
+          <motion.h1
+            variants={fadeInUp}
+            style={{
+              fontFamily: "var(--font-heading)",
+              color: "var(--text-primary)",
+              marginBottom: 28,
+              maxWidth: 900,
+            }}
+          >
+            Vídeos que chamam atenção, explicam valor e ajudam sua marca a{" "}
+            <span className="text-gradient">vender.</span>
+          </motion.h1>
 
-              <motion.p
-                variants={fadeInUp}
-                style={{
-                  maxWidth: 680,
-                  fontSize: "1.1rem",
-                  lineHeight: 1.85,
-                  color: "var(--text-secondary)",
-                  fontFamily: "var(--font-body)",
-                  marginBottom: 44,
-                }}
-              >
-                Criamos vídeos para negócios em formatos curtos, UGC e conteúdos visuais de alto impacto para redes sociais, campanhas, anúncios e ofertas.
-              </motion.p>
+          <motion.p
+            variants={fadeInUp}
+            style={{
+              maxWidth: 680,
+              fontSize: "1.1rem",
+              lineHeight: 1.85,
+              color: "var(--text-secondary)",
+              fontFamily: "var(--font-body)",
+              marginBottom: 44,
+            }}
+          >
+            Criamos vídeos para negócios em formatos curtos, UGC e conteúdos visuais de alto impacto para redes sociais, campanhas, anúncios e ofertas.
+          </motion.p>
 
-              <motion.div variants={fadeInUp} style={{ display: "flex", flexWrap: "wrap", gap: 20, alignItems: "center" }}>
-                <Link
-                  href="/contato"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 12,
-                    borderRadius: 999,
-                    padding: "16px 40px",
-                    fontSize: 13,
-                    fontWeight: 700,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.1em",
-                    backgroundColor: CYAN,
-                    color: "var(--navy-950)",
-                    fontFamily: "var(--font-body)",
-                    transition: "all 0.5s cubic-bezier(0.16,1,0.3,1)",
-                    textDecoration: "none",
-                  }}
-                >
-                  Quero produzir vídeos para minha marca
-                </Link>
-                <Link
-                  href="/monte-seu-pacote"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 12,
-                    borderRadius: 999,
-                    border: `1px solid ${CYAN}66`,
-                    padding: "16px 40px",
-                    fontSize: 13,
-                    fontWeight: 700,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.1em",
-                    color: CYAN,
-                    fontFamily: "var(--font-body)",
-                    transition: "all 0.5s cubic-bezier(0.16,1,0.3,1)",
-                    textDecoration: "none",
-                  }}
-                >
-                  Monte seu pacote
-                </Link>
-              </motion.div>
-            </div>
+          <motion.div variants={fadeInUp} style={{ display: "flex", flexWrap: "wrap", gap: 20, alignItems: "center" }}>
+            <Link
+              href="/contato"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 12,
+                borderRadius: 999,
+                padding: "16px 40px",
+                fontSize: 13,
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
+                backgroundColor: "var(--accent-gold)",
+                color: "var(--navy-950)",
+                fontFamily: "var(--font-body)",
+                transition: "all 0.5s cubic-bezier(0.16,1,0.3,1)",
+                textDecoration: "none",
+              }}
+            >
+              Quero produzir vídeos para minha marca
+            </Link>
+            <Link
+              href="/monte-seu-pacote"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 12,
+                borderRadius: 999,
+                border: "1px solid rgba(201,168,76,0.4)",
+                padding: "16px 40px",
+                fontSize: 13,
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
+                color: "var(--accent-gold)",
+                fontFamily: "var(--font-body)",
+                transition: "all 0.5s cubic-bezier(0.16,1,0.3,1)",
+                textDecoration: "none",
+              }}
+            >
+              Monte seu pacote
+            </Link>
+          </motion.div>
 
+          <motion.div className="ugc-video-panel" variants={fadeInUp}>
             <motion.div className="ugc-video-grid" variants={stagger}>
               {videoShowcase.map((video) => (
                 <motion.div
@@ -236,8 +235,8 @@ function HeroSection() {
                     aspectRatio: "9 / 16",
                     minHeight: 340,
                     backgroundColor: "#06101f",
-                    border: "1px solid rgba(34,211,238,0.2)",
-                    boxShadow: "0 24px 80px rgba(0,0,0,0.35)",
+                    border: "1px solid rgba(201,168,76,0.22)",
+                    boxShadow: "0 24px 70px rgba(0,0,0,0.32)",
                   }}
                 >
                   <video
@@ -266,7 +265,7 @@ function HeroSection() {
                         fontWeight: 700,
                         letterSpacing: "0.16em",
                         textTransform: "uppercase",
-                        color: CYAN,
+                        color: "var(--accent-gold)",
                         fontFamily: "var(--font-body)",
                       }}
                     >
@@ -279,7 +278,7 @@ function HeroSection() {
                 </motion.div>
               ))}
             </motion.div>
-          </div>
+          </motion.div>
         </motion.div>
       </div>
     </section>

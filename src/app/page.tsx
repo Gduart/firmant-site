@@ -66,6 +66,53 @@ const services = [
   },
 ];
 
+const socialMediaCapabilities = [
+  {
+    title: "Gestão centralizada da operação",
+    description: "Organizamos diferentes marcas, canais e rotinas em um ambiente mais centralizado, reduzindo dispersão e trazendo mais controle para cada cliente.",
+  },
+  {
+    title: "Agendamento em múltiplos formatos e redes",
+    description: "Planejamos e distribuímos conteúdos em diferentes formatos e plataformas para manter constância, adaptação por canal e presença mais profissional.",
+  },
+  {
+    title: "Melhores dias e horários para postar",
+    description: "A publicação deixa de ser baseada apenas em hábito ou tentativa e passa a considerar janelas mais estratégicas para cada rede.",
+  },
+  {
+    title: "Workflow de criação e aprovação",
+    description: "Nós fazemos a postagem na sua rede e você somente aprova. O processo entre criação, revisão, ajustes e validação final fica mais claro, com menos ruído e mais organização operacional.",
+  },
+  {
+    title: "Aprovação facilitada por link e WhatsApp",
+    description: "O cliente pode aprovar conteúdos de forma prática, com menos atrito e mais agilidade no retorno, sem depender de processos complicados.",
+  },
+  {
+    title: "Relatórios profissionais e dashboards personalizados",
+    description: "Os dados passam a ser apresentados com mais clareza, organização e personalização, ajudando na leitura dos resultados e na tomada de decisão.",
+  },
+  {
+    title: "Envio automático de relatórios",
+    description: "Acompanhamentos podem ser estruturados em rotina, com entregas recorrentes que reforçam constância e profissionalismo.",
+  },
+  {
+    title: "Portal do Cliente com acesso individual",
+    description: "Cada cliente pode ter login e senha para acessar seu ambiente, visualizar dados e acompanhar informações de forma mais organizada e reservada.",
+  },
+  {
+    title: "Dashboard online para acompanhamento contínuo",
+    description: "Em vez de depender apenas de PDFs ou mensagens, o cliente pode acompanhar métricas em um painel online, de forma mais visual e contínua.",
+  },
+  {
+    title: "Inteligência artificial para escala e agilidade",
+    description: "Recursos de IA ajudam a acelerar a produção, gerar variações por rede e apoiar decisões com mais inteligência operacional.",
+  },
+  {
+    title: "Análise de concorrentes para decisões melhores",
+    description: "A comparação com concorrentes ajuda a ajustar formatos, frequência, horários e direção estratégica com menos achismo.",
+  },
+];
+
 const faqs = [
   {
     question: "Como funciona a inteligência artificial nos serviços da Firmant?",
@@ -86,6 +133,26 @@ const faqs = [
   {
     question: "Qual o prazo de entrega?",
     answer: "Publicações para redes sociais: 3-5 dias úteis. Vídeos editados: 5-7 dias úteis. UGC com IA: 3-5 dias úteis. Projetos de desenvolvimento: variável conforme escopo, com entregas parciais semanais.",
+  },
+  {
+    question: "Portal do Cliente com login individual: como funciona?",
+    answer: "O cliente pode receber um login e uma senha para acessar seu ambiente. Esse acesso é configurado pela operação da agência e vinculado ao dashboard que foi criado para ele.",
+  },
+  {
+    question: "Quem libera esse acesso?",
+    answer: "A própria agência organiza e configura o acesso do cliente dentro da estrutura da operação, definindo credenciais e permissões de visualização.",
+  },
+  {
+    question: "Acompanhamento contínuo por dashboard online: como funciona?",
+    answer: "O cliente acessa um painel online com suas métricas em ambiente web. Assim, ele não depende apenas de PDF ou mensagens soltas para acompanhar evolução e resultados.",
+  },
+  {
+    question: "Aprovação por link ou WhatsApp: o cliente precisa entrar em uma plataforma complexa?",
+    answer: "Não. O conteúdo pode ser enviado por link, inclusive via WhatsApp, o que simplifica muito o processo de aprovação e acelera o retorno.",
+  },
+  {
+    question: "Os relatórios podem ser enviados automaticamente?",
+    answer: "Sim. O acompanhamento pode ser estruturado em envios recorrentes, o que ajuda a manter constância e percepção de profissionalismo.",
   },
 ];
 
@@ -374,6 +441,167 @@ function ServicesSection() {
           {/* borda inferior do último item */}
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.12)" }} />
         </div>
+
+        <AnimatedSection style={{ marginTop: "120px", marginBottom: "56px" }}>
+          <motion.span
+            variants={fadeInUp}
+            style={{
+              display: "block",
+              marginBottom: "20px",
+              fontSize: "11px",
+              fontWeight: 600,
+              textTransform: "uppercase",
+              letterSpacing: "0.3em",
+              color: "var(--accent-gold)",
+              fontFamily: "var(--font-body)",
+            }}
+          >
+            Gestão de Social Media
+          </motion.span>
+          <motion.h2
+            variants={fadeInUp}
+            style={{ fontFamily: "var(--font-heading)", color: "var(--text-primary)", maxWidth: "920px", marginBottom: "28px" }}
+          >
+            Uma operação de social media mais{" "}
+            <span className="text-gradient">estratégica, organizada e profissional.</span>
+          </motion.h2>
+          <motion.p
+            variants={fadeInUp}
+            style={{
+              maxWidth: "900px",
+              fontSize: "1rem",
+              lineHeight: 1.9,
+              color: "var(--text-secondary)",
+              fontFamily: "var(--font-body)",
+              marginBottom: "28px",
+            }}
+          >
+            Na FIRMANT, sua gestão de redes sociais não depende de improviso, mensagens soltas ou acompanhamento superficial. Estruturamos a operação com planejamento, aprovação facilitada, relatórios profissionais, dashboards online, adaptação por formato e apoio de inteligência artificial para dar mais clareza, velocidade e consistência ao trabalho.
+          </motion.p>
+          <motion.div
+            variants={fadeInUp}
+            style={{
+              maxWidth: "940px",
+              borderRadius: "20px",
+              border: "1px solid rgba(201,168,76,0.28)",
+              background: "linear-gradient(135deg, rgba(201,168,76,0.12), rgba(255,255,255,0.025))",
+              padding: "26px 28px",
+              marginBottom: "28px",
+            }}
+          >
+            <p
+              style={{
+                fontSize: "15px",
+                lineHeight: 1.85,
+                color: "var(--text-secondary)",
+                fontFamily: "var(--font-body)",
+              }}
+            >
+              Em contratações acima de 8 posts mensais, sua marca também recebe uma análise detalhada da situação atual do Instagram, para identificar cenário, oportunidades de melhoria e pontos estratégicos de direcionamento. E todos os recursos destacados nos próximos cards também passam a fazer parte da operação.
+            </p>
+          </motion.div>
+          <motion.p
+            variants={fadeInUp}
+            style={{
+              maxWidth: "760px",
+              fontSize: "15px",
+              lineHeight: 1.8,
+              color: "var(--text-tertiary)",
+              fontFamily: "var(--font-body)",
+            }}
+          >
+            Mais do que publicar conteúdos, o objetivo é criar um fluxo organizado para sua marca comunicar melhor, aprovar com mais facilidade e acompanhar os resultados com mais transparência.
+          </motion.p>
+        </AnimatedSection>
+
+        <AnimatedSection>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
+              gap: "22px",
+            }}
+          >
+            {socialMediaCapabilities.map((item, index) => (
+              <motion.div
+                key={item.title}
+                variants={fadeInUp}
+                style={{
+                  position: "relative",
+                  minHeight: "250px",
+                  borderRadius: "18px",
+                  border: "1px solid var(--border-primary)",
+                  backgroundColor: "var(--bg-card)",
+                  padding: "30px 26px",
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    background: "radial-gradient(circle at 18% 0%, rgba(201,168,76,0.11), transparent 36%)",
+                    pointerEvents: "none",
+                  }}
+                />
+                <div style={{ position: "relative", zIndex: 1 }}>
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: "34px",
+                      height: "34px",
+                      borderRadius: "999px",
+                      border: "1px solid rgba(201,168,76,0.32)",
+                      marginBottom: "26px",
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      color: "var(--accent-gold)",
+                      fontFamily: "var(--font-body)",
+                    }}
+                  >
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <h3
+                    style={{
+                      fontFamily: "var(--font-heading)",
+                      fontSize: "clamp(1.05rem, 2vw, 1.25rem)",
+                      lineHeight: 1.25,
+                      color: "var(--text-primary)",
+                      marginBottom: "16px",
+                    }}
+                  >
+                    {item.title}
+                  </h3>
+                  <p
+                    style={{
+                      fontSize: "14px",
+                      lineHeight: 1.78,
+                      color: "var(--text-secondary)",
+                      fontFamily: "var(--font-body)",
+                    }}
+                  >
+                    {item.description}
+                  </p>
+                  <p
+                    style={{
+                      marginTop: "22px",
+                      fontSize: "10px",
+                      fontWeight: 700,
+                      letterSpacing: "0.16em",
+                      textTransform: "uppercase",
+                      color: "var(--accent-gold)",
+                      fontFamily: "var(--font-body)",
+                    }}
+                  >
+                    Incluso em planos 8+ posts
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </AnimatedSection>
       </div>
     </section>
   );

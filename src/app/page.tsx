@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, type Variants, useInView, AnimatePresence } from "framer-motion";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 const easeCurve: [number, number, number, number] = [0.16, 1, 0.3, 1];
@@ -111,6 +111,15 @@ const socialMediaCapabilities = [
     title: "Análise de concorrentes para decisões melhores",
     description: "A comparação com concorrentes ajuda a ajustar formatos, frequência, horários e direção estratégica com menos achismo.",
   },
+];
+
+const approachParagraphs = [
+  "Na FIRMANT, acreditamos que marcas não precisam apenas de mais conteúdo. Precisam de uma operação mais inteligente, mais organizada e mais estratégica por trás da comunicação.",
+  "Nossa abordagem combina estratégia, criatividade, estrutura operacional e inteligência artificial aplicada para tornar o marketing mais claro, mais ágil e mais profissional. A IA atua nos bastidores para acelerar etapas, apoiar análises, ampliar possibilidades, adaptar conteúdos por formato e dar mais eficiência à execução. Mas a direção da marca, a leitura do contexto, o refinamento da comunicação e as decisões que realmente importam continuam sendo conduzidos com critério, visão humana e acompanhamento próximo.",
+  "Isso significa que sua empresa não fica presa a processos improvisados, trocas soltas ou ações sem direção. Em vez disso, passa a contar com uma estrutura que organiza a produção, facilita aprovações, melhora a consistência da comunicação, amplia a capacidade de execução e traz mais visibilidade sobre o que está sendo feito.",
+  "Na prática, usamos a tecnologia para reduzir fricção, ganhar velocidade e aumentar a capacidade operacional, sem abrir mão da identidade da marca, da clareza da mensagem e do foco comercial. O resultado é uma comunicação mais alinhada, uma operação mais previsível e uma presença digital mais preparada para transmitir valor, gerar confiança e sustentar crescimento.",
+  "A FIRMANT entende que o marketing mais forte hoje não nasce apenas da criatividade, nem apenas da tecnologia. Ele nasce da combinação entre visão estratégica, processos bem definidos, adaptação inteligente e execução orientada por resultado.",
+  "Por isso, nossa abordagem foi construída para entregar mais do que peças ou publicações isoladas. Entregamos uma operação mais madura, mais consistente e mais preparada para ajudar sua marca a comunicar melhor, vender com mais força e crescer com mais clareza.",
 ];
 
 const faqs = [
@@ -608,7 +617,181 @@ function ServicesSection() {
 }
 
 // ─── Seção: SOBRE ─────────────────────────────────────────────────────────────
+function ApproachModal({ onClose }: { onClose: () => void }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 90,
+        display: "grid",
+        placeItems: "center",
+        padding: "24px",
+        backgroundColor: "rgba(2, 6, 23, 0.84)",
+        backdropFilter: "blur(16px)",
+      }}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 24, scale: 0.96 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 24, scale: 0.96 }}
+        transition={{ duration: 0.35, ease: easeCurve }}
+        onClick={(event) => event.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Conheça nossa abordagem"
+        style={{
+          position: "relative",
+          width: "min(100%, 920px)",
+          maxHeight: "min(86vh, 900px)",
+          overflowY: "auto",
+          borderRadius: "30px",
+          border: "1px solid rgba(201,168,76,0.28)",
+          background:
+            "radial-gradient(circle at 16% 0%, rgba(201,168,76,0.16), transparent 34%), linear-gradient(135deg, rgba(15,23,42,0.98), rgba(2,6,23,0.98))",
+          boxShadow: "0 40px 120px rgba(0,0,0,0.58)",
+          padding: "clamp(30px, 5vw, 56px)",
+        }}
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Fechar janela"
+          style={{
+            position: "absolute",
+            top: "20px",
+            right: "20px",
+            display: "grid",
+            placeItems: "center",
+            width: "40px",
+            height: "40px",
+            borderRadius: "999px",
+            border: "1px solid var(--border-primary)",
+            backgroundColor: "rgba(255,255,255,0.04)",
+            color: "var(--text-primary)",
+            cursor: "pointer",
+            fontSize: "22px",
+            lineHeight: 1,
+          }}
+        >
+          ×
+        </button>
+
+        <span
+          style={{
+            display: "block",
+            marginBottom: "18px",
+            fontSize: "11px",
+            fontWeight: 700,
+            textTransform: "uppercase",
+            letterSpacing: "0.26em",
+            color: "var(--accent-gold)",
+            fontFamily: "var(--font-body)",
+          }}
+        >
+          Sobre a FIRMANT
+        </span>
+
+        <h2
+          style={{
+            maxWidth: "720px",
+            marginBottom: "34px",
+            fontFamily: "var(--font-heading)",
+            color: "var(--text-primary)",
+            fontSize: "clamp(2.2rem, 5vw, 4rem)",
+            lineHeight: 1.06,
+            letterSpacing: "-0.03em",
+          }}
+        >
+          IA nos bastidores.{" "}
+          <span className="text-gradient">Você no controle.</span>
+        </h2>
+
+        <div style={{ display: "grid", gap: "22px" }}>
+          {approachParagraphs.map((paragraph) => (
+            <p
+              key={paragraph}
+              style={{
+                fontSize: "1rem",
+                lineHeight: 1.9,
+                color: "var(--text-secondary)",
+                fontFamily: "var(--font-body)",
+              }}
+            >
+              {paragraph}
+            </p>
+          ))}
+        </div>
+
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "16px", marginTop: "40px" }}>
+          <Link
+            href="/monte-seu-pacote"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              borderRadius: "999px",
+              padding: "14px 30px",
+              fontSize: "12px",
+              fontWeight: 700,
+              textTransform: "uppercase",
+              letterSpacing: "0.1em",
+              backgroundColor: "var(--accent-gold)",
+              color: "var(--navy-950)",
+              fontFamily: "var(--font-body)",
+              textDecoration: "none",
+            }}
+          >
+            Monte seu pacote
+          </Link>
+          <Link
+            href="/contato"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              borderRadius: "999px",
+              border: "1px solid rgba(201,168,76,0.44)",
+              padding: "14px 30px",
+              fontSize: "12px",
+              fontWeight: 700,
+              textTransform: "uppercase",
+              letterSpacing: "0.1em",
+              color: "var(--accent-gold)",
+              fontFamily: "var(--font-body)",
+              textDecoration: "none",
+            }}
+          >
+            Fale conosco
+          </Link>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 function AboutSection() {
+  const [isApproachOpen, setIsApproachOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isApproachOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsApproachOpen(false);
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [isApproachOpen]);
+
   return (
     <section style={{ backgroundColor: "var(--bg-secondary)", paddingTop: "160px", paddingBottom: "160px" }}>
       <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 48px" }}>
@@ -657,8 +840,9 @@ function AboutSection() {
               O resultado? Mais volume, mais qualidade, mais velocidade — pelo preço que cabe no orçamento de quem realmente precisa crescer.
             </motion.p>
             <motion.div variants={fadeInUp}>
-              <Link
-                href="/contato"
+              <button
+                type="button"
+                onClick={() => setIsApproachOpen(true)}
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -672,11 +856,13 @@ function AboutSection() {
                   letterSpacing: "0.1em",
                   color: "var(--accent-gold)",
                   fontFamily: "var(--font-body)",
+                  background: "transparent",
+                  cursor: "pointer",
                   transition: "all 0.5s cubic-bezier(0.16,1,0.3,1)",
                 }}
               >
                 Conheça nossa abordagem
-              </Link>
+              </button>
             </motion.div>
           </AnimatedSection>
 
@@ -736,6 +922,9 @@ function AboutSection() {
           </AnimatedSection>
         </div>
       </div>
+      <AnimatePresence>
+        {isApproachOpen && <ApproachModal onClose={() => setIsApproachOpen(false)} />}
+      </AnimatePresence>
     </section>
   );
 }

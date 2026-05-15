@@ -5,6 +5,7 @@ import { LenisProvider } from "@/components/LenisProvider";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { CustomCursor } from "@/components/CustomCursor";
+import { AnalyticsConsentManager } from "@/components/AnalyticsConsentManager";
 
 const syne = Syne({
   variable: "--font-heading",
@@ -60,6 +61,7 @@ export default function RootLayout({
           <Navbar />
           <main>{children}</main>
           <Footer />
+          <AnalyticsConsentManager />
         </LenisProvider>
       </body>
     </html>

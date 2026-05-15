@@ -3,110 +3,18 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import Link from "next/link";
-
-// ─── Tipos ───────────────────────────────────────────────────────────────────
-type ServiceItem = {
-  id: string;
-  label: string;
-  price: number; // preço unitário
-  unit: string;
-  description: string;
-  allowQty?: boolean; // itens unitários permitem contador
-};
-
-type Category = {
-  id: string;
-  number: string;
-  title: string;
-  tagline: string;
-  color: string;
-  services: ServiceItem[];
-};
-
-type Selection = {
-  categoryId: string;
-  serviceId: string;
-  qty: number;
-};
-
-type ClientData = {
-  name: string;
-  email: string;
-  whatsapp: string;
-  empresa: string;
-  obs: string;
-};
-
-// ─── Dados ────────────────────────────────────────────────────────────────────
-// ⚠️ Preços Redes Sociais revisados para entrada mais acessível
-const categories: Category[] = [
-  {
-    id: "social",
-    number: "01",
-    title: "Gestão de Redes Sociais",
-    tagline: "Publicações completas — da copy à arte final, entregues com IA.",
-    color: "#C9A84C",
-    services: [
-      { id: "s4",  label: "4 publicações/mês",  price: 397,  unit: "mês", description: "R$ 99/post — ideal para começar" },
-      { id: "s8",  label: "8 publicações/mês",  price: 697,  unit: "mês", description: "R$ 87/post — mais presença, mais engajamento" },
-      { id: "s12", label: "12 publicações/mês", price: 997,  unit: "mês", description: "R$ 83/post — frequência profissional" },
-      { id: "s16", label: "16 publicações/mês", price: 1297, unit: "mês", description: "R$ 81/post — ~18% de desconto" },
-      { id: "s20", label: "20 publicações/mês", price: 1597, unit: "mês", description: "R$ 79/post — ~20% de desconto" },
-      { id: "s24", label: "24+ publicações/mês",price: 1897, unit: "mês", description: "R$ 79/post — máximo alcance" },
-    ],
-  },
-  {
-    id: "video",
-    number: "02",
-    title: "Edição de Vídeo",
-    tagline: "Reels, Stories e Shorts editados profissionalmente com IA.",
-    color: "#22D3EE",
-    services: [
-      { id: "v8s",  label: "Story 8s",    price: 97,  unit: "vídeo", description: "Stories curtos, cortes dinâmicos",  allowQty: true },
-      { id: "v16s", label: "Reel 16s",    price: 149, unit: "vídeo", description: "Reels curtos para maior alcance",    allowQty: true },
-      { id: "v30s", label: "Reel 30s",    price: 219, unit: "vídeo", description: "Reel padrão — formato mais engajado", allowQty: true },
-      { id: "v1m",  label: "Reel 1 min",  price: 349, unit: "vídeo", description: "Reel longo, tutorial ou depoimento",  allowQty: true },
-      { id: "vs10", label: "Stories Pack — 10 vídeos 8s", price: 690, unit: "pacote", description: "Pacote fechado — R$ 69 cada" },
-      { id: "vg8",  label: "Growth Pack — 8 Reels 30s",  price: 1352,unit: "pacote", description: "Pacote Growth — R$ 169 cada" },
-    ],
-  },
-  {
-    id: "ugc",
-    number: "03",
-    title: "Vídeo UGC com IA",
-    tagline: "Avatar de IA falando sobre seu produto — sem câmera, sem ator.",
-    color: "#A78BFA",
-    services: [
-      { id: "u8s",  label: "UGC 8s",      price: 129, unit: "vídeo", description: "Bumper ad — impacto rápido",          allowQty: true },
-      { id: "u16s", label: "UGC 16s",     price: 197, unit: "vídeo", description: "Story / pre-roll",                    allowQty: true },
-      { id: "u30s", label: "UGC 30s",     price: 297, unit: "vídeo", description: "UGC padrão — maior conversão",        allowQty: true },
-      { id: "u1m",  label: "UGC 1 min",   price: 449, unit: "vídeo", description: "Review ou tutorial completo",         allowQty: true },
-      { id: "u_ads",label: "Direito anúncios +3 meses", price: 149, unit: "vídeo", description: "Add-on Meta/TikTok Ads — por vídeo", allowQty: true },
-      { id: "u6pk", label: "Pack 6 UGC 30s", price: 1194, unit: "pacote", description: "~31% de desconto — R$ 199 cada" },
-    ],
-  },
-  {
-    id: "dev",
-    number: "04",
-    title: "Desenvolvimento Web/Mobile",
-    tagline: "Aplicações sob medida em Python — do MVP ao sistema completo.",
-    color: "#34D399",
-    services: [
-      { id: "d_lp1",  label: "Landing Page básica",         price: 997,   unit: "projeto", description: "1 página, responsivo, formulário — 3 a 5 dias" },
-      { id: "d_lp2",  label: "Landing Page alta conversão", price: 1997,  unit: "projeto", description: "Copy, pixel Meta/Google — 5 a 7 dias" },
-      { id: "d_lp3",  label: "Landing Page premium",        price: 2997,  unit: "projeto", description: "Funil, A/B, CRM — 7 a 14 dias" },
-      { id: "d_site1",label: "Site institucional (5 págs)", price: 2497,  unit: "projeto", description: "Design, SEO, blog — 7 a 14 dias" },
-      { id: "d_site2",label: "Site institucional completo", price: 4997,  unit: "projeto", description: "8 a 15 páginas, SEO avançado — 14 a 21 dias" },
-      { id: "d_ecom", label: "E-commerce (até 50 produtos)",price: 5997,  unit: "projeto", description: "Checkout, Mercado Pago, estoque — 14 a 30 dias" },
-      { id: "d_app",  label: "App Mobile (iOS + Android)",  price: 19997, unit: "projeto", description: "React Native, backend, deploy — 45 a 90 dias" },
-      { id: "d_manut",label: "Manutenção mensal",           price: 297,   unit: "mês",    description: "Atualizações, backups, suporte contínuo" },
-    ],
-  },
-];
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-const fmt = (n: number) =>
-  n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0 });
+import {
+  categories,
+  fmtCurrency,
+  getItemTotal,
+  getPackageBreakdown,
+  getPackageTotal,
+  getServiceById,
+  getUnitPrice,
+  readyPackages,
+  type ClientData,
+  type Selection,
+} from "@/lib/package-catalog";
 
 const easeCurve: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
@@ -121,77 +29,7 @@ function rgbFromColor(c: string) {
   if (c === "#A78BFA") return "167,139,250";
   return "52,211,153";
 }
-
-// ─── Preços com desconto por volume ──────────────────────────────────────────
-// Cada entrada: [qtdMínima, preçoPorUnidade]
-const tieredPricing: Record<string, Array<[number, number]>> = {
-  v8s:  [[1, 97],  [2, 87],  [4, 79],  [8, 69]],
-  v16s: [[1, 149], [2, 139], [4, 129], [8, 119]],
-  v30s: [[1, 219], [2, 199], [4, 179], [8, 169]],
-  v1m:  [[1, 349], [2, 319], [4, 299]],
-  u8s:  [[1, 129], [2, 119], [4, 99],  [5, 89]],
-  u16s: [[1, 197], [2, 179], [4, 159], [8, 149]],
-  u30s: [[1, 297], [2, 267], [4, 229], [6, 199]],
-  u1m:  [[1, 449], [2, 399], [4, 349]],
-  u_ads:[[1, 149], [3, 129]],
-};
-
-function getUnitPrice(svcId: string, qty: number): number {
-  const tiers = tieredPricing[svcId];
-  if (!tiers) return 0;
-  let price = tiers[0][1];
-  for (const [minQty, unitPrice] of tiers) {
-    if (qty >= minQty) price = unitPrice;
-  }
-  return price;
-}
-
-function getItemTotal(svc: ServiceItem, qty: number): number {
-  if (!svc.allowQty) return svc.price;
-  return getUnitPrice(svc.id, qty) * qty;
-}
-
-// ─── Pacotes pré-configurados ─────────────────────────────────────────────────
-const readyPackages = [
-  {
-    label: "ESSENCIAL",
-    desc: "8 posts + 4 Reels 30s",
-    cats: ["social", "video"],
-    items: [
-      { categoryId: "social", serviceId: "s8",   qty: 1 },
-      { categoryId: "video",  serviceId: "v30s",  qty: 4 },
-    ] as Selection[],
-  },
-  {
-    label: "CRESCIMENTO",
-    desc: "12 posts + 8 Reels + 3 UGC 30s",
-    cats: ["social", "video", "ugc"],
-    items: [
-      { categoryId: "social", serviceId: "s12",  qty: 1 },
-      { categoryId: "video",  serviceId: "v30s",  qty: 8 },
-      { categoryId: "ugc",    serviceId: "u30s",  qty: 3 },
-    ] as Selection[],
-  },
-  {
-    label: "ACELERAÇÃO",
-    desc: "16 posts + 8 Reels + 6 UGC 30s",
-    cats: ["social", "video", "ugc"],
-    items: [
-      { categoryId: "social", serviceId: "s16",  qty: 1 },
-      { categoryId: "video",  serviceId: "v30s",  qty: 8 },
-      { categoryId: "ugc",    serviceId: "u30s",  qty: 6 },
-    ] as Selection[],
-  },
-];
-
-function getPackageTotal(pkg: typeof readyPackages[0]): number {
-  return pkg.items.reduce((acc, item) => {
-    const cat = categories.find((c) => c.id === item.categoryId);
-    const svc = cat?.services.find((s) => s.id === item.serviceId);
-    if (!svc) return acc;
-    return acc + getItemTotal(svc, item.qty);
-  }, 0);
-}
+const fmt = fmtCurrency;
 
 // ─── Step 1: Escolha de categorias ───────────────────────────────────────────
 function StepCategories({ selected, onToggle }: { selected: string[]; onToggle: (id: string) => void }) {
@@ -403,19 +241,49 @@ function StepContact({ data, onChange }: { data: ClientData; onChange: (d: Clien
       </motion.p>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
         <motion.div variants={fadeUp}>{field("name", "Nome completo", "Seu nome", true)}</motion.div>
-        <motion.div variants={fadeUp}>{field("empresa", "Empresa / negócio", "Nome da empresa ou projeto")}</motion.div>
+        <motion.div variants={fadeUp}>{field("cpf", "CPF", "000.000.000-00", true)}</motion.div>
         <motion.div variants={fadeUp}>{field("email", "E-mail", "seu@email.com", true)}</motion.div>
         <motion.div variants={fadeUp}>{field("whatsapp", "WhatsApp", "(11) 99999-9999", true)}</motion.div>
+        <motion.div variants={fadeUp}>{field("instagram", "Instagram", "@suaempresa", true)}</motion.div>
+        <motion.div variants={fadeUp}>{field("empresa", "Empresa / negócio", "Nome da empresa ou projeto")}</motion.div>
         <motion.div variants={fadeUp} style={{ gridColumn: "1 / -1" }}>
           {field("obs", "Briefing / observações", "Conte sobre seu negócio e o que espera dos serviços...", false, true)}
         </motion.div>
       </div>
+      <motion.div variants={fadeUp} className="wizard-privacy-note">
+        <p>
+          Ao continuar, você declara que leu e concorda com os{" "}
+          <Link href="/termos-de-uso" target="_blank">
+            Termos de Uso
+          </Link>
+          {", com a "}
+          <Link href="/politica-privacidade" target="_blank">
+            Política de Privacidade
+          </Link>
+          {" "}e com a{" "}
+          <Link href="/politica-de-reembolso" target="_blank">
+            Política de Reembolso da FIRMANT
+          </Link>
+          , estando ciente de que serviços digitais personalizados podem ter regras específicas de cancelamento e reembolso conforme o estágio de execução.
+        </p>
+      </motion.div>
     </motion.div>
   );
 }
 
 // ─── Step 4: Resumo ───────────────────────────────────────────────────────────
-function StepSummary({ selections, clientData, total, onEdit }: { selections: Selection[]; clientData: ClientData; total: number; onEdit: (step: number) => void }) {
+function StepSummary({
+  selections,
+  clientData,
+  breakdown,
+  onEdit,
+}: {
+  selections: Selection[];
+  clientData: ClientData;
+  breakdown: ReturnType<typeof getPackageBreakdown>;
+  onEdit: (step: number) => void;
+}) {
+  const pixPackageTotal = Math.round(breakdown.grandTotal * 0.95);
   const grouped = categories
     .map((cat) => ({
       cat,
@@ -456,156 +324,458 @@ function StepSummary({ selections, clientData, total, onEdit }: { selections: Se
         </div>
         <p style={{ fontSize: "14px", color: "var(--text-primary)", margin: "0 0 4px", fontFamily: "var(--font-body)" }}>{clientData.name}{clientData.empresa && ` — ${clientData.empresa}`}</p>
         <p style={{ fontSize: "13px", color: "var(--text-tertiary)", margin: "0 0 2px" }}>{clientData.email}</p>
-        <p style={{ fontSize: "13px", color: "var(--text-tertiary)", margin: 0 }}>{clientData.whatsapp}</p>
+        <p style={{ fontSize: "13px", color: "var(--text-tertiary)", margin: "0 0 2px" }}>{clientData.whatsapp}</p>
+        <p style={{ fontSize: "13px", color: "var(--text-tertiary)", margin: 0 }}>CPF: {clientData.cpf} · Instagram: {clientData.instagram}</p>
       </motion.div>
 
       <motion.div variants={fadeUp} style={{ padding: "24px 28px", borderRadius: "14px", border: "1.5px solid rgba(201,168,76,0.3)", backgroundColor: "rgba(201,168,76,0.05)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
-          <p style={{ fontSize: "12px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.15em", color: "var(--text-muted)", margin: "0 0 4px" }}>Total do pedido</p>
-          <p style={{ fontSize: "11px", color: "var(--text-muted)", margin: 0 }}>Recorrente mensal + projetos pontuais</p>
+          <p style={{ fontSize: "12px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.15em", color: "var(--text-muted)", margin: "0 0 4px" }}>Resumo financeiro</p>
+          {breakdown.hasOneTime && (
+            <p style={{ fontSize: "11px", color: "var(--text-muted)", margin: "0 0 2px" }}>
+              Avulso: {fmt(breakdown.oneTimeTotal)}
+            </p>
+          )}
+          {breakdown.hasRecurring && (
+            <p style={{ fontSize: "11px", color: "var(--text-muted)", margin: 0 }}>
+              Mensal: {fmt(breakdown.recurringTotal)}
+            </p>
+          )}
+          <p style={{ fontSize: "11px", color: "#34D399", margin: "2px 0 0" }}>
+            Pix no fechamento: {fmt(pixPackageTotal)}
+          </p>
         </div>
-        <span style={{ fontSize: "clamp(1.6rem,3.5vw,2.2rem)", fontWeight: 800, color: "var(--accent-gold)", fontFamily: "var(--font-heading)" }}>{fmt(total)}</span>
+        <span style={{ fontSize: "clamp(1.6rem,3.5vw,2.2rem)", fontWeight: 800, color: "var(--accent-gold)", fontFamily: "var(--font-heading)" }}>{fmt(breakdown.grandTotal)}</span>
       </motion.div>
     </motion.div>
   );
 }
 
-// ─── Step 5: Finalização ──────────────────────────────────────────────────────
-function StepFinalization({ total, clientData, selections, onConfirm }: {
-  total: number;
-  clientData: ClientData;
+// ─── Step 5: Validação do contrato ───────────────────────────────────────────
+function StepContractValidation({
+  selections,
+  clientData,
+  breakdown,
+  accepted,
+  onAcceptedChange,
+  onEdit,
+}: {
   selections: Selection[];
-  onConfirm: (method: "pix" | "card" | "boleto" | "whatsapp") => void;
+  clientData: ClientData;
+  breakdown: ReturnType<typeof getPackageBreakdown>;
+  accepted: boolean;
+  onAcceptedChange: (value: boolean) => void;
+  onEdit: (step: number) => void;
 }) {
-  const [selected, setSelected] = useState<"pix" | "card" | "boleto" | "whatsapp" | null>(null);
+  const contractType = inferPublicContractType(selections, breakdown);
+  const requiresDigitalSignature = contractType !== "pdf_email";
+  const grouped = categories
+    .map((cat) => ({
+      cat,
+      items: selections
+        .filter((selection) => selection.categoryId === cat.id)
+        .map((selection) => ({
+          selection,
+          service: cat.services.find((service) => service.id === selection.serviceId),
+        }))
+        .filter((item) => item.service),
+    }))
+    .filter((group) => group.items.length > 0);
 
-  const methods = [
+  const openContractPreview = () => {
+    const preview = window.open("", "_blank");
+
+    if (!preview) {
+      return;
+    }
+
+    preview.document.write(buildPublicContractHtml({
+      selections,
+      clientData,
+      breakdown,
+      contractType,
+      requiresDigitalSignature,
+    }));
+    preview.document.close();
+  };
+
+  return (
+    <motion.div initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.08 } } }}>
+      <motion.p variants={fadeUp} style={{ marginBottom: "32px", fontSize: "15px", color: "var(--text-secondary)", lineHeight: 1.7 }}>
+        Confira o contrato/termo de contratação antes de seguir para o pagamento. Esta etapa registra que você revisou seus dados, os serviços selecionados e as condições principais da contratação.
+      </motion.p>
+
+      <motion.div variants={fadeUp} style={{ display: "flex", justifyContent: "space-between", gap: "18px", alignItems: "center", padding: "22px 24px", borderRadius: "14px", border: "1.5px solid rgba(201,168,76,0.28)", backgroundColor: "rgba(201,168,76,0.05)", marginBottom: "24px" }}>
+        <div>
+          <p style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.16em", color: "var(--accent-gold)", margin: "0 0 8px" }}>
+            Contrato para validação
+          </p>
+          <h3 style={{ fontSize: "1.2rem", color: "var(--text-primary)", fontFamily: "var(--font-heading)", margin: "0 0 8px" }}>
+            Termo de contratação FIRMANT
+          </h3>
+          <p style={{ fontSize: "13px", color: "var(--text-secondary)", lineHeight: 1.6, margin: 0 }}>
+            {requiresDigitalSignature
+              ? "Este tipo de contratação poderá receber contrato digital para assinatura oficial após a validação comercial da FIRMANT."
+              : "Este tipo de contratação poderá receber contrato/termo em PDF por e-mail após a criação do pedido."}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={openContractPreview}
+          style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "8px", padding: "13px 20px", borderRadius: "999px", border: "1px solid rgba(201,168,76,0.5)", backgroundColor: "transparent", color: "var(--accent-gold)", fontSize: "12px", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", cursor: "pointer", whiteSpace: "nowrap" }}
+        >
+          Gerar contrato
+        </button>
+      </motion.div>
+
+      <motion.div variants={fadeUp} style={{ padding: "24px", borderRadius: "14px", border: "1px solid rgba(255,255,255,0.08)", backgroundColor: "var(--bg-card)", marginBottom: "18px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: "16px", alignItems: "flex-start", marginBottom: "18px" }}>
+          <div>
+            <p style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em", color: "var(--text-muted)", margin: "0 0 8px" }}>Dados do cliente</p>
+            <p style={{ fontSize: "14px", color: "var(--text-primary)", margin: "0 0 4px" }}>{clientData.name}{clientData.empresa && ` — ${clientData.empresa}`}</p>
+            <p style={{ fontSize: "13px", color: "var(--text-tertiary)", margin: "0 0 3px" }}>{clientData.email} · {clientData.whatsapp}</p>
+            <p style={{ fontSize: "13px", color: "var(--text-tertiary)", margin: 0 }}>CPF: {clientData.cpf} · Instagram: {clientData.instagram}</p>
+          </div>
+          <button onClick={() => onEdit(3)} style={{ fontSize: "11px", color: "var(--text-muted)", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>editar</button>
+        </div>
+
+        <div style={{ marginBottom: "18px" }}>
+          <p style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em", color: "var(--text-muted)", margin: "0 0 10px" }}>Serviços contratados</p>
+          {grouped.map(({ cat, items }) => (
+            <div key={cat.id} style={{ marginBottom: "12px" }}>
+              <p style={{ fontSize: "12px", fontWeight: 700, color: cat.color, margin: "0 0 6px" }}>{cat.title}</p>
+              {items.map(({ selection, service }) => service && (
+                <div key={service.id} style={{ display: "flex", justifyContent: "space-between", gap: "12px", padding: "10px 12px", borderRadius: "10px", backgroundColor: "rgba(255,255,255,0.035)", marginBottom: "5px" }}>
+                  <span style={{ fontSize: "13px", color: "var(--text-secondary)" }}>{service.label}{selection.qty > 1 && ` x ${selection.qty}`}</span>
+                  <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--text-primary)" }}>{fmt(getItemTotal(service, selection.qty))}</span>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px", marginBottom: "18px" }}>
+          <ContractInfo label="Valor avulso" value={fmt(breakdown.oneTimeTotal)} />
+          <ContractInfo label="Valor mensal" value={fmt(breakdown.recurringTotal)} />
+          <ContractInfo label="Total estimado" value={fmt(breakdown.grandTotal)} highlight />
+        </div>
+
+        <div style={{ padding: "16px 18px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.07)", backgroundColor: "rgba(255,255,255,0.025)" }}>
+          <p style={{ fontSize: "12px", color: "var(--text-secondary)", lineHeight: 1.7, margin: "0 0 8px" }}>
+            O pagamento será escolhido no próximo passo. Os valores do configurador podem ser revisados pela FIRMANT quando houver necessidade de análise técnica, escopo personalizado, disponibilidade operacional ou condições específicas do projeto.
+          </p>
+          <p style={{ fontSize: "12px", color: "var(--text-secondary)", lineHeight: 1.7, margin: 0 }}>
+            Aplicam-se os{" "}
+            <Link href="/termos-de-uso" target="_blank">Termos de Uso</Link>
+            {", a "}
+            <Link href="/politica-privacidade" target="_blank">Política de Privacidade</Link>
+            {" e a "}
+            <Link href="/politica-de-reembolso" target="_blank">Política de Reembolso</Link>
+            {" da FIRMANT."}
+          </p>
+        </div>
+      </motion.div>
+
+      <motion.label variants={fadeUp} style={{ display: "flex", alignItems: "flex-start", gap: "12px", padding: "18px 20px", borderRadius: "14px", border: `1.5px solid ${accepted ? "rgba(201,168,76,0.45)" : "rgba(255,255,255,0.08)"}`, backgroundColor: accepted ? "rgba(201,168,76,0.055)" : "rgba(255,255,255,0.025)", cursor: "pointer" }}>
+        <input
+          type="checkbox"
+          checked={accepted}
+          onChange={(event) => onAcceptedChange(event.target.checked)}
+          style={{ marginTop: "3px", width: "18px", height: "18px", accentColor: "var(--accent-gold)", flexShrink: 0 }}
+        />
+        <span style={{ fontSize: "13px", color: "var(--text-secondary)", lineHeight: 1.65 }}>
+          Li, conferi e valido os dados acima, os serviços solicitados, as políticas aplicáveis e as condições gerais do contrato/termo de contratação da FIRMANT. Estou ciente de que, dependendo do tipo de serviço contratado, poderei receber contrato digital para assinatura oficial.
+        </span>
+      </motion.label>
+    </motion.div>
+  );
+}
+
+function ContractInfo({ label, value, highlight = false }: { label: string; value: string; highlight?: boolean }) {
+  return (
+    <div style={{ padding: "14px 16px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.07)", backgroundColor: "rgba(255,255,255,0.025)" }}>
+      <p style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: "var(--text-muted)", margin: "0 0 6px" }}>{label}</p>
+      <p style={{ fontSize: highlight ? "1.05rem" : "14px", fontWeight: 800, color: highlight ? "var(--accent-gold)" : "var(--text-primary)", margin: 0, fontFamily: "var(--font-heading)" }}>{value}</p>
+    </div>
+  );
+}
+
+function inferPublicContractType(
+  selections: Selection[],
+  breakdown: ReturnType<typeof getPackageBreakdown>,
+) {
+  const hasDevelopment = selections.some((selection) => selection.categoryId === "dev");
+  const hasRecurring = breakdown.hasRecurring;
+
+  if (hasDevelopment) {
+    return "analise_manual";
+  }
+
+  if (hasRecurring || breakdown.grandTotal >= 1000 || selections.length > 1) {
+    return "autentique";
+  }
+
+  return "pdf_email";
+}
+
+function buildPublicContractHtml({
+  selections,
+  clientData,
+  breakdown,
+  contractType,
+  requiresDigitalSignature,
+}: {
+  selections: Selection[];
+  clientData: ClientData;
+  breakdown: ReturnType<typeof getPackageBreakdown>;
+  contractType: string;
+  requiresDigitalSignature: boolean;
+}) {
+  const services = selections
+    .map((selection) => {
+      const category = categories.find((item) => item.id === selection.categoryId);
+      const service = getServiceById(selection.categoryId, selection.serviceId);
+
+      if (!category || !service) {
+        return "";
+      }
+
+      return `<li><strong>${escapeHtml(category.title)}:</strong> ${escapeHtml(service.label)}${selection.qty > 1 ? ` x ${selection.qty}` : ""} - ${escapeHtml(fmt(getItemTotal(service, selection.qty)))}</li>`;
+    })
+    .join("");
+
+  const signatureNotice = requiresDigitalSignature
+    ? "Dependendo da validacao comercial e do tipo de escopo, este contrato podera ser enviado digitalmente para assinatura oficial."
+    : "Este contrato/termo podera ser enviado em PDF por e-mail apos a criacao do pedido.";
+
+  return `<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>Contrato para conferencia | FIRMANT</title>
+  <style>
+    body { margin: 0; padding: 48px; background: #f6f7fb; color: #152033; font-family: Arial, sans-serif; line-height: 1.58; }
+    main { max-width: 860px; margin: 0 auto; background: #fff; border: 1px solid #dde2ec; padding: 44px; }
+    h1 { margin: 0 0 8px; font-size: 28px; letter-spacing: .02em; }
+    h2 { margin: 28px 0 8px; font-size: 16px; text-transform: uppercase; letter-spacing: .08em; }
+    p { margin: 0 0 10px; }
+    ul { margin: 8px 0 0 20px; padding: 0; }
+    .meta { color: #667085; font-size: 13px; margin-bottom: 26px; }
+    .notice { margin-top: 28px; padding: 16px 18px; border: 1px solid #d6b557; background: #fff9e8; }
+    .actions { margin-top: 28px; }
+    button { border: 0; border-radius: 999px; background: #c9a84c; color: #101828; padding: 12px 20px; font-weight: 700; cursor: pointer; }
+    @media print { body { background: #fff; padding: 0; } main { border: 0; } .actions { display: none; } }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Contrato / Termo de Contratacao FIRMANT</h1>
+    <p class="meta">Versao para conferencia gerada no site. O numero final do contrato sera atribuido apos a criacao do pedido.</p>
+
+    <h2>1. Dados da FIRMANT</h2>
+    <p>Nome comercial: FIRMANT<br />CNPJ: 63.867.205/0001-99<br />Atendimento: 100% online para todo o Brasil<br />E-mail: ag.firmant@gmail.com<br />WhatsApp: +55 11 91491-2488</p>
+
+    <h2>2. Dados do cliente</h2>
+    <p>Nome completo: ${escapeHtml(clientData.name)}<br />CPF: ${escapeHtml(clientData.cpf)}<br />E-mail: ${escapeHtml(clientData.email)}<br />WhatsApp: ${escapeHtml(clientData.whatsapp)}<br />Instagram: ${escapeHtml(clientData.instagram)}${clientData.empresa ? `<br />Empresa/projeto: ${escapeHtml(clientData.empresa)}` : ""}</p>
+
+    <h2>3. Servicos solicitados</h2>
+    <ul>${services}</ul>
+
+    <h2>4. Condicoes comerciais</h2>
+    <p>Valor avulso: ${escapeHtml(fmt(breakdown.oneTimeTotal))}<br />Valor mensal: ${escapeHtml(fmt(breakdown.recurringTotal))}<br />Total estimado: ${escapeHtml(fmt(breakdown.grandTotal))}<br />Forma de pagamento: a escolher no proximo passo do checkout.<br />Tipo de contrato previsto: ${escapeHtml(contractType)}.</p>
+
+    <h2>5. Politicas aplicaveis</h2>
+    <p>Aplicam-se os Termos de Uso, a Politica de Privacidade e a Politica de Reembolso da FIRMANT, disponiveis em firmant.com.br.</p>
+
+    <h2>6. Clausulas principais</h2>
+    <p>A execucao dos servicos depende do escopo contratado, envio de informacoes pelo cliente, aprovacoes, materiais necessarios, disponibilidade operacional e condicoes comerciais confirmadas pela FIRMANT.</p>
+    <p>Servicos digitais personalizados podem envolver estrategia, planejamento, criacao, tecnologia, inteligencia artificial, automacoes, desenvolvimento, edicao e producao intelectual sob demanda.</p>
+    <p>A FIRMANT pode utilizar ferramentas de IA como apoio estrategico, criativo, tecnico e operacional, mantendo curadoria e responsabilidade humana sobre orientacoes e entregas.</p>
+    <p>A FIRMANT nao garante resultados absolutos, como vendas, seguidores, viralizacao, performance exata, posicao garantida em buscadores ou retorno financeiro especifico.</p>
+
+    <div class="notice">${escapeHtml(signatureNotice)}</div>
+    <div class="actions"><button onclick="window.print()">Imprimir / salvar em PDF</button></div>
+  </main>
+</body>
+</html>`;
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+// ─── Step 6: Finalização ──────────────────────────────────────────────────────
+type FinalizationAction =
+  | "PIX"
+  | "CREDIT_CARD"
+  | "SUBSCRIPTION"
+  | "WHATSAPP";
+
+type FinalizationMethod = {
+  id: FinalizationAction;
+  label: string;
+  badge: string;
+  badgeColor: string;
+  description: string;
+  priceLabel: string;
+  disabled?: boolean;
+};
+
+function StepFinalization({
+  breakdown,
+  onConfirm,
+  isSubmitting,
+  submitError,
+}: {
+  breakdown: ReturnType<typeof getPackageBreakdown>;
+  onConfirm: (action: FinalizationAction) => void;
+  isSubmitting: boolean;
+  submitError: string;
+}) {
+  const [selected, setSelected] = useState<FinalizationAction | null>(null);
+  const packageAmount = breakdown.grandTotal;
+  const pixPackageAmount = Math.round(packageAmount * 0.95);
+  const hasSelectedItems = packageAmount > 0;
+
+  const methods: FinalizationMethod[] = [
     {
-      id: "pix" as const,
-      icon: (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
-        </svg>
-      ),
-      label: "Quero pagar por Pix",
-      badge: "preferencial",
+      id: "PIX",
+      label: "Pagar este pacote via Pix",
+      badge: "5% off",
       badgeColor: "#34D399",
-      description: "Nossa equipe confirma o pedido e envia os dados para pagamento via Pix.",
-      priceLabel: fmt(Math.round(total * 0.95)),
+      description: "Pagamento único do pacote selecionado, com desconto Pix. Não cria mensalidade.",
+      priceLabel: hasSelectedItems ? fmt(pixPackageAmount) : "Selecione um item",
+      disabled: !hasSelectedItems,
     },
     {
-      id: "card" as const,
-      icon: (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="1" y="4" width="22" height="16" rx="2" ry="2" /><line x1="1" y1="10" x2="23" y2="10" />
-        </svg>
-      ),
-      label: "Quero pagar por cartão",
+      id: "CREDIT_CARD",
+      label: "Pagar este pacote no cartão",
       badge: "Até 12×",
       badgeColor: "#22D3EE",
-      description: "Nossa equipe confirma o pedido e envia o link seguro de pagamento.",
-      priceLabel: `${fmt(total)} ou 12× de ${fmt(Math.round(total / 12))}`,
+      description: "Pagamento único do pacote selecionado, com parcelamento no checkout do Asaas. Não cria mensalidade.",
+      priceLabel: hasSelectedItems
+        ? `${fmt(packageAmount)} ou 12× de ${fmt(Math.round(packageAmount / 12))}`
+        : "Selecione um item",
+      disabled: !hasSelectedItems,
     },
     {
-      id: "boleto" as const,
-      icon: (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="8" y1="13" x2="16" y2="13" /><line x1="8" y1="17" x2="13" y2="17" />
-        </svg>
-      ),
-      label: "Quero pagar por boleto",
-      badge: "3 dias úteis",
-      badgeColor: "#C9A84C",
-      description: "Nossa equipe confirma o pedido e envia o boleto para pagamento à vista.",
-      priceLabel: fmt(total),
+      id: "SUBSCRIPTION",
+      label: "Assinar mensal no cartão",
+      badge: "Cartão recorrente",
+      badgeColor: "#A78BFA",
+      description: "Transforma o pacote selecionado em assinatura mensal recorrente no cartão.",
+      priceLabel: hasSelectedItems ? `${fmt(packageAmount)}/mês` : "Selecione um item",
+      disabled: !hasSelectedItems,
     },
     {
-      id: "whatsapp" as const,
-      icon: (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a9.956 9.956 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374A9.86 9.86 0 012.049 11.89c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884" />
-        </svg>
-      ),
-      label: "Confirmar pelo WhatsApp",
-      badge: "Atendimento",
+      id: "WHATSAPP",
+      label: "Falar no WhatsApp",
+      badge: "Opcional",
       badgeColor: "#25D366",
-      description: "Envie o resumo agora e finalize os próximos passos com nossa equipe.",
-      priceLabel: fmt(total),
+      description: "Atendimento humano para negociação assistida, dúvidas comerciais ou fechamento manual.",
+      priceLabel: "Atendimento",
     },
   ];
 
   return (
     <motion.div initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.08 } } }}>
       <motion.p variants={fadeUp} style={{ marginBottom: "40px", fontSize: "15px", color: "var(--text-secondary)", lineHeight: 1.7 }}>
-        Escolha a forma preferida para o atendimento. O pedido será enviado para a equipe da FIRMANT confirmar valores, prazos e próximos passos.
+        Escolha a condição de pagamento. Pix e cartão são pagamentos avulsos. Assinatura transforma o pacote selecionado em cobrança mensal recorrente no cartão.
       </motion.p>
 
-      {/* Total */}
-      <motion.div variants={fadeUp} style={{ padding: "20px 24px", borderRadius: "14px", border: "1px solid rgba(201,168,76,0.2)", backgroundColor: "rgba(201,168,76,0.04)", marginBottom: "32px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.1em" }}>Total do pedido</span>
-        <span style={{ fontSize: "1.6rem", fontWeight: 800, color: "var(--accent-gold)", fontFamily: "var(--font-heading)" }}>{fmt(total)}</span>
+      <motion.div variants={fadeUp} style={{ padding: "20px 24px", borderRadius: "14px", border: "1px solid rgba(201,168,76,0.2)", backgroundColor: "rgba(201,168,76,0.04)", marginBottom: "32px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: breakdown.hasRecurring && breakdown.hasOneTime ? "10px" : 0 }}>
+          <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.1em" }}>Resumo do fechamento</span>
+          <span style={{ fontSize: "1.4rem", fontWeight: 800, color: "var(--accent-gold)", fontFamily: "var(--font-heading)" }}>{fmt(breakdown.grandTotal)}</span>
+        </div>
+        <p style={{ fontSize: "12px", color: "var(--text-muted)", margin: "0 0 4px" }}>
+          Pix: {fmt(pixPackageAmount)}
+          <span style={{ marginLeft: "8px" }}>Cartão: {fmt(packageAmount)}</span>
+        </p>
+        <p style={{ fontSize: "12px", color: "var(--text-muted)", margin: 0 }}>
+          Assinatura: {fmt(packageAmount)}/mês
+        </p>
       </motion.div>
 
-      {/* Preferência de atendimento */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "32px" }}>
-        {methods.map((m) => {
-          const active = selected === m.id;
+      <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "24px" }}>
+        {methods.map((method) => {
+          const active = !method.disabled && selected === method.id;
           return (
             <motion.button
-              key={m.id}
+              key={method.id}
               variants={fadeUp}
-              onClick={() => setSelected(m.id)}
+              disabled={method.disabled || isSubmitting}
+              onClick={() => {
+                if (!method.disabled) {
+                  setSelected(method.id);
+                }
+              }}
               style={{
-                display: "flex", alignItems: "center", gap: "16px",
-                padding: "18px 20px", borderRadius: "14px", cursor: "pointer", textAlign: "left",
-                border: `1.5px solid ${active ? m.badgeColor : "rgba(255,255,255,0.08)"}`,
-                backgroundColor: active ? `rgba(${m.badgeColor === "#34D399" ? "52,211,153" : m.badgeColor === "#22D3EE" ? "34,211,238" : m.badgeColor === "#C9A84C" ? "201,168,76" : "37,211,102"},0.07)` : "var(--bg-card)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "16px",
+                padding: "18px 20px",
+                borderRadius: "14px",
+                cursor: method.disabled ? "not-allowed" : "pointer",
+                textAlign: "left",
+                border: `1.5px solid ${active ? method.badgeColor : "rgba(255,255,255,0.08)"}`,
+                backgroundColor: active ? "rgba(255,255,255,0.06)" : "var(--bg-card)",
+                opacity: method.disabled ? 0.55 : 1,
                 transition: "all 250ms ease",
               }}
             >
-              <div style={{ color: active ? m.badgeColor : "var(--text-tertiary)", transition: "color 250ms ease", flexShrink: 0 }}>
-                {m.icon}
-              </div>
               <div style={{ flex: 1 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px" }}>
-                  <span style={{ fontSize: "15px", fontWeight: 700, color: "var(--text-primary)", fontFamily: "var(--font-body)" }}>{m.label}</span>
-                  <span style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", padding: "2px 8px", borderRadius: "999px", backgroundColor: `rgba(${m.badgeColor === "#34D399" ? "52,211,153" : m.badgeColor === "#22D3EE" ? "34,211,238" : m.badgeColor === "#C9A84C" ? "201,168,76" : "37,211,102"},0.15)`, color: m.badgeColor }}>
-                    {m.badge}
+                  <span style={{ fontSize: "15px", fontWeight: 700, color: "var(--text-primary)", fontFamily: "var(--font-body)" }}>{method.label}</span>
+                  <span style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", padding: "2px 8px", borderRadius: "999px", backgroundColor: "rgba(255,255,255,0.08)", color: method.badgeColor }}>
+                    {method.badge}
                   </span>
                 </div>
-                <p style={{ fontSize: "12px", color: "var(--text-tertiary)", margin: 0 }}>{m.description}</p>
+                <p style={{ fontSize: "12px", color: "var(--text-tertiary)", margin: 0 }}>{method.description}</p>
               </div>
-              <div style={{ textAlign: "right", flexShrink: 0 }}>
-                <span style={{ fontSize: "14px", fontWeight: 700, color: active ? m.badgeColor : "var(--text-secondary)", fontFamily: "var(--font-heading)" }}>{m.priceLabel}</span>
-              </div>
+              <span style={{ fontSize: "14px", fontWeight: 700, color: active ? method.badgeColor : "var(--text-secondary)", fontFamily: "var(--font-heading)", flexShrink: 0 }}>
+                {method.priceLabel}
+              </span>
             </motion.button>
           );
         })}
       </div>
 
-      {/* Aviso de finalização */}
+      {submitError && (
+        <motion.div variants={fadeUp} style={{ padding: "14px 18px", borderRadius: "10px", border: "1px solid rgba(239,68,68,0.25)", backgroundColor: "rgba(239,68,68,0.08)", marginBottom: "12px" }}>
+          <p style={{ fontSize: "12px", color: "#fca5a5", margin: 0, lineHeight: 1.6 }}>
+            {submitError}
+          </p>
+        </motion.div>
+      )}
+
       <motion.div variants={fadeUp} style={{ padding: "14px 18px", borderRadius: "10px", backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", marginBottom: "8px" }}>
         <p style={{ fontSize: "12px", color: "var(--text-muted)", margin: 0, lineHeight: 1.6 }}>
-          Esta etapa ainda não processa pagamento automaticamente. Ao confirmar, o resumo completo será enviado pelo WhatsApp para validação final da equipe FIRMANT.
+          Antes de concluir o pagamento, recomendamos a leitura dos Termos de Uso, da Política de Privacidade e da Política de Reembolso da FIRMANT. Serviços digitais personalizados podem não ser elegíveis a reembolso integral após o início da execução. Dependendo do tipo de serviço contratado, você receberá por e-mail o contrato ou termo digital da FIRMANT para formalização e, quando aplicável, assinatura oficial.
         </p>
       </motion.div>
 
-      {/* Botão confirmar */}
       <motion.div variants={fadeUp} style={{ marginTop: "24px" }}>
         <button
           onClick={() => selected && onConfirm(selected)}
-          disabled={!selected}
+          disabled={!selected || isSubmitting}
           style={{
             display: "inline-flex", alignItems: "center", gap: "10px",
             padding: "16px 40px", borderRadius: "999px", width: "100%", justifyContent: "center",
-            backgroundColor: selected ? "var(--accent-gold)" : "rgba(255,255,255,0.08)",
-            color: selected ? "var(--navy-950)" : "var(--text-muted)",
+            backgroundColor: selected && !isSubmitting ? "var(--accent-gold)" : "rgba(255,255,255,0.08)",
+            color: selected && !isSubmitting ? "var(--navy-950)" : "var(--text-muted)",
             fontSize: "14px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em",
-            fontFamily: "var(--font-body)", border: "none", cursor: selected ? "pointer" : "not-allowed",
+            fontFamily: "var(--font-body)", border: "none", cursor: selected && !isSubmitting ? "pointer" : "not-allowed",
             transition: "all 300ms ease",
           }}
         >
-          {selected ? "Enviar resumo para atendimento" : "Selecione uma preferência de atendimento"}
+          {isSubmitting ? "Abrindo checkout..." : selected ? "Continuar para o fechamento" : "Selecione uma opção"}
         </button>
       </motion.div>
     </motion.div>
@@ -617,8 +787,19 @@ export default function MonteSeuPacotePage() {
   const [step, setStep] = useState(1);
   const [selectedCats, setSelectedCats] = useState<string[]>([]);
   const [selections, setSelections] = useState<Selection[]>([]);
-  const [clientData, setClientData] = useState<ClientData>({ name: "", email: "", whatsapp: "", empresa: "", obs: "" });
+  const [clientData, setClientData] = useState<ClientData>({
+    name: "",
+    cpf: "",
+    email: "",
+    whatsapp: "",
+    instagram: "",
+    empresa: "",
+    obs: "",
+  });
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [contractAccepted, setContractAccepted] = useState(false);
   const topRef = useRef<HTMLDivElement>(null);
 
   const scrollTop = () => topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -650,51 +831,130 @@ export default function MonteSeuPacotePage() {
     scrollTop();
   };
 
-  const total = selections.reduce((acc, sel) => {
-    const cat = categories.find((c) => c.id === sel.categoryId);
-    const svc = cat?.services.find((s) => s.id === sel.serviceId);
-    if (!svc) return acc;
-    return acc + getItemTotal(svc, sel.qty);
-  }, 0);
+  const breakdown = getPackageBreakdown(selections);
+  const total = breakdown.grandTotal;
 
   const canNext = () => {
     if (step === 1) return selectedCats.length > 0;
     if (step === 2) return selections.length > 0;
-    if (step === 3) return !!(clientData.name && clientData.email && clientData.whatsapp);
+    if (step === 3) {
+      return !!(
+        clientData.name
+        && clientData.cpf.replace(/\D/g, "").length === 11
+        && clientData.email
+        && clientData.whatsapp
+        && clientData.instagram
+      );
+    }
+    if (step === 5) return contractAccepted;
     return true;
   };
 
   const next = () => { if (canNext()) { setStep((s) => s + 1); scrollTop(); } };
   const back = () => { setStep((s) => s - 1); scrollTop(); };
-  const goTo = (s: number) => { setStep(s); scrollTop(); };
+  const goTo = (s: number) => {
+    if (s < 5) {
+      setContractAccepted(false);
+    }
 
-  const handleConfirm = (method: "pix" | "card" | "boleto" | "whatsapp") => {
-    const finalTotal = method === "pix" ? Math.round(total * 0.95) : total;
-    const discount = method === "pix" ? "\n💰 Desconto Pix (5%) aplicado!" : "";
-    const payLabel = { pix: "Pix", card: "Cartão de crédito", boleto: "Boleto bancário", whatsapp: "Atendimento direto" }[method];
+    setStep(s);
+    scrollTop();
+  };
 
+  const handleWhatsappFlow = () => {
     const msg = encodeURIComponent(
       `Olá! Finalizei meu pacote na FIRMANT:\n\n` +
       `━━━━━━━━━━━━━━━━━\n` +
       selections.map((sel) => {
-        const cat = categories.find((c) => c.id === sel.categoryId);
-        const svc = cat?.services.find((s) => s.id === sel.serviceId);
+        const svc = getServiceById(sel.categoryId, sel.serviceId);
         const lineTotal = svc ? getItemTotal(svc, sel.qty) : 0;
         return `• ${svc?.label}${sel.qty > 1 ? ` × ${sel.qty}` : ""} — ${fmt(lineTotal)}`;
       }).join("\n") +
       `\n━━━━━━━━━━━━━━━━━\n` +
-      `💳 Preferência informada: ${payLabel}${discount}\n` +
-      `💰 Total: ${fmt(finalTotal)}\n\n` +
+      `💰 Avulso: ${fmt(breakdown.oneTimeTotal)}\n` +
+      `🔁 Mensal: ${fmt(breakdown.recurringTotal)}\n` +
+      `💰 Total estimado: ${fmt(total)}\n\n` +
       `👤 ${clientData.name}${clientData.empresa ? ` — ${clientData.empresa}` : ""}\n` +
+      `🪪 CPF: ${clientData.cpf}\n` +
       `📧 ${clientData.email}\n` +
-      `📱 ${clientData.whatsapp}` +
+      `📱 ${clientData.whatsapp}\n` +
+      `📸 Instagram: ${clientData.instagram}` +
       (clientData.obs ? `\n\n📝 ${clientData.obs}` : "")
     );
-    window.open(`https://wa.me/5511915058962?text=${msg}`, "_blank");
+    window.open(`https://wa.me/5511914912488?text=${msg}`, "_blank");
     setSubmitted(true);
   };
 
-  const steps = ["Serviços", "Detalhes", "Seus dados", "Resumo", "Finalizar"];
+  const handleConfirm = async (action: FinalizationAction) => {
+    setSubmitError("");
+
+    if (action === "WHATSAPP") {
+      handleWhatsappFlow();
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const endpoint =
+        action === "SUBSCRIPTION"
+          ? "/api/payments/subscription"
+          : "/api/payments/checkout";
+
+      const payload =
+        action === "SUBSCRIPTION"
+          ? { selections, clientData }
+          : { selections, clientData, paymentMethod: action };
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error ?? "Falha ao iniciar o checkout.");
+      }
+
+      if (!data.checkoutUrl) {
+        throw new Error("O checkout não retornou uma URL válida.");
+      }
+
+      await registerCommercialData(data.orderId);
+      window.location.href = data.checkoutUrl;
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : "Falha ao iniciar o fluxo de pagamento.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const registerCommercialData = async (orderId: string | undefined) => {
+    if (!orderId) {
+      return;
+    }
+
+    try {
+      await fetch("/api/commercial/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ orderId, clientData }),
+      });
+    } catch (error) {
+      console.error("Falha ao registrar dados comerciais.", error);
+    }
+  };
+
+  const steps = ["Serviços", "Detalhes", "Seus dados", "Resumo", "Contrato", "Finalizar"];
 
   if (submitted) {
     return (
@@ -733,7 +993,7 @@ export default function MonteSeuPacotePage() {
           </motion.h1>
           <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }}
             style={{ fontSize: "16px", color: "var(--text-secondary)", lineHeight: 1.8, maxWidth: "540px", fontFamily: "var(--font-body)" }}>
-            Escolha os serviços, defina as quantidades e envie seu resumo para atendimento.
+            Escolha os serviços, defina as quantidades e feche seu pacote com checkout seguro ou atendimento consultivo.
           </motion.p>
         </div>
       </div>
@@ -780,13 +1040,14 @@ export default function MonteSeuPacotePage() {
                 {step === 1 && <StepCategories selected={selectedCats} onToggle={toggleCat} />}
                 {step === 2 && <StepServices activeCategoryIds={selectedCats} selections={selections} onToggle={toggleSvc} onQty={handleQty} />}
                 {step === 3 && <StepContact data={clientData} onChange={setClientData} />}
-                {step === 4 && <StepSummary selections={selections} clientData={clientData} total={total} onEdit={goTo} />}
-                {step === 5 && <StepFinalization total={total} clientData={clientData} selections={selections} onConfirm={handleConfirm} />}
+                {step === 4 && <StepSummary selections={selections} clientData={clientData} breakdown={breakdown} onEdit={goTo} />}
+                {step === 5 && <StepContractValidation selections={selections} clientData={clientData} breakdown={breakdown} accepted={contractAccepted} onAcceptedChange={setContractAccepted} onEdit={goTo} />}
+                {step === 6 && <StepFinalization breakdown={breakdown} onConfirm={handleConfirm} isSubmitting={isSubmitting} submitError={submitError} />}
               </motion.div>
             </AnimatePresence>
 
             {/* Navegação */}
-            {step < 5 && (
+            {step < 6 && (
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "48px", paddingTop: "28px", borderTop: "1px solid rgba(255,255,255,0.07)" }}>
                 {step > 1 ? (
                   <button onClick={back} style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "11px 22px", borderRadius: "999px", border: "1px solid rgba(255,255,255,0.12)", background: "none", color: "var(--text-secondary)", fontSize: "13px", fontWeight: 600, fontFamily: "var(--font-body)", cursor: "pointer", letterSpacing: "0.06em" }}>
@@ -796,16 +1057,16 @@ export default function MonteSeuPacotePage() {
                 ) : <div />}
                 <button onClick={next} disabled={!canNext()}
                   style={{ display: "inline-flex", alignItems: "center", gap: "10px", padding: "13px 34px", borderRadius: "999px", backgroundColor: canNext() ? "var(--accent-gold)" : "rgba(255,255,255,0.08)", color: canNext() ? "var(--navy-950)" : "var(--text-muted)", fontSize: "13px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "var(--font-body)", border: "none", cursor: canNext() ? "pointer" : "not-allowed", transition: "all 250ms ease" }}>
-                  {step === 4 ? "Finalizar pedido" : "Continuar"}
+                  {step === 4 ? "Validar contrato" : step === 5 ? "Ir para pagamento" : "Continuar"}
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
                 </button>
               </div>
             )}
-            {step === 5 && (
+            {step === 6 && (
               <div style={{ marginTop: "24px", paddingTop: "20px", borderTop: "1px solid rgba(255,255,255,0.07)" }}>
                 <button onClick={back} style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "11px 22px", borderRadius: "999px", border: "1px solid rgba(255,255,255,0.12)", background: "none", color: "var(--text-secondary)", fontSize: "13px", fontWeight: 600, fontFamily: "var(--font-body)", cursor: "pointer" }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" /></svg>
-                  Voltar ao resumo
+                  Voltar ao contrato
                 </button>
               </div>
             )}
@@ -824,7 +1085,7 @@ export default function MonteSeuPacotePage() {
                   <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                     {selections.map((sel) => {
                       const cat = categories.find((c) => c.id === sel.categoryId);
-                      const svc = cat?.services.find((s) => s.id === sel.serviceId);
+                      const svc = getServiceById(sel.categoryId, sel.serviceId);
                       if (!svc) return null;
                       return (
                         <div key={sel.serviceId} style={{ display: "flex", justifyContent: "space-between", gap: "8px", padding: "9px 11px", borderRadius: "8px", backgroundColor: "rgba(255,255,255,0.04)" }}>
@@ -839,9 +1100,23 @@ export default function MonteSeuPacotePage() {
                 )}
               </div>
               {selections.length > 0 && (
-                <div style={{ padding: "16px 24px", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--text-muted)" }}>Total</span>
-                  <span style={{ fontSize: "1.3rem", fontWeight: 800, color: "var(--accent-gold)", fontFamily: "var(--font-heading)" }}>{fmt(total)}</span>
+                <div style={{ padding: "16px 24px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                  {breakdown.hasOneTime && (
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: breakdown.hasRecurring ? "8px" : 0 }}>
+                      <span style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--text-muted)" }}>Avulso</span>
+                      <span style={{ fontSize: "1rem", fontWeight: 800, color: "var(--accent-gold)", fontFamily: "var(--font-heading)" }}>{fmt(breakdown.oneTimeTotal)}</span>
+                    </div>
+                  )}
+                  {breakdown.hasRecurring && (
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                      <span style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--text-muted)" }}>Mensal</span>
+                      <span style={{ fontSize: "1rem", fontWeight: 800, color: "#A78BFA", fontFamily: "var(--font-heading)" }}>{fmt(breakdown.recurringTotal)}</span>
+                    </div>
+                  )}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--text-muted)" }}>Total estimado</span>
+                    <span style={{ fontSize: "1.3rem", fontWeight: 800, color: "var(--accent-gold)", fontFamily: "var(--font-heading)" }}>{fmt(total)}</span>
+                  </div>
                 </div>
               )}
             </div>

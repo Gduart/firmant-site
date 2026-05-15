@@ -1,0 +1,64 @@
+import { getRequiredEnvValue } from "@/lib/cloudflare-runtime";
+
+type RequestOptions = {
+  method?: "GET" | "POST" | "PUT";
+  body?: unknown;
+};
+
+export class AsaasApiError extends Error {
+  status: number;
+  details: unknown;
+
+  constructor(message: string, status: number, details: unknown) {
+    super(message);
+    this.name = "AsaasApiError";
+    this.status = status;
+    this.details = details;
+  }
+}
+
+export async function asaasRequest<T>(path: string, options: RequestOptions = {}) {
+  const [baseUrl, apiKey] = await Promise.all([
+    getRequiredEnvValue("ASAAS_API_BASE_URL"),
+    getRequiredEnvValue("ASAAS_API_KEY"),
+  ]);
+
+  const response = await fetch(`${baseUrl}${path}`, {
+    method: options.method ?? "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "User-Agent": "FirmantSite/1.0 (+https://firmant.com.br)",
+      access_token: apiKey,
+    },
+    body: options.body ? JSON.stringify(options.body) : undefined,
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    let details: unknown = null;
+
+    try {
+      details = await response.json();
+    } catch {
+      details = await response.text();
+    }
+
+    console.error("Asaas API error", {
+      path,
+      status: response.status,
+      details,
+    });
+
+    throw new AsaasApiError(
+      `Asaas request failed: ${response.status}`,
+      response.status,
+      details,
+    );
+  }
+
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  return response.json() as Promise<T>;
+}

@@ -1,6 +1,17 @@
 "use client";
 
+import { Mail } from "lucide-react";
 import Link from "next/link";
+
+function InstagramGlyph({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="3" width="18" height="18" rx="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17" cy="7" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
 
 const footerLinks = {
   servicos: [
@@ -13,6 +24,8 @@ const footerLinks = {
     { href: "/blog", label: "Blog" },
     { href: "/contato", label: "Contato" },
     { href: "/politica-privacidade", label: "Política de Privacidade" },
+    { href: "/termos-de-uso", label: "Termos de Uso" },
+    { href: "/politica-de-reembolso", label: "Política de Reembolso" },
   ],
 };
 
@@ -59,40 +72,51 @@ export function Footer() {
                 fontFamily: "var(--font-body)",
               }}
             >
-              Tecnologia invisível, resultados visíveis. Gestão de redes sociais, vídeos para negócios, conteúdo UGC com IA e desenvolvimento web/mobile para negócios que querem crescer.
+              FIRMANT — Agência digital com IA, estratégia e soluções online para marcas em crescimento. Atendimento 100% online para todo o Brasil.
             </p>
+            <div style={{ marginTop: "20px", display: "grid", gap: "6px" }}>
+              {[
+                "WhatsApp: +55 11 91491-2488",
+                "E-mail: ag.firmant@gmail.com",
+                "Instagram: @ag.firmant",
+                "CNPJ: 63.867.205/0001-99",
+              ].map((item) => (
+                <p
+                  key={item}
+                  style={{
+                    fontSize: "13px",
+                    lineHeight: 1.5,
+                    color: "var(--text-muted)",
+                    fontFamily: "var(--font-body)",
+                  }}
+                >
+                  {item}
+                </p>
+              ))}
+            </div>
             {/* Ícones sociais */}
             <div style={{ marginTop: "32px", display: "flex", gap: "12px" }}>
               {[
                 {
-                  href: "https://instagram.com/firmant",
-                  paths: (
-                    <>
-                      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-                      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-                      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
-                    </>
-                  ),
+                  href: "https://www.instagram.com/ag.firmant/",
+                  label: "Instagram da FIRMANT",
+                  icon: InstagramGlyph,
                 },
                 {
-                  href: "https://facebook.com/firmant",
-                  paths: <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />,
+                  href: "mailto:ag.firmant@gmail.com",
+                  label: "E-mail da FIRMANT",
+                  icon: Mail,
                 },
-                {
-                  href: "mailto:contato@firmant.com.br",
-                  paths: (
-                    <>
-                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                      <polyline points="22,6 12,13 2,6" />
-                    </>
-                  ),
-                },
-              ].map((social) => (
+              ].map((social) => {
+                const Icon = social.icon;
+
+                return (
                 <a
                   key={social.href}
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
+                  aria-label={social.label}
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -106,20 +130,10 @@ export function Footer() {
                     transition: "all 300ms ease",
                   }}
                 >
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    {social.paths}
-                  </svg>
+                  <Icon size={16} strokeWidth={1.7} />
                 </a>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -229,7 +243,7 @@ export function Footer() {
 
       {/* WhatsApp flutuante */}
       <a
-        href="https://wa.me/5511915058962?text=Olá!%20Vim%20pelo%20site%20da%20Firmant%20e%20gostaria%20de%20saber%20mais."
+        href="https://wa.me/5511914912488?text=Ol%C3%A1%2C%20FIRMANT.%20Vim%20pelo%20site%20e%20gostaria%20de%20entender%20melhor%20os%20servi%C3%A7os."
         target="_blank"
         rel="noopener noreferrer"
         style={{

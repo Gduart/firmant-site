@@ -133,7 +133,7 @@ const faqs = [
   },
   {
     question: "Quais formas de pagamento vocês aceitam?",
-    answer: "Aceitamos Pix, cartão de crédito (com parcelamento), cartão de débito e boleto bancário — tudo via Mercado Pago com total segurança.",
+    answer: "Aceitamos Pix, cartão de crédito com parcelamento e boleto bancário — tudo por meio de checkout seguro com total proteção dos dados.",
   },
   {
     question: "Posso combinar serviços diferentes?",

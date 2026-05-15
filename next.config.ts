@@ -1,7 +1,19 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      const currentExternals = Array.isArray(config.externals)
+        ? config.externals
+        : config.externals
+          ? [config.externals]
+          : [];
+
+      config.externals = [...currentExternals, "cloudflare:sockets"];
+    }
+
+    return config;
+  },
 };
 
 export default nextConfig;

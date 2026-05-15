@@ -48,3 +48,12 @@ next-env.d.ts
 .dev.vars*
 !.dev.vars.example
 !.env.example
+
+# local test artifacts
+/wrangler-*.log
+/next-dev.*.log
+/tmp-chrome-profile/
+/tmp-*.png
+/*.headers
+/*.pdf
+/anotacao

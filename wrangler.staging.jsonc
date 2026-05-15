@@ -1,7 +1,7 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"main": ".open-next/worker.js",
-	"name": "firmant-site",
+	"name": "firmant-site-staging",
 	"compatibility_date": "2026-04-11",
 	"compatibility_flags": [
 		"nodejs_compat"
@@ -11,36 +11,28 @@
 		"binding": "ASSETS"
 	},
 	"vars": {
-		"APP_BASE_URL": "https://firmant.com.br",
+		"APP_BASE_URL": "https://firmant-site-staging.geraldo1fduarte.workers.dev",
 		"ASAAS_API_BASE_URL": "https://api-sandbox.asaas.com",
-		"ASAAS_CANCEL_URL": "https://firmant.com.br/pagamento/cancelado",
-		"ASAAS_EXPIRED_URL": "https://firmant.com.br/pagamento/expirado",
-		"ASAAS_SUCCESS_URL": "https://firmant.com.br/pagamento/sucesso",
+		"ASAAS_CANCEL_URL": "https://firmant-site-staging.geraldo1fduarte.workers.dev/pagamento/cancelado",
+		"ASAAS_EXPIRED_URL": "https://firmant-site-staging.geraldo1fduarte.workers.dev/pagamento/expirado",
+		"ASAAS_SUCCESS_URL": "https://firmant-site-staging.geraldo1fduarte.workers.dev/pagamento/sucesso",
 		"FIRMANT_ADMIN_USER": "FIRMANT_ADMIN",
 		"GMAIL_SMTP_USER": "ag.firmant@gmail.com",
 		"GA_MEASUREMENT_ID": "",
 		"GOOGLE_ADS_ID": "",
 		"META_PIXEL_ID": ""
 	},
-	"routes": [
-		{
-			"pattern": "firmant.com.br",
-			"zone_name": "firmant.com.br",
-			"custom_domain": true
-		}
-	],
 	"d1_databases": [
 		{
 			"binding": "FIRMANT_DB",
-			"database_name": "firmant-payments",
-			"database_id": "f46d991a-d1b2-45b2-af6c-6b15ba50d1f9"
+			"database_name": "firmant-payments-staging",
+			"database_id": "6a806da5-8569-407c-a32d-0df2234fbc78"
 		}
 	],
 	"services": [
 		{
 			"binding": "WORKER_SELF_REFERENCE",
-			"service": "firmant-site",
-			"environment": "production"
+			"service": "firmant-site-staging"
 		}
 	],
 	"images": {

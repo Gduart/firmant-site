@@ -711,6 +711,29 @@ input:focus, textarea:focus, select:focus {
   gap: 12px;
 }
 
+.blog-admin-auth-required {
+  border: 1px solid var(--border-primary);
+  border-radius: 18px;
+  padding: clamp(28px, 4vw, 42px);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(201, 168, 76, 0.12), transparent 34%),
+    var(--bg-card);
+}
+
+.blog-admin-auth-required h2 {
+  margin-bottom: 12px;
+  color: var(--text-primary);
+  font-size: clamp(1.45rem, 2.8vw, 2rem);
+}
+
+.blog-admin-auth-required p {
+  max-width: 620px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+}
+
 .blog-admin-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 380px;

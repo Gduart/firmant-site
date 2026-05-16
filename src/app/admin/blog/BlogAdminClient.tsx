@@ -61,6 +61,7 @@ export function BlogAdminClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSlugEdited, setIsSlugEdited] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const previewTags = useMemo(
     () => normalizeTagsInput(form.tags),
@@ -90,9 +91,11 @@ export function BlogAdminClient() {
 
       window.sessionStorage.setItem("firmant-blog-admin-token", authToken);
       window.localStorage.removeItem("firmant-blog-admin-token");
+      setIsAuthenticated(true);
       setPosts(data.posts ?? []);
       setStatusMessage("Posts carregados.");
     } catch (error) {
+      setIsAuthenticated(false);
       setErrorMessage(
         error instanceof Error ? error.message : "Falha ao carregar posts.",
       );
@@ -153,6 +156,18 @@ export function BlogAdminClient() {
     } finally {
       setIsSaving(false);
     }
+  }
+
+  function logout() {
+    window.sessionStorage.removeItem("firmant-blog-admin-token");
+    window.localStorage.removeItem("firmant-blog-admin-token");
+    setToken("");
+    setPosts([]);
+    setForm(emptyForm);
+    setIsSlugEdited(false);
+    setIsAuthenticated(false);
+    setStatusMessage("Sessão do Blog encerrada.");
+    setErrorMessage("");
   }
 
   async function deletePost(post: BlogPost) {
@@ -261,12 +276,25 @@ export function BlogAdminClient() {
             <button type="button" onClick={() => void loadPosts()} disabled={isLoading}>
               {isLoading ? "Carregando..." : "Entrar"}
             </button>
+            {isAuthenticated && (
+              <button type="button" onClick={logout}>
+                Sair
+              </button>
+            )}
           </div>
         </div>
 
         {errorMessage && <div className="blog-admin-alert blog-admin-alert-error">{errorMessage}</div>}
         {statusMessage && <div className="blog-admin-alert blog-admin-alert-success">{statusMessage}</div>}
 
+        {!isAuthenticated ? (
+          <div className="blog-admin-auth-required">
+            <h2>Acesso restrito</h2>
+            <p>
+              Informe o token administrativo para carregar, criar, editar ou excluir posts do Blog.
+            </p>
+          </div>
+        ) : (
         <div className="blog-admin-grid">
           <form className="blog-admin-form" onSubmit={savePost}>
             <div className="blog-admin-form-title">
@@ -434,6 +462,7 @@ export function BlogAdminClient() {
             </div>
           </aside>
         </div>
+        )}
       </section>
     </div>
   );

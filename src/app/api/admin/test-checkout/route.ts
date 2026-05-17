@@ -108,8 +108,8 @@ function buildTestCheckoutPage() {
     <h1>Checkout teste producao</h1>
     <p>Gera um checkout Pix real de R$ 5,00. Use somente para validacao final e remova esta rota depois do teste.</p>
     <div class="actions">
-      <button id="create" type="button">Gerar checkout R$ 5,00</button>
-      <a id="open" href="#" target="_blank" rel="noreferrer" hidden>Abrir checkout</a>
+      <button id="create" type="button">Gerar e abrir checkout R$ 5,00</button>
+      <a id="open" href="#" target="_blank" rel="noreferrer" hidden>Abrir checkout novamente</a>
     </div>
     <pre id="result">Aguardando...</pre>
   </main>
@@ -117,8 +117,14 @@ function buildTestCheckoutPage() {
     const button = document.getElementById("create");
     const link = document.getElementById("open");
     const result = document.getElementById("result");
+    let currentCheckoutUrl = "";
 
     button.addEventListener("click", async () => {
+      if (currentCheckoutUrl) {
+        window.open(currentCheckoutUrl, "_blank", "noopener,noreferrer");
+        return;
+      }
+
       button.disabled = true;
       result.textContent = "Criando checkout...";
       link.hidden = true;
@@ -135,8 +141,11 @@ function buildTestCheckoutPage() {
           return;
         }
 
+        currentCheckoutUrl = json.checkoutUrl;
         link.href = json.checkoutUrl;
         link.hidden = false;
+        button.textContent = "Checkout gerado - abrir novamente";
+        window.open(json.checkoutUrl, "_blank", "noopener,noreferrer");
       } catch (error) {
         result.textContent = error instanceof Error ? error.message : "Falha ao criar checkout.";
       } finally {

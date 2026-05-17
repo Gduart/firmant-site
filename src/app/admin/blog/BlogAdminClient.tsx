@@ -60,7 +60,6 @@ export function BlogAdminClient() {
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isSlugEdited, setIsSlugEdited] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -253,50 +252,6 @@ export function BlogAdminClient() {
     }));
   }
 
-  async function uploadCoverImage(file: File | null) {
-    if (!file) {
-      return;
-    }
-
-    if (!token || !isAuthenticated) {
-      setErrorMessage("Entre com o token administrativo antes de enviar imagens.");
-      return;
-    }
-
-    setIsUploadingImage(true);
-    setErrorMessage("");
-    setStatusMessage("");
-
-    try {
-      await validateCoverImageDimensions(file);
-
-      const body = new FormData();
-      body.append("file", file);
-
-      const response = await fetch("/api/admin/blog/images", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body,
-      });
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error ?? "Falha ao enviar imagem.");
-      }
-
-      updateField("coverImage", data.url);
-      setStatusMessage("Imagem enviada e aplicada na capa do post.");
-    } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : "Falha ao enviar imagem.",
-      );
-    } finally {
-      setIsUploadingImage(false);
-    }
-  }
-
   return (
     <div className="blog-admin-page">
       <section className="blog-admin-shell">
@@ -412,17 +367,11 @@ export function BlogAdminClient() {
               <input
                 value={form.coverImage}
                 onChange={(event) => updateField("coverImage", event.target.value)}
-                placeholder="/blog/minha-imagem.webp ou https://..."
-              />
-              <input
-                type="file"
-                accept="image/avif,image/jpeg,image/png,image/webp"
-                onChange={(event) => void uploadCoverImage(event.target.files?.[0] ?? null)}
-                disabled={isUploadingImage}
+                placeholder="/blog/minha-imagem.jpg ou https://..."
               />
               <small className="blog-admin-help">
-                Recomendado: 1600x900 px, proporção 16:9, WebP/JPG/PNG/AVIF, até 5 MB.
-                {isUploadingImage ? " Enviando imagem..." : ""}
+                Salve o arquivo em public/blog/ e use /blog/nome-da-imagem.jpg.
+                Recomendado: 1600x900 px, 16:9, JPG/WebP, até 500 KB.
               </small>
             </Field>
 
@@ -521,42 +470,6 @@ export function BlogAdminClient() {
       </section>
     </div>
   );
-}
-
-async function validateCoverImageDimensions(file: File) {
-  const dimensions = await readImageDimensions(file);
-  const ratio = dimensions.width / dimensions.height;
-  const targetRatio = 16 / 9;
-  const ratioTolerance = 0.04;
-
-  if (file.size > 5 * 1024 * 1024) {
-    throw new Error("Imagem muito pesada. Envie um arquivo de até 5 MB.");
-  }
-
-  if (dimensions.width < 1200 || dimensions.height < 675) {
-    throw new Error("Imagem pequena demais. Use pelo menos 1200x675 px; recomendado: 1600x900 px.");
-  }
-
-  if (Math.abs(ratio - targetRatio) > ratioTolerance) {
-    throw new Error("A imagem precisa estar em proporção 16:9. Recomendado: 1600x900 px.");
-  }
-}
-
-function readImageDimensions(file: File): Promise<{ width: number; height: number }> {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    const image = new Image();
-
-    image.onload = () => {
-      URL.revokeObjectURL(url);
-      resolve({ width: image.naturalWidth, height: image.naturalHeight });
-    };
-    image.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error("Não foi possível ler as dimensões da imagem."));
-    };
-    image.src = url;
-  });
 }
 
 function Field({

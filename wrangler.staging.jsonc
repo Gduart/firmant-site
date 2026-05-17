@@ -20,9 +20,7 @@
 		"GMAIL_SMTP_USER": "ag.firmant@gmail.com",
 		"GA_MEASUREMENT_ID": "",
 		"GOOGLE_ADS_ID": "",
-		"META_PIXEL_ID": "",
-		"CLOUDFLARE_ACCOUNT_ID": "",
-		"CLOUDFLARE_IMAGES_VARIANT": "public"
+		"META_PIXEL_ID": ""
 	},
 	"d1_databases": [
 		{

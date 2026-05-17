@@ -25,15 +25,33 @@ const PUBLIC_COLUMNS = `
   updatedAt
 `;
 
+const LIST_COLUMNS = `
+  id,
+  slug,
+  title,
+  excerpt,
+  coverImage,
+  coverAlt,
+  category,
+  tags,
+  status,
+  author,
+  seoTitle,
+  seoDescription,
+  publishedAt,
+  createdAt,
+  updatedAt
+`;
+
 export async function listPublishedBlogPosts() {
-  const rows = await allStatement<BlogPostRow>(
-    `SELECT ${PUBLIC_COLUMNS}
+  const rows = await allStatement<Omit<BlogPostRow, "content">>(
+    `SELECT ${LIST_COLUMNS}
      FROM blog_posts
      WHERE status = 'published'
      ORDER BY COALESCE(publishedAt, createdAt) DESC`,
   );
 
-  return rows.map(mapBlogPostRow);
+  return rows.map((row) => mapBlogPostRow({ ...row, content: "" }));
 }
 
 export async function listAllBlogPosts() {

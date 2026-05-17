@@ -119,54 +119,25 @@ export async function syncProductionSmokeTestPayments() {
   const results = [];
 
   for (const order of orders) {
-    const payments = await findAsaasPaymentsForOrder(order);
-
-    if (payments.length === 0) {
-      results.push({
-        orderId: order.id,
-        checkoutId: order.asaasCheckoutId,
-        externalReference: order.externalReference,
-        synced: false,
-        reason: "Nenhuma cobranca encontrada no Asaas para este checkout.",
-      });
-      continue;
-    }
-
-    for (const payment of payments) {
-      const payloadPayment = {
-        ...payment,
-        externalReference: payment.externalReference ?? order.externalReference,
-        checkoutSession: payment.checkoutSession ?? order.asaasCheckoutId ?? undefined,
-      };
-      const event = buildManualSyncEvent(payloadPayment);
-      const syncResult = await processAsaasWebhook({
-        id: `manual-sync:${payment.id ?? order.id}:${payment.status ?? "UNKNOWN"}`,
-        event,
-        dateCreated: new Date().toISOString(),
-        payment: payloadPayment,
-        checkout: order.asaasCheckoutId
-          ? {
-              id: order.asaasCheckoutId,
-              externalReference: order.externalReference,
-            }
-          : undefined,
-      });
-
-      results.push({
-        orderId: order.id,
-        checkoutId: order.asaasCheckoutId,
-        paymentId: payment.id,
-        paymentStatus: payment.status,
-        event,
-        synced: syncResult.processed === true || syncResult.duplicate === true,
-        result: syncResult,
-      });
-    }
+    results.push(...await syncAsaasPaymentsForOrder(order));
   }
 
   return {
     checkedOrders: orders.length,
     results,
+  };
+}
+
+export async function syncAsaasPaymentsForOrderId(orderId: string) {
+  const order = await getOrderById(orderId);
+
+  if (!order) {
+    throw new Error("Pedido não encontrado.");
+  }
+
+  return {
+    orderId: order.id,
+    results: await syncAsaasPaymentsForOrder(order),
   };
 }
 
@@ -516,6 +487,57 @@ async function findAsaasPaymentsForOrder(order: OrderRecord) {
   });
 
   return byExternalReference.data ?? [];
+}
+
+async function syncAsaasPaymentsForOrder(order: OrderRecord) {
+  const payments = await findAsaasPaymentsForOrder(order);
+
+  if (payments.length === 0) {
+    return [
+      {
+        orderId: order.id,
+        checkoutId: order.asaasCheckoutId,
+        externalReference: order.externalReference,
+        synced: false,
+        reason: "Nenhuma cobranca encontrada no Asaas para este checkout.",
+      },
+    ];
+  }
+
+  const results = [];
+
+  for (const payment of payments) {
+    const payloadPayment = {
+      ...payment,
+      externalReference: payment.externalReference ?? order.externalReference,
+      checkoutSession: payment.checkoutSession ?? order.asaasCheckoutId ?? undefined,
+    };
+    const event = buildManualSyncEvent(payloadPayment);
+    const syncResult = await processAsaasWebhook({
+      id: `manual-sync:${payment.id ?? order.id}:${payment.status ?? "UNKNOWN"}`,
+      event,
+      dateCreated: new Date().toISOString(),
+      payment: payloadPayment,
+      checkout: order.asaasCheckoutId
+        ? {
+            id: order.asaasCheckoutId,
+            externalReference: order.externalReference,
+          }
+        : undefined,
+    });
+
+    results.push({
+      orderId: order.id,
+      checkoutId: order.asaasCheckoutId,
+      paymentId: payment.id,
+      paymentStatus: payment.status,
+      event,
+      synced: syncResult.processed === true || syncResult.duplicate === true,
+      result: syncResult,
+    });
+  }
+
+  return results;
 }
 
 function buildManualSyncEvent(payment: AsaasPaymentPayload) {

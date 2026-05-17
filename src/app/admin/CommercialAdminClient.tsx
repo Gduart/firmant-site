@@ -365,6 +365,28 @@ export function CommercialAdminClient({ mode, id }: CommercialAdminClientProps) 
     }
   }
 
+  async function syncAsaasPayment(orderId: string) {
+    try {
+      setError("");
+      setToast("");
+      setActiveActionId(`${orderId}:sync-asaas`);
+      const result = await postJson(`/api/admin/orders/${orderId}/sync-asaas`, {});
+      const synced = Array.isArray(result.results)
+        ? result.results.filter((item: { synced?: boolean }) => item.synced).length
+        : 0;
+      const successMessage = synced > 0
+        ? `Sincronização Asaas concluída (${synced} cobrança(s)).`
+        : "Sincronização Asaas concluída sem cobrança encontrada.";
+      setMessage(successMessage);
+      setToast(successMessage);
+      await loadData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha ao sincronizar pagamento Asaas.");
+    } finally {
+      setActiveActionId("");
+    }
+  }
+
   return (
     <section className="commercial-admin-page">
       <div className="commercial-admin-shell">
@@ -452,6 +474,7 @@ export function CommercialAdminClient({ mode, id }: CommercialAdminClientProps) 
             contractAction={contractAction}
             sendContractEmail={sendContractEmail}
             generateAndOpenPdf={generateAndOpenPdf}
+            syncAsaasPayment={syncAsaasPayment}
             activeActionId={activeActionId}
           />
         )}
@@ -599,6 +622,7 @@ function OrderDetails({
   contractAction,
   sendContractEmail,
   generateAndOpenPdf,
+  syncAsaasPayment,
   activeActionId,
 }: {
   data: AdminData;
@@ -608,6 +632,7 @@ function OrderDetails({
   contractAction: ContractAction;
   sendContractEmail: (contractId: string) => Promise<void>;
   generateAndOpenPdf: (contractId: string) => Promise<void>;
+  syncAsaasPayment: (orderId: string) => Promise<void>;
   activeActionId: string;
 }) {
   const order = data?.order;
@@ -640,6 +665,11 @@ function OrderDetails({
         ["Asaas checkout", order.asaasCheckoutId ?? "Não informado"],
         ["Asaas payment", order.asaasPaymentId ?? "Não informado"],
       ]} />
+      <PaymentSyncCard
+        order={order}
+        syncAsaasPayment={syncAsaasPayment}
+        activeActionId={activeActionId}
+      />
       {contract && (
         <ContractActionsCard
           contract={contract}
@@ -652,6 +682,37 @@ function OrderDetails({
       )}
       <NotesCard note={note} setNote={setNote} saveNote={saveNote} notes={data?.notes ?? []} />
       <EventsCard events={data?.events ?? []} />
+    </div>
+  );
+}
+
+function PaymentSyncCard({
+  order,
+  syncAsaasPayment,
+  activeActionId,
+}: {
+  order: OrderRow;
+  syncAsaasPayment: (orderId: string) => Promise<void>;
+  activeActionId: string;
+}) {
+  const isSyncing = activeActionId === `${order.id}:sync-asaas`;
+
+  return (
+    <div className="commercial-admin-card">
+      <h2>Sincronização Asaas</h2>
+      <dl className="commercial-admin-definition">
+        <div><dt>Checkout</dt><dd>{order.asaasCheckoutId ?? "Não informado"}</dd></div>
+        <div><dt>Payment</dt><dd>{order.asaasPaymentId ?? "Não informado"}</dd></div>
+      </dl>
+      <div className="commercial-admin-actions commercial-admin-actions-block">
+        <button
+          type="button"
+          onClick={() => syncAsaasPayment(order.id)}
+          disabled={isSyncing || !order.asaasCheckoutId}
+        >
+          {isSyncing ? "Sincronizando..." : "Sincronizar pagamento"}
+        </button>
+      </div>
     </div>
   );
 }

@@ -1,5 +1,29 @@
 import { asaasRequest } from "@/lib/payments/asaas/client";
-import type { AsaasPaymentPayload } from "@/lib/payments/asaas/types";
+import type {
+  AsaasPaymentListResponse,
+  AsaasPaymentPayload,
+} from "@/lib/payments/asaas/types";
+
+export async function listAsaasPayments(params: {
+  externalReference?: string | null;
+  checkoutSession?: string | null;
+  limit?: number;
+}) {
+  const searchParams = new URLSearchParams();
+  searchParams.set("limit", String(Math.min(params.limit ?? 10, 100)));
+
+  if (params.externalReference) {
+    searchParams.set("externalReference", params.externalReference);
+  }
+
+  if (params.checkoutSession) {
+    searchParams.set("checkoutSession", params.checkoutSession);
+  }
+
+  return asaasRequest<AsaasPaymentListResponse>(
+    `/v3/payments?${searchParams.toString()}`,
+  );
+}
 
 export async function updateAsaasPaymentDescription(
   payment: AsaasPaymentPayload,

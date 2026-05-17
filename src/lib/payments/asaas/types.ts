@@ -64,6 +64,15 @@ export type AsaasPaymentPayload = {
   externalReference?: string;
 };
 
+export type AsaasPaymentListResponse = {
+  object?: string;
+  hasMore?: boolean;
+  totalCount?: number;
+  limit?: number;
+  offset?: number;
+  data?: AsaasPaymentPayload[];
+};
+
 export type AsaasCheckoutPayload = {
   id?: string;
   status?: string;

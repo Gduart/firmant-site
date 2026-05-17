@@ -10,15 +10,22 @@ import {
   createAsaasCheckout,
 } from "@/lib/payments/asaas/checkouts";
 import { createAsaasPaymentLink } from "@/lib/payments/asaas/payment-links";
-import type { AsaasBillingType, AsaasCheckoutRequest } from "@/lib/payments/asaas/types";
+import { listAsaasPayments } from "@/lib/payments/asaas/payments";
+import type {
+  AsaasBillingType,
+  AsaasCheckoutRequest,
+  AsaasPaymentPayload,
+} from "@/lib/payments/asaas/types";
 import { buildOrderDescription } from "@/lib/payments/order-description";
 import {
   getOrderById,
   insertOrder,
+  listProductionSmokeTestOrders,
   updateOrder,
 } from "@/lib/payments/orders-repository";
 import { listPaymentsByOrderId } from "@/lib/payments/payments-repository";
 import { getSubscriptionByOrderId } from "@/lib/payments/subscriptions-repository";
+import { processAsaasWebhook } from "@/lib/payments/webhook-service";
 import type {
   CheckoutPaymentMethod,
   OrderRecord,
@@ -104,6 +111,62 @@ export async function createProductionSmokeTestCheckout() {
     checkoutUrl,
     amount,
     statusUrl: `/pagamento/status/${order.id}`,
+  };
+}
+
+export async function syncProductionSmokeTestPayments() {
+  const orders = await listProductionSmokeTestOrders();
+  const results = [];
+
+  for (const order of orders) {
+    const payments = await findAsaasPaymentsForOrder(order);
+
+    if (payments.length === 0) {
+      results.push({
+        orderId: order.id,
+        checkoutId: order.asaasCheckoutId,
+        externalReference: order.externalReference,
+        synced: false,
+        reason: "Nenhuma cobranca encontrada no Asaas para este checkout.",
+      });
+      continue;
+    }
+
+    for (const payment of payments) {
+      const payloadPayment = {
+        ...payment,
+        externalReference: payment.externalReference ?? order.externalReference,
+        checkoutSession: payment.checkoutSession ?? order.asaasCheckoutId ?? undefined,
+      };
+      const event = buildManualSyncEvent(payloadPayment);
+      const syncResult = await processAsaasWebhook({
+        id: `manual-sync:${payment.id ?? order.id}:${payment.status ?? "UNKNOWN"}`,
+        event,
+        dateCreated: new Date().toISOString(),
+        payment: payloadPayment,
+        checkout: order.asaasCheckoutId
+          ? {
+              id: order.asaasCheckoutId,
+              externalReference: order.externalReference,
+            }
+          : undefined,
+      });
+
+      results.push({
+        orderId: order.id,
+        checkoutId: order.asaasCheckoutId,
+        paymentId: payment.id,
+        paymentStatus: payment.status,
+        event,
+        synced: syncResult.processed === true || syncResult.duplicate === true,
+        result: syncResult,
+      });
+    }
+  }
+
+  return {
+    checkedOrders: orders.length,
+    results,
   };
 }
 
@@ -432,4 +495,45 @@ function parseOrderNotes(notes: string | null) {
 
 function optionalText(value: unknown) {
   return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+
+async function findAsaasPaymentsForOrder(order: OrderRecord) {
+  const byCheckout = order.asaasCheckoutId
+    ? await listAsaasPayments({
+        checkoutSession: order.asaasCheckoutId,
+        limit: 10,
+      })
+    : null;
+  const checkoutMatches = byCheckout?.data ?? [];
+
+  if (checkoutMatches.length > 0) {
+    return checkoutMatches;
+  }
+
+  const byExternalReference = await listAsaasPayments({
+    externalReference: order.externalReference,
+    limit: 10,
+  });
+
+  return byExternalReference.data ?? [];
+}
+
+function buildManualSyncEvent(payment: AsaasPaymentPayload) {
+  switch (payment.status) {
+    case "RECEIVED":
+    case "RECEIVED_IN_CASH":
+      return "PAYMENT_RECEIVED";
+    case "CONFIRMED":
+      return "PAYMENT_CONFIRMED";
+    case "OVERDUE":
+      return "PAYMENT_OVERDUE";
+    case "REFUNDED":
+      return "PAYMENT_REFUNDED";
+    case "DELETED":
+      return "PAYMENT_DELETED";
+    case "REFUSED":
+      return "PAYMENT_CREDIT_CARD_CAPTURE_REFUSED";
+    default:
+      return "PAYMENT_CREATED";
+  }
 }

@@ -140,3 +140,15 @@ export async function listOrders() {
     "SELECT * FROM orders ORDER BY createdAt DESC LIMIT 50",
   );
 }
+
+export async function listProductionSmokeTestOrders() {
+  return allStatement<OrderRecord>(
+    `
+      SELECT * FROM orders
+      WHERE notes LIKE ?
+      ORDER BY createdAt DESC
+      LIMIT 20
+    `,
+    ["%production_smoke_test%"],
+  );
+}

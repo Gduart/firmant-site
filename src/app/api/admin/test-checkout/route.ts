@@ -101,6 +101,11 @@ function buildTestCheckoutPage() {
       flex-wrap: wrap;
       gap: 10px;
     }
+    .secondary {
+      background: transparent;
+      border: 1px solid rgba(214, 181, 87, 0.6);
+      color: #d6b557;
+    }
   </style>
 </head>
 <body>
@@ -109,12 +114,14 @@ function buildTestCheckoutPage() {
     <p>Gera um checkout Pix real de R$ 5,00. Use somente para validacao final e remova esta rota depois do teste.</p>
     <div class="actions">
       <button id="create" type="button">Gerar e abrir checkout R$ 5,00</button>
+      <button id="sync" class="secondary" type="button">Sincronizar pagamentos Asaas</button>
       <a id="open" href="#" target="_blank" rel="noreferrer" hidden>Abrir checkout novamente</a>
     </div>
     <pre id="result">Aguardando...</pre>
   </main>
   <script>
     const button = document.getElementById("create");
+    const syncButton = document.getElementById("sync");
     const link = document.getElementById("open");
     const result = document.getElementById("result");
     let currentCheckoutUrl = "";
@@ -150,6 +157,24 @@ function buildTestCheckoutPage() {
         result.textContent = error instanceof Error ? error.message : "Falha ao criar checkout.";
       } finally {
         button.disabled = false;
+      }
+    });
+
+    syncButton.addEventListener("click", async () => {
+      syncButton.disabled = true;
+      result.textContent = "Sincronizando com Asaas...";
+
+      try {
+        const response = await fetch("/api/admin/test-checkout/sync", {
+          method: "POST",
+          credentials: "same-origin"
+        });
+        const json = await response.json();
+        result.textContent = JSON.stringify(json, null, 2);
+      } catch (error) {
+        result.textContent = error instanceof Error ? error.message : "Falha ao sincronizar pagamentos.";
+      } finally {
+        syncButton.disabled = false;
       }
     });
   </script>

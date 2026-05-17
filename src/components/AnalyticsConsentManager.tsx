@@ -19,6 +19,7 @@ declare global {
     gtag?: (...args: unknown[]) => void;
     fbq?: FbqFunction;
     _fbq?: FbqFunction;
+    __firmantMetaPixelIds?: Record<string, true>;
   }
 }
 
@@ -309,7 +310,13 @@ function loadMetaPixel(pixelId: string | null) {
   }
 
   ensureScript(META_SCRIPT_ID, "https://connect.facebook.net/en_US/fbevents.js");
-  window.fbq("init", pixelId);
+
+  window.__firmantMetaPixelIds = window.__firmantMetaPixelIds ?? {};
+
+  if (!window.__firmantMetaPixelIds[pixelId]) {
+    window.fbq("init", pixelId);
+    window.__firmantMetaPixelIds[pixelId] = true;
+  }
 }
 
 function trackPageView(config: TrackingConfig | null, consent: ConsentChoice) {

@@ -106,9 +106,9 @@ function buildTestCheckoutPage() {
 <body>
   <main>
     <h1>Checkout teste producao</h1>
-    <p>Gera um checkout Pix real de R$ 1,00. Use somente para validacao final e remova esta rota depois do teste.</p>
+    <p>Gera um checkout Pix real de R$ 5,00. Use somente para validacao final e remova esta rota depois do teste.</p>
     <div class="actions">
-      <button id="create" type="button">Gerar checkout R$ 1,00</button>
+      <button id="create" type="button">Gerar checkout R$ 5,00</button>
       <a id="open" href="#" target="_blank" rel="noreferrer" hidden>Abrir checkout</a>
     </div>
     <pre id="result">Aguardando...</pre>

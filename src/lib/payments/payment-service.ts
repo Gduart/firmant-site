@@ -36,7 +36,7 @@ type CreateCheckoutParams = CreateOrderBaseParams & {
 };
 
 export async function createProductionSmokeTestCheckout() {
-  const amount = 1;
+  const amount = 5;
   const orderId = crypto.randomUUID();
   const externalReference = `firmant:test:${orderId}`;
   const serviceSnapshot = JSON.stringify([

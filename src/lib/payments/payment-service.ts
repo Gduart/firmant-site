@@ -76,10 +76,10 @@ export async function createProductionSmokeTestCheckout() {
     notes: JSON.stringify({
       internal: true,
       purpose: "production_smoke_test",
-      address: "Rua das Palmeiras",
-      addressNumber: "100",
-      postalCode: "89000000",
-      province: "Centro",
+      address: "Praca da Se",
+      addressNumber: "1",
+      postalCode: "01001000",
+      province: "Se",
     }),
   });
 

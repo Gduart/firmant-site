@@ -35,6 +35,74 @@ type CreateCheckoutParams = CreateOrderBaseParams & {
   paymentMethod: CheckoutPaymentMethod;
 };
 
+export async function createProductionSmokeTestCheckout() {
+  const amount = 1;
+  const orderId = crypto.randomUUID();
+  const externalReference = `firmant:test:${orderId}`;
+  const serviceSnapshot = JSON.stringify([
+    {
+      categoryId: "internal",
+      categoryTitle: "Teste interno",
+      serviceId: "production_smoke_test",
+      serviceLabel: "Teste real de producao FIRMANT",
+      qty: 1,
+      unit: "teste",
+      total: amount,
+      recurring: false,
+    },
+  ]);
+
+  const order = await insertOrder({
+    id: orderId,
+    customerName: "Teste Producao FIRMANT",
+    customerEmail: "ag.firmant@gmail.com",
+    customerPhone: "11999999999",
+    customerCompany: "FIRMANT",
+    customerCpfCnpj: null,
+    serviceSnapshot,
+    billingModel: "ONE_TIME",
+    paymentMethodPreference: "PIX",
+    oneTimeAmount: amount,
+    recurringAmount: 0,
+    amount,
+    currency: "BRL",
+    status: "DRAFT",
+    externalReference,
+    asaasCustomerId: null,
+    asaasPaymentId: null,
+    asaasCheckoutId: null,
+    asaasSubscriptionId: null,
+    checkoutUrl: null,
+    notes: JSON.stringify({
+      internal: true,
+      purpose: "production_smoke_test",
+    }),
+  });
+
+  if (!order) {
+    throw new Error("Falha ao criar pedido interno de teste.");
+  }
+
+  const checkout = await createAsaasCheckout(
+    await buildOneTimeCheckoutPayload(order, "PIX"),
+  );
+  const checkoutUrl = await buildAsaasCheckoutUrl(checkout.id);
+
+  await updateOrder(order.id, {
+    status: "CHECKOUT_CREATED",
+    asaasCheckoutId: checkout.id,
+    checkoutUrl,
+  });
+
+  return {
+    orderId: order.id,
+    checkoutId: checkout.id,
+    checkoutUrl,
+    amount,
+    statusUrl: `/pagamento/status/${order.id}`,
+  };
+}
+
 export async function createOneTimeCheckout(params: CreateCheckoutParams) {
   const breakdown = getPackageBreakdown(params.selections);
   const checkoutItems = [

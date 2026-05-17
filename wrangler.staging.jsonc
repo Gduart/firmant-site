@@ -18,9 +18,9 @@
 		"ASAAS_SUCCESS_URL": "https://firmant-site-staging.geraldo1fduarte.workers.dev/pagamento/sucesso",
 		"FIRMANT_ADMIN_USER": "FIRMANT_ADMIN",
 		"GMAIL_SMTP_USER": "ag.firmant@gmail.com",
-		"GA_MEASUREMENT_ID": "",
-		"GOOGLE_ADS_ID": "",
-		"META_PIXEL_ID": ""
+		"GA_MEASUREMENT_ID": "G-Y390WCJ9SY",
+		"GOOGLE_ADS_ID": "AW-7226193568",
+		"META_PIXEL_ID": "1252030843677271"
 	},
 	"d1_databases": [
 		{

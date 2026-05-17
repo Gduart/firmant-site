@@ -56,9 +56,9 @@ export async function createProductionSmokeTestCheckout() {
     id: orderId,
     customerName: "Teste Producao FIRMANT",
     customerEmail: "ag.firmant@gmail.com",
-    customerPhone: "11999999999",
+    customerPhone: "47999998888",
     customerCompany: "FIRMANT",
-    customerCpfCnpj: null,
+    customerCpfCnpj: "12345678909",
     serviceSnapshot,
     billingModel: "ONE_TIME",
     paymentMethodPreference: "PIX",
@@ -76,6 +76,10 @@ export async function createProductionSmokeTestCheckout() {
     notes: JSON.stringify({
       internal: true,
       purpose: "production_smoke_test",
+      address: "Rua das Palmeiras",
+      addressNumber: "100",
+      postalCode: "89000000",
+      province: "Centro",
     }),
   });
 
@@ -226,7 +230,7 @@ async function createDraftOrder(params: {
     customerEmail: params.clientData.email,
     customerPhone: normalizePhone(params.clientData.whatsapp),
     customerCompany: params.clientData.empresa || null,
-    customerCpfCnpj: null,
+    customerCpfCnpj: normalizeCpfCnpj(params.clientData.cpf),
     serviceSnapshot: JSON.stringify(buildServiceSnapshot(params.selections)),
     billingModel: params.billingModel,
     paymentMethodPreference: params.paymentMethodPreference,
@@ -244,6 +248,11 @@ async function createDraftOrder(params: {
     notes: JSON.stringify({
       empresa: params.clientData.empresa,
       obs: params.clientData.obs,
+      address: params.clientData.address,
+      addressNumber: params.clientData.addressNumber,
+      complement: params.clientData.complement,
+      postalCode: params.clientData.postalCode,
+      province: params.clientData.province,
     }),
   });
 
@@ -302,6 +311,7 @@ async function buildOneTimeCheckoutPayload(
       email: order.customerEmail,
       phone: order.customerPhone,
       cpfCnpj: order.customerCpfCnpj ?? undefined,
+      ...getCheckoutCustomerAddress(order),
     },
     installment:
       paymentMethod === "CREDIT_CARD"
@@ -387,4 +397,39 @@ function mapCheckoutPaymentMethod(
 
 function normalizePhone(phone: string) {
   return phone.replace(/\D/g, "");
+}
+
+function normalizeCpfCnpj(value: string) {
+  return value.replace(/\D/g, "");
+}
+
+function getCheckoutCustomerAddress(order: OrderRecord) {
+  const notes = parseOrderNotes(order.notes);
+
+  return {
+    address: optionalText(notes.address),
+    addressNumber: optionalText(notes.addressNumber),
+    complement: optionalText(notes.complement),
+    postalCode: optionalText(notes.postalCode)?.replace(/\D/g, ""),
+    province: optionalText(notes.province),
+  };
+}
+
+function parseOrderNotes(notes: string | null) {
+  if (!notes) {
+    return {} as Record<string, unknown>;
+  }
+
+  try {
+    const parsed = JSON.parse(notes);
+    return parsed && typeof parsed === "object"
+      ? parsed as Record<string, unknown>
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+function optionalText(value: unknown) {
+  return typeof value === "string" && value.trim() ? value.trim() : undefined;
 }

@@ -29,6 +29,11 @@ export type ClientData = {
   whatsapp: string;
   instagram: string;
   empresa: string;
+  address: string;
+  addressNumber: string;
+  complement: string;
+  postalCode: string;
+  province: string;
   obs: string;
 };
 

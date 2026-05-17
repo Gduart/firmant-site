@@ -25,6 +25,11 @@ export type AsaasCheckoutRequest = {
     email?: string;
     phone?: string;
     cpfCnpj?: string;
+    address?: string;
+    addressNumber?: string;
+    complement?: string;
+    postalCode?: string;
+    province?: string;
   };
   installment?: {
     maxInstallmentCount: number;

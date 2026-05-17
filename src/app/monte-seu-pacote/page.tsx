@@ -246,6 +246,13 @@ function StepContact({ data, onChange }: { data: ClientData; onChange: (d: Clien
         <motion.div variants={fadeUp}>{field("whatsapp", "WhatsApp", "(11) 99999-9999", true)}</motion.div>
         <motion.div variants={fadeUp}>{field("instagram", "Instagram", "@suaempresa", true)}</motion.div>
         <motion.div variants={fadeUp}>{field("empresa", "Empresa / negócio", "Nome da empresa ou projeto")}</motion.div>
+        <motion.div variants={fadeUp}>{field("postalCode", "CEP", "00000-000", true)}</motion.div>
+        <motion.div variants={fadeUp}>{field("address", "Endereço", "Rua / Avenida", true)}</motion.div>
+        <motion.div variants={fadeUp}>{field("addressNumber", "Número", "100", true)}</motion.div>
+        <motion.div variants={fadeUp}>{field("province", "Bairro", "Centro", true)}</motion.div>
+        <motion.div variants={fadeUp} style={{ gridColumn: "1 / -1" }}>
+          {field("complement", "Complemento", "Sala, apto ou referência")}
+        </motion.div>
         <motion.div variants={fadeUp} style={{ gridColumn: "1 / -1" }}>
           {field("obs", "Briefing / observações", "Conte sobre seu negócio e o que espera dos serviços...", false, true)}
         </motion.div>
@@ -326,6 +333,9 @@ function StepSummary({
         <p style={{ fontSize: "13px", color: "var(--text-tertiary)", margin: "0 0 2px" }}>{clientData.email}</p>
         <p style={{ fontSize: "13px", color: "var(--text-tertiary)", margin: "0 0 2px" }}>{clientData.whatsapp}</p>
         <p style={{ fontSize: "13px", color: "var(--text-tertiary)", margin: 0 }}>CPF: {clientData.cpf} · Instagram: {clientData.instagram}</p>
+        <p style={{ fontSize: "13px", color: "var(--text-tertiary)", margin: "4px 0 0" }}>
+          Endereço: {clientData.address}, {clientData.addressNumber} · {clientData.province} · CEP {clientData.postalCode}
+        </p>
       </motion.div>
 
       <motion.div variants={fadeUp} style={{ padding: "24px 28px", borderRadius: "14px", border: "1.5px solid rgba(201,168,76,0.3)", backgroundColor: "rgba(201,168,76,0.05)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -435,6 +445,9 @@ function StepContractValidation({
             <p style={{ fontSize: "14px", color: "var(--text-primary)", margin: "0 0 4px" }}>{clientData.name}{clientData.empresa && ` — ${clientData.empresa}`}</p>
             <p style={{ fontSize: "13px", color: "var(--text-tertiary)", margin: "0 0 3px" }}>{clientData.email} · {clientData.whatsapp}</p>
             <p style={{ fontSize: "13px", color: "var(--text-tertiary)", margin: 0 }}>CPF: {clientData.cpf} · Instagram: {clientData.instagram}</p>
+            <p style={{ fontSize: "13px", color: "var(--text-tertiary)", margin: "4px 0 0" }}>
+              {clientData.address}, {clientData.addressNumber} · {clientData.province} · CEP {clientData.postalCode}
+            </p>
           </div>
           <button onClick={() => onEdit(3)} style={{ fontSize: "11px", color: "var(--text-muted)", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>editar</button>
         </div>
@@ -576,7 +589,7 @@ function buildPublicContractHtml({
     <p>Nome comercial: FIRMANT<br />CNPJ: 63.867.205/0001-99<br />Atendimento: 100% online para todo o Brasil<br />E-mail: ag.firmant@gmail.com<br />WhatsApp: +55 11 91491-2488</p>
 
     <h2>2. Dados do cliente</h2>
-    <p>Nome completo: ${escapeHtml(clientData.name)}<br />CPF: ${escapeHtml(clientData.cpf)}<br />E-mail: ${escapeHtml(clientData.email)}<br />WhatsApp: ${escapeHtml(clientData.whatsapp)}<br />Instagram: ${escapeHtml(clientData.instagram)}${clientData.empresa ? `<br />Empresa/projeto: ${escapeHtml(clientData.empresa)}` : ""}</p>
+    <p>Nome completo: ${escapeHtml(clientData.name)}<br />CPF: ${escapeHtml(clientData.cpf)}<br />E-mail: ${escapeHtml(clientData.email)}<br />WhatsApp: ${escapeHtml(clientData.whatsapp)}<br />Instagram: ${escapeHtml(clientData.instagram)}${clientData.empresa ? `<br />Empresa/projeto: ${escapeHtml(clientData.empresa)}` : ""}<br />Endereco: ${escapeHtml(clientData.address)}, ${escapeHtml(clientData.addressNumber)}${clientData.complement ? ` - ${escapeHtml(clientData.complement)}` : ""}<br />Bairro: ${escapeHtml(clientData.province)}<br />CEP: ${escapeHtml(clientData.postalCode)}</p>
 
     <h2>3. Servicos solicitados</h2>
     <ul>${services}</ul>
@@ -794,6 +807,11 @@ export default function MonteSeuPacotePage() {
     whatsapp: "",
     instagram: "",
     empresa: "",
+    address: "",
+    addressNumber: "",
+    complement: "",
+    postalCode: "",
+    province: "",
     obs: "",
   });
   const [submitted, setSubmitted] = useState(false);
@@ -842,8 +860,12 @@ export default function MonteSeuPacotePage() {
         clientData.name
         && clientData.cpf.replace(/\D/g, "").length === 11
         && clientData.email
-        && clientData.whatsapp
+        && [10, 11].includes(clientData.whatsapp.replace(/\D/g, "").length)
         && clientData.instagram
+        && clientData.postalCode.replace(/\D/g, "").length === 8
+        && clientData.address
+        && clientData.addressNumber
+        && clientData.province
       );
     }
     if (step === 5) return contractAccepted;

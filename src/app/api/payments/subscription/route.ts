@@ -13,9 +13,9 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!body?.clientData?.name || !body?.clientData?.email || !body?.clientData?.whatsapp) {
+    if (!isValidClientData(body?.clientData)) {
       return NextResponse.json(
-        { error: "Preencha nome, e-mail e WhatsApp." },
+        { error: "Preencha nome, CPF, e-mail, WhatsApp, CEP, endereço, número e bairro." },
         { status: 400 },
       );
     }
@@ -32,4 +32,21 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ error: message }, { status: 500 });
   }
+}
+
+function isValidClientData(clientData: Record<string, unknown> | undefined) {
+  if (!clientData) {
+    return false;
+  }
+
+  return Boolean(
+    clientData.name
+    && String(clientData.cpf ?? "").replace(/\D/g, "").length === 11
+    && clientData.email
+    && [10, 11].includes(String(clientData.whatsapp ?? "").replace(/\D/g, "").length)
+    && String(clientData.postalCode ?? "").replace(/\D/g, "").length === 8
+    && clientData.address
+    && clientData.addressNumber
+    && clientData.province
+  );
 }

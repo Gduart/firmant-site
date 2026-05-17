@@ -297,6 +297,12 @@ async function buildOneTimeCheckoutPayload(
         value: amount,
       },
     ],
+    customerData: {
+      name: order.customerName,
+      email: order.customerEmail,
+      phone: order.customerPhone,
+      cpfCnpj: order.customerCpfCnpj ?? undefined,
+    },
     installment:
       paymentMethod === "CREDIT_CARD"
         ? {

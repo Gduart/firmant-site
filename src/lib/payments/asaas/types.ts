@@ -20,6 +20,12 @@ export type AsaasCheckoutRequest = {
     expiredUrl: string;
   };
   items: AsaasCheckoutItem[];
+  customerData?: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    cpfCnpj?: string;
+  };
   installment?: {
     maxInstallmentCount: number;
   };

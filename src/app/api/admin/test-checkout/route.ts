@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { assertFirmantAdminRequest } from "@/lib/admin/firmant-admin-auth";
+import { AsaasApiError } from "@/lib/payments/asaas/client";
 import { createProductionSmokeTestCheckout } from "@/lib/payments/payment-service";
 
 export async function GET(request: Request) {
@@ -34,6 +35,7 @@ export async function POST(request: Request) {
         error: error instanceof Error
           ? error.message
           : "Falha ao criar checkout de teste.",
+        details: error instanceof AsaasApiError ? error.details : undefined,
       },
       { status: 500 },
     );

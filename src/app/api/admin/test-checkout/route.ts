@@ -27,7 +27,11 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await createProductionSmokeTestCheckout();
+    const body = await safeReadJson(request);
+    const paymentMethod = body?.paymentMethod === "CREDIT_CARD"
+      ? "CREDIT_CARD"
+      : "PIX";
+    const result = await createProductionSmokeTestCheckout(paymentMethod);
     return NextResponse.json(result);
   } catch (error) {
     return NextResponse.json(
@@ -39,6 +43,14 @@ export async function POST(request: Request) {
       },
       { status: 500 },
     );
+  }
+}
+
+async function safeReadJson(request: Request) {
+  try {
+    return await request.json() as { paymentMethod?: string };
+  } catch {
+    return null;
   }
 }
 
@@ -111,35 +123,41 @@ function buildTestCheckoutPage() {
 <body>
   <main>
     <h1>Checkout teste producao</h1>
-    <p>Gera um checkout Pix real de R$ 5,00. Use somente para validacao final e remova esta rota depois do teste.</p>
+    <p>Gera checkouts reais de R$ 5,00. Use somente para validacao final e remova esta rota depois do teste.</p>
     <div class="actions">
-      <button id="create" type="button">Gerar e abrir checkout R$ 5,00</button>
+      <button id="create-pix" type="button">Gerar Pix R$ 5,00</button>
+      <button id="create-card" type="button">Gerar cartão avulso R$ 5,00</button>
       <button id="sync" class="secondary" type="button">Sincronizar pagamentos Asaas</button>
       <a id="open" href="#" target="_blank" rel="noreferrer" hidden>Abrir checkout novamente</a>
     </div>
     <pre id="result">Aguardando...</pre>
   </main>
   <script>
-    const button = document.getElementById("create");
+    const pixButton = document.getElementById("create-pix");
+    const cardButton = document.getElementById("create-card");
     const syncButton = document.getElementById("sync");
     const link = document.getElementById("open");
     const result = document.getElementById("result");
     let currentCheckoutUrl = "";
 
-    button.addEventListener("click", async () => {
+    async function createCheckout(paymentMethod, button) {
       if (currentCheckoutUrl) {
         window.open(currentCheckoutUrl, "_blank", "noopener,noreferrer");
         return;
       }
 
       button.disabled = true;
+      pixButton.disabled = true;
+      cardButton.disabled = true;
       result.textContent = "Criando checkout...";
       link.hidden = true;
 
       try {
         const response = await fetch("/api/admin/test-checkout", {
           method: "POST",
-          credentials: "same-origin"
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ paymentMethod })
         });
         const json = await response.json();
         result.textContent = JSON.stringify(json, null, 2);
@@ -157,8 +175,13 @@ function buildTestCheckoutPage() {
         result.textContent = error instanceof Error ? error.message : "Falha ao criar checkout.";
       } finally {
         button.disabled = false;
+        pixButton.disabled = false;
+        cardButton.disabled = false;
       }
-    });
+    }
+
+    pixButton.addEventListener("click", () => createCheckout("PIX", pixButton));
+    cardButton.addEventListener("click", () => createCheckout("CREDIT_CARD", cardButton));
 
     syncButton.addEventListener("click", async () => {
       syncButton.disabled = true;

@@ -42,16 +42,21 @@ type CreateCheckoutParams = CreateOrderBaseParams & {
   paymentMethod: CheckoutPaymentMethod;
 };
 
-export async function createProductionSmokeTestCheckout() {
+type ProductionSmokeTestPaymentMethod = "PIX" | "CREDIT_CARD";
+
+export async function createProductionSmokeTestCheckout(
+  paymentMethod: ProductionSmokeTestPaymentMethod = "PIX",
+) {
   const amount = 5;
   const orderId = crypto.randomUUID();
   const externalReference = `firmant:test:${orderId}`;
+  const methodLabel = paymentMethod === "PIX" ? "Pix" : "Cartao avulso";
   const serviceSnapshot = JSON.stringify([
     {
       categoryId: "internal",
       categoryTitle: "Teste interno",
       serviceId: "production_smoke_test",
-      serviceLabel: "Teste real de producao FIRMANT",
+      serviceLabel: `Teste real de producao FIRMANT - ${methodLabel}`,
       qty: 1,
       unit: "teste",
       total: amount,
@@ -68,7 +73,7 @@ export async function createProductionSmokeTestCheckout() {
     customerCpfCnpj: "12345678909",
     serviceSnapshot,
     billingModel: "ONE_TIME",
-    paymentMethodPreference: "PIX",
+    paymentMethodPreference: paymentMethod,
     oneTimeAmount: amount,
     recurringAmount: 0,
     amount,
@@ -87,6 +92,7 @@ export async function createProductionSmokeTestCheckout() {
       addressNumber: "1",
       postalCode: "01001000",
       province: "Se",
+      paymentMethod,
     }),
   });
 
@@ -94,10 +100,14 @@ export async function createProductionSmokeTestCheckout() {
     throw new Error("Falha ao criar pedido interno de teste.");
   }
 
-  const checkout = await createAsaasCheckout(
-    await buildOneTimeCheckoutPayload(order, "PIX"),
-  );
-  const checkoutUrl = await buildAsaasCheckoutUrl(checkout.id);
+  const checkout = paymentMethod === "CREDIT_CARD"
+    ? await createAsaasPaymentLink(await buildOneTimeCardLinkPayload(order))
+    : await createAsaasCheckout(
+        await buildOneTimeCheckoutPayload(order, "PIX"),
+      );
+  const checkoutUrl = "url" in checkout
+    ? checkout.url
+    : await buildAsaasCheckoutUrl(checkout.id);
 
   await updateOrder(order.id, {
     status: "CHECKOUT_CREATED",
@@ -110,6 +120,7 @@ export async function createProductionSmokeTestCheckout() {
     checkoutId: checkout.id,
     checkoutUrl,
     amount,
+    paymentMethod,
     statusUrl: `/pagamento/status/${order.id}`,
   };
 }

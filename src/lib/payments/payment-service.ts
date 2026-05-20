@@ -361,7 +361,7 @@ async function buildOneTimeCheckoutPayload(
     installment:
       paymentMethod === "CREDIT_CARD"
         ? {
-            maxInstallmentCount: 12,
+            maxInstallmentCount: getMaxCardInstallments(amount),
           }
         : undefined,
   };
@@ -379,7 +379,7 @@ async function buildOneTimeCardLinkPayload(order: OrderRecord) {
     value: order.oneTimeAmount,
     billingType: "CREDIT_CARD" as const,
     chargeType: "INSTALLMENT" as const,
-    maxInstallmentCount: 12,
+    maxInstallmentCount: getMaxCardInstallments(order.oneTimeAmount),
     externalReference: order.externalReference,
     notificationEnabled: false,
   };
@@ -477,6 +477,11 @@ function parseOrderNotes(notes: string | null) {
 
 function optionalText(value: unknown) {
   return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+
+function getMaxCardInstallments(amount: number) {
+  const minInstallmentAmount = 5;
+  return Math.min(12, Math.max(1, Math.floor(amount / minInstallmentAmount)));
 }
 
 async function findAsaasPaymentsForOrder(order: OrderRecord) {

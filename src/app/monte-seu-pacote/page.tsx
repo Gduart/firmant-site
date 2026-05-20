@@ -626,6 +626,7 @@ function escapeHtml(value: string) {
 type FinalizationAction =
   | "PIX"
   | "CREDIT_CARD"
+  | "BOLETO"
   | "SUBSCRIPTION"
   | "WHATSAPP";
 
@@ -653,6 +654,7 @@ function StepFinalization({
   const [selected, setSelected] = useState<FinalizationAction | null>(null);
   const packageAmount = breakdown.grandTotal;
   const pixPackageAmount = Math.round(packageAmount * 0.95);
+  const cardInstallments = Math.min(12, Math.max(1, Math.floor(packageAmount / 5)));
   const hasSelectedItems = packageAmount > 0;
 
   const methods: FinalizationMethod[] = [
@@ -666,13 +668,22 @@ function StepFinalization({
       disabled: !hasSelectedItems,
     },
     {
+      id: "BOLETO",
+      label: "Pagar este pacote por boleto",
+      badge: "Boleto",
+      badgeColor: "#F59E0B",
+      description: "Pagamento único do pacote selecionado por boleto bancário. Não cria mensalidade.",
+      priceLabel: hasSelectedItems ? fmt(packageAmount) : "Selecione um item",
+      disabled: !hasSelectedItems,
+    },
+    {
       id: "CREDIT_CARD",
       label: "Pagar este pacote no cartão",
       badge: "Até 12×",
       badgeColor: "#22D3EE",
       description: "Pagamento único do pacote selecionado, com parcelamento no checkout do Asaas. Não cria mensalidade.",
       priceLabel: hasSelectedItems
-        ? `${fmt(packageAmount)} ou 12× de ${fmt(Math.round(packageAmount / 12))}`
+        ? `${fmt(packageAmount)} ou ${cardInstallments}× de ${fmt(Math.round(packageAmount / cardInstallments))}`
         : "Selecione um item",
       disabled: !hasSelectedItems,
     },
@@ -698,7 +709,7 @@ function StepFinalization({
   return (
     <motion.div initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.08 } } }}>
       <motion.p variants={fadeUp} style={{ marginBottom: "40px", fontSize: "15px", color: "var(--text-secondary)", lineHeight: 1.7 }}>
-        Escolha a condição de pagamento. Pix e cartão são pagamentos avulsos. Assinatura transforma o pacote selecionado em cobrança mensal recorrente no cartão.
+        Escolha a condição de pagamento. Pix, boleto e cartão são pagamentos avulsos. Assinatura transforma o pacote selecionado em cobrança mensal recorrente no cartão.
       </motion.p>
 
       <motion.div variants={fadeUp} style={{ padding: "20px 24px", borderRadius: "14px", border: "1px solid rgba(201,168,76,0.2)", backgroundColor: "rgba(201,168,76,0.04)", marginBottom: "32px" }}>
@@ -709,6 +720,7 @@ function StepFinalization({
         <p style={{ fontSize: "12px", color: "var(--text-muted)", margin: "0 0 4px" }}>
           Pix: {fmt(pixPackageAmount)}
           <span style={{ marginLeft: "8px" }}>Cartão: {fmt(packageAmount)}</span>
+          <span style={{ marginLeft: "8px" }}>Boleto: {fmt(packageAmount)}</span>
         </p>
         <p style={{ fontSize: "12px", color: "var(--text-muted)", margin: 0 }}>
           Assinatura: {fmt(packageAmount)}/mês

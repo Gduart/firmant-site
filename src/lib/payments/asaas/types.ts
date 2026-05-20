@@ -37,6 +37,7 @@ export type AsaasCheckoutRequest = {
   subscription?: {
     cycle: "MONTHLY";
     nextDueDate: string;
+    endDate?: string;
   };
 };
 

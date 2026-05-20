@@ -22,7 +22,7 @@ export type OrderStatus =
   | "REFUNDED"
   | "FAILED";
 
-export type CheckoutPaymentMethod = "PIX" | "CREDIT_CARD";
+export type CheckoutPaymentMethod = "PIX" | "CREDIT_CARD" | "BOLETO";
 
 export type CheckoutFlowMode = "ONE_TIME" | "RECURRING";
 

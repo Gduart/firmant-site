@@ -28,9 +28,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await safeReadJson(request);
-    const paymentMethod = body?.paymentMethod === "CREDIT_CARD"
-      ? "CREDIT_CARD"
-      : "PIX";
+    const paymentMethod = getTestPaymentMethod(body?.paymentMethod);
     const result = await createProductionSmokeTestCheckout(paymentMethod);
     return NextResponse.json(result);
   } catch (error) {
@@ -44,6 +42,18 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
+}
+
+function getTestPaymentMethod(value?: string) {
+  if (
+    value === "CREDIT_CARD"
+    || value === "BOLETO"
+    || value === "SUBSCRIPTION"
+  ) {
+    return value;
+  }
+
+  return "PIX";
 }
 
 async function safeReadJson(request: Request) {
@@ -124,9 +134,12 @@ function buildTestCheckoutPage() {
   <main>
     <h1>Checkout teste producao</h1>
     <p>Gera checkouts reais de R$ 5,00. Use somente para validacao final e remova esta rota depois do teste.</p>
+    <p><strong>Atenção:</strong> assinatura mensal cria cobrança recorrente real no cartão. Cancele a assinatura no Asaas depois do teste.</p>
     <div class="actions">
       <button id="create-pix" type="button">Gerar Pix R$ 5,00</button>
       <button id="create-card" type="button">Gerar cartão avulso R$ 5,00</button>
+      <button id="create-boleto" type="button">Gerar boleto R$ 5,00</button>
+      <button id="create-subscription" type="button">Gerar assinatura cartão R$ 5,00/mês</button>
       <button id="sync" class="secondary" type="button">Sincronizar pagamentos Asaas</button>
       <a id="open" href="#" target="_blank" rel="noreferrer" hidden>Abrir checkout novamente</a>
     </div>
@@ -135,6 +148,8 @@ function buildTestCheckoutPage() {
   <script>
     const pixButton = document.getElementById("create-pix");
     const cardButton = document.getElementById("create-card");
+    const boletoButton = document.getElementById("create-boleto");
+    const subscriptionButton = document.getElementById("create-subscription");
     const syncButton = document.getElementById("sync");
     const link = document.getElementById("open");
     const result = document.getElementById("result");
@@ -149,6 +164,8 @@ function buildTestCheckoutPage() {
       button.disabled = true;
       pixButton.disabled = true;
       cardButton.disabled = true;
+      boletoButton.disabled = true;
+      subscriptionButton.disabled = true;
       result.textContent = "Criando checkout...";
       link.hidden = true;
 
@@ -177,11 +194,15 @@ function buildTestCheckoutPage() {
         button.disabled = false;
         pixButton.disabled = false;
         cardButton.disabled = false;
+        boletoButton.disabled = false;
+        subscriptionButton.disabled = false;
       }
     }
 
     pixButton.addEventListener("click", () => createCheckout("PIX", pixButton));
     cardButton.addEventListener("click", () => createCheckout("CREDIT_CARD", cardButton));
+    boletoButton.addEventListener("click", () => createCheckout("BOLETO", boletoButton));
+    subscriptionButton.addEventListener("click", () => createCheckout("SUBSCRIPTION", subscriptionButton));
 
     syncButton.addEventListener("click", async () => {
       syncButton.disabled = true;

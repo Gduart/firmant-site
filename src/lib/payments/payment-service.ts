@@ -9,7 +9,6 @@ import {
   buildAsaasCheckoutUrl,
   createAsaasCheckout,
 } from "@/lib/payments/asaas/checkouts";
-import { createAsaasPaymentLink } from "@/lib/payments/asaas/payment-links";
 import { listAsaasPayments } from "@/lib/payments/asaas/payments";
 import type {
   AsaasBillingType,
@@ -42,7 +41,7 @@ type CreateCheckoutParams = CreateOrderBaseParams & {
   paymentMethod: CheckoutPaymentMethod;
 };
 
-type ProductionSmokeTestPaymentMethod = "PIX" | "CREDIT_CARD";
+type ProductionSmokeTestPaymentMethod = CheckoutPaymentMethod | "SUBSCRIPTION";
 
 export async function createProductionSmokeTestCheckout(
   paymentMethod: ProductionSmokeTestPaymentMethod = "PIX",
@@ -50,7 +49,7 @@ export async function createProductionSmokeTestCheckout(
   const amount = 5;
   const orderId = crypto.randomUUID();
   const externalReference = `firmant:test:${orderId}`;
-  const methodLabel = paymentMethod === "PIX" ? "Pix" : "Cartao avulso";
+  const methodLabel = getSmokeTestMethodLabel(paymentMethod);
   const serviceSnapshot = JSON.stringify([
     {
       categoryId: "internal",
@@ -72,10 +71,10 @@ export async function createProductionSmokeTestCheckout(
     customerCompany: "FIRMANT",
     customerCpfCnpj: "12345678909",
     serviceSnapshot,
-    billingModel: "ONE_TIME",
-    paymentMethodPreference: paymentMethod,
-    oneTimeAmount: amount,
-    recurringAmount: 0,
+    billingModel: paymentMethod === "SUBSCRIPTION" ? "RECURRING" : "ONE_TIME",
+    paymentMethodPreference: paymentMethod === "SUBSCRIPTION" ? "CREDIT_CARD" : paymentMethod,
+    oneTimeAmount: paymentMethod === "SUBSCRIPTION" ? 0 : amount,
+    recurringAmount: paymentMethod === "SUBSCRIPTION" ? amount : 0,
     amount,
     currency: "BRL",
     status: "DRAFT",
@@ -100,14 +99,16 @@ export async function createProductionSmokeTestCheckout(
     throw new Error("Falha ao criar pedido interno de teste.");
   }
 
-  const checkout = paymentMethod === "CREDIT_CARD"
-    ? await createAsaasPaymentLink(await buildOneTimeCardLinkPayload(order))
+  const checkout = paymentMethod === "SUBSCRIPTION"
+    ? await createAsaasCheckout(
+        await buildRecurringCheckoutPayload(order, {
+          endDate: addDaysAsDateString(1),
+        }),
+      )
     : await createAsaasCheckout(
-        await buildOneTimeCheckoutPayload(order, "PIX"),
+        await buildOneTimeCheckoutPayload(order, paymentMethod),
       );
-  const checkoutUrl = "url" in checkout
-    ? checkout.url
-    : await buildAsaasCheckoutUrl(checkout.id);
+  const checkoutUrl = await buildAsaasCheckoutUrl(checkout.id);
 
   await updateOrder(order.id, {
     status: "CHECKOUT_CREATED",
@@ -177,14 +178,10 @@ export async function createOneTimeCheckout(params: CreateCheckoutParams) {
     clientData: params.clientData,
   });
 
-  const checkout =
-    params.paymentMethod === "CREDIT_CARD"
-      ? await createAsaasPaymentLink(await buildOneTimeCardLinkPayload(order))
-      : await createAsaasCheckout(
-          await buildOneTimeCheckoutPayload(order, params.paymentMethod),
-        );
-  const checkoutUrl =
-    "url" in checkout ? checkout.url : await buildAsaasCheckoutUrl(checkout.id);
+  const checkout = await createAsaasCheckout(
+    await buildOneTimeCheckoutPayload(order, params.paymentMethod),
+  );
+  const checkoutUrl = await buildAsaasCheckoutUrl(checkout.id);
 
   await updateOrder(order.id, {
     status: "CHECKOUT_CREATED",
@@ -223,10 +220,10 @@ export async function createRecurringCheckout(params: CreateOrderBaseParams) {
     clientData: params.clientData,
   });
 
-  const checkout = await createAsaasPaymentLink(
-    await buildRecurringPaymentLinkPayload(order),
+  const checkout = await createAsaasCheckout(
+    await buildRecurringCheckoutPayload(order),
   );
-  const checkoutUrl = checkout.url;
+  const checkoutUrl = await buildAsaasCheckoutUrl(checkout.id);
 
   await updateOrder(order.id, {
     status: "CHECKOUT_CREATED",
@@ -367,36 +364,52 @@ async function buildOneTimeCheckoutPayload(
   };
 }
 
-async function buildOneTimeCardLinkPayload(order: OrderRecord) {
-  const orderDescription = buildOrderDescription(
-    order,
-    "Pagamento avulso FIRMANT",
-  );
-
-  return {
-    name: "Pacote FIRMANT",
-    description: orderDescription,
-    value: order.oneTimeAmount,
-    billingType: "CREDIT_CARD" as const,
-    chargeType: "INSTALLMENT" as const,
-    maxInstallmentCount: getMaxCardInstallments(order.oneTimeAmount),
-    externalReference: order.externalReference,
-    notificationEnabled: false,
-  };
-}
-
-async function buildRecurringPaymentLinkPayload(order: OrderRecord) {
+async function buildRecurringCheckoutPayload(
+  order: OrderRecord,
+  options: { endDate?: string } = {},
+): Promise<AsaasCheckoutRequest> {
+  const [baseUrl, successBaseUrl, cancelBaseUrl, expiredBaseUrl] = await Promise.all([
+    getRequiredEnvValue("APP_BASE_URL"),
+    getEnvValue("ASAAS_SUCCESS_URL"),
+    getEnvValue("ASAAS_CANCEL_URL"),
+    getEnvValue("ASAAS_EXPIRED_URL"),
+  ]);
   const orderDescription = buildOrderDescription(order, "Assinatura mensal FIRMANT");
+  const callback = buildCallbackConfig({
+    baseUrl,
+    successBaseUrl,
+    cancelBaseUrl,
+    expiredBaseUrl,
+    orderId: order.id,
+  });
 
   return {
-    name: "Plano mensal FIRMANT",
-    description: orderDescription,
-    value: order.recurringAmount,
-    billingType: "CREDIT_CARD" as const,
-    chargeType: "RECURRENT" as const,
-    subscriptionCycle: "MONTHLY" as const,
+    billingTypes: ["CREDIT_CARD"],
+    chargeTypes: ["RECURRENT"],
+    minutesToExpire: 180,
     externalReference: order.externalReference,
-    notificationEnabled: false,
+    description: orderDescription,
+    callback,
+    items: [
+      {
+        name: "Plano mensal FIRMANT",
+        description: orderDescription,
+        quantity: 1,
+        value: order.recurringAmount,
+      },
+    ],
+    customerData: {
+      name: order.customerName,
+      email: order.customerEmail,
+      phone: order.customerPhone,
+      cpfCnpj: order.customerCpfCnpj ?? undefined,
+      ...getCheckoutCustomerAddress(order),
+    },
+    subscription: {
+      cycle: "MONTHLY",
+      nextDueDate: currentDateString(),
+      endDate: options.endDate,
+    },
   };
 }
 
@@ -435,6 +448,8 @@ function mapCheckoutPaymentMethod(
   switch (paymentMethod) {
     case "PIX":
       return "PIX";
+    case "BOLETO":
+      return "BOLETO";
     default:
       return "CREDIT_CARD";
   }
@@ -482,6 +497,29 @@ function optionalText(value: unknown) {
 function getMaxCardInstallments(amount: number) {
   const minInstallmentAmount = 5;
   return Math.min(12, Math.max(1, Math.floor(amount / minInstallmentAmount)));
+}
+
+function getSmokeTestMethodLabel(paymentMethod: ProductionSmokeTestPaymentMethod) {
+  switch (paymentMethod) {
+    case "PIX":
+      return "Pix";
+    case "CREDIT_CARD":
+      return "Cartao avulso";
+    case "BOLETO":
+      return "Boleto";
+    case "SUBSCRIPTION":
+      return "Assinatura mensal cartao";
+  }
+}
+
+function currentDateString() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function addDaysAsDateString(days: number) {
+  const date = new Date();
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
 }
 
 async function findAsaasPaymentsForOrder(order: OrderRecord) {

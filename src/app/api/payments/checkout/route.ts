@@ -6,6 +6,7 @@ import type { CheckoutPaymentMethod } from "@/lib/payments/types";
 const validMethods = new Set<CheckoutPaymentMethod>([
   "PIX",
   "CREDIT_CARD",
+  "BOLETO",
 ]);
 
 export async function POST(request: Request) {

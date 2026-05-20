@@ -153,11 +153,21 @@ function buildTestCheckoutPage() {
     const syncButton = document.getElementById("sync");
     const link = document.getElementById("open");
     const result = document.getElementById("result");
-    let currentCheckoutUrl = "";
+    const checkoutUrls = new Map();
+    const defaultButtonLabels = new Map([
+      ["PIX", "Gerar Pix R$ 5,00"],
+      ["CREDIT_CARD", "Gerar cartão avulso R$ 5,00"],
+      ["BOLETO", "Gerar boleto R$ 5,00"],
+      ["SUBSCRIPTION", "Gerar assinatura cartão R$ 5,00/mês"]
+    ]);
 
     async function createCheckout(paymentMethod, button) {
-      if (currentCheckoutUrl) {
-        window.open(currentCheckoutUrl, "_blank", "noopener,noreferrer");
+      const existingCheckoutUrl = checkoutUrls.get(paymentMethod);
+      if (existingCheckoutUrl) {
+        link.href = existingCheckoutUrl;
+        link.hidden = false;
+        result.textContent = "Reabrindo checkout " + paymentMethod + " já gerado nesta sessão.";
+        window.open(existingCheckoutUrl, "_blank", "noopener,noreferrer");
         return;
       }
 
@@ -183,10 +193,10 @@ function buildTestCheckoutPage() {
           return;
         }
 
-        currentCheckoutUrl = json.checkoutUrl;
+        checkoutUrls.set(paymentMethod, json.checkoutUrl);
         link.href = json.checkoutUrl;
         link.hidden = false;
-        button.textContent = "Checkout gerado - abrir novamente";
+        button.textContent = defaultButtonLabels.get(paymentMethod).replace("Gerar", "Abrir");
         window.open(json.checkoutUrl, "_blank", "noopener,noreferrer");
       } catch (error) {
         result.textContent = error instanceof Error ? error.message : "Falha ao criar checkout.";

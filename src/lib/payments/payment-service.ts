@@ -9,6 +9,7 @@ import {
   buildAsaasCheckoutUrl,
   createAsaasCheckout,
 } from "@/lib/payments/asaas/checkouts";
+import { createAsaasPaymentLink } from "@/lib/payments/asaas/payment-links";
 import { listAsaasPayments } from "@/lib/payments/asaas/payments";
 import type {
   AsaasBillingType,
@@ -99,16 +100,20 @@ export async function createProductionSmokeTestCheckout(
     throw new Error("Falha ao criar pedido interno de teste.");
   }
 
-  const checkout = paymentMethod === "SUBSCRIPTION"
-    ? await createAsaasCheckout(
+  const checkout = paymentMethod === "BOLETO"
+    ? await createAsaasPaymentLink(await buildOneTimeBoletoLinkPayload(order))
+    : paymentMethod === "SUBSCRIPTION"
+      ? await createAsaasCheckout(
         await buildRecurringCheckoutPayload(order, {
           endDate: addDaysAsDateString(1),
         }),
       )
-    : await createAsaasCheckout(
+      : await createAsaasCheckout(
         await buildOneTimeCheckoutPayload(order, paymentMethod),
       );
-  const checkoutUrl = await buildAsaasCheckoutUrl(checkout.id);
+  const checkoutUrl = "url" in checkout
+    ? checkout.url
+    : await buildAsaasCheckoutUrl(checkout.id);
 
   await updateOrder(order.id, {
     status: "CHECKOUT_CREATED",
@@ -178,10 +183,14 @@ export async function createOneTimeCheckout(params: CreateCheckoutParams) {
     clientData: params.clientData,
   });
 
-  const checkout = await createAsaasCheckout(
-    await buildOneTimeCheckoutPayload(order, params.paymentMethod),
-  );
-  const checkoutUrl = await buildAsaasCheckoutUrl(checkout.id);
+  const checkout = params.paymentMethod === "BOLETO"
+    ? await createAsaasPaymentLink(await buildOneTimeBoletoLinkPayload(order))
+    : await createAsaasCheckout(
+        await buildOneTimeCheckoutPayload(order, params.paymentMethod),
+      );
+  const checkoutUrl = "url" in checkout
+    ? checkout.url
+    : await buildAsaasCheckoutUrl(checkout.id);
 
   await updateOrder(order.id, {
     status: "CHECKOUT_CREATED",
@@ -361,6 +370,24 @@ async function buildOneTimeCheckoutPayload(
             maxInstallmentCount: getMaxCardInstallments(amount),
           }
         : undefined,
+  };
+}
+
+async function buildOneTimeBoletoLinkPayload(order: OrderRecord) {
+  const orderDescription = buildOrderDescription(
+    order,
+    "Pagamento avulso por boleto FIRMANT",
+  );
+
+  return {
+    name: "Pacote FIRMANT",
+    description: orderDescription,
+    value: order.oneTimeAmount,
+    billingType: "BOLETO" as const,
+    chargeType: "DETACHED" as const,
+    dueDateLimitDays: 3,
+    externalReference: order.externalReference,
+    notificationEnabled: false,
   };
 }
 

@@ -4,7 +4,7 @@ export type AsaasPaymentLinkRequest = {
   name: string;
   description: string;
   value: number;
-  billingType: "PIX" | "CREDIT_CARD";
+  billingType: "PIX" | "CREDIT_CARD" | "BOLETO";
   chargeType: "DETACHED" | "INSTALLMENT" | "RECURRENT";
   dueDateLimitDays?: number;
   subscriptionCycle?: "MONTHLY";

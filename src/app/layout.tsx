@@ -37,6 +37,13 @@ export const metadata: Metadata = {
     "Brasil",
   ],
   authors: [{ name: "FIRMANT" }],
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg",
+  },
   openGraph: {
     title: "FIRMANT — Agência Digital com IA",
     description:

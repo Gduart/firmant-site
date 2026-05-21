@@ -380,7 +380,7 @@ async function buildOneTimeBoletoLinkPayload(order: OrderRecord) {
   );
 
   return {
-    name: "Pacote FIRMANT",
+    name: buildPaymentLinkName(order),
     description: orderDescription,
     value: order.oneTimeAmount,
     billingType: "BOLETO" as const,
@@ -524,6 +524,24 @@ function optionalText(value: unknown) {
 function getMaxCardInstallments(amount: number) {
   const minInstallmentAmount = 5;
   return Math.min(12, Math.max(1, Math.floor(amount / minInstallmentAmount)));
+}
+
+function buildPaymentLinkName(order: OrderRecord) {
+  try {
+    const items = JSON.parse(order.serviceSnapshot) as Array<{
+      serviceLabel?: string;
+    }>;
+    const summary = items
+      .map((item) => item.serviceLabel)
+      .filter(Boolean)
+      .slice(0, 2)
+      .join(" + ");
+
+    return (summary ? `FIRMANT - ${summary}` : "FIRMANT - Pacote contratado")
+      .slice(0, 100);
+  } catch {
+    return "FIRMANT - Pacote contratado";
+  }
 }
 
 function getSmokeTestMethodLabel(paymentMethod: ProductionSmokeTestPaymentMethod) {

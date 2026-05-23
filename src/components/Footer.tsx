@@ -13,6 +13,16 @@ function InstagramGlyph({ size = 16 }: { size?: number }) {
   );
 }
 
+function FacebookGlyph({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M14.2 8.2h2.4V4.4c-.42-.06-1.86-.18-3.54-.18-3.5 0-5.9 2.14-5.9 6.08v3.42H3.4V18h3.76v6h4.62v-6h3.62l.58-4.28h-4.2v-3c0-1.24.34-2.52 2.42-2.52Z" />
+    </svg>
+  );
+}
+
+const FACEBOOK_URL = "https://web.facebook.com/profile.php?id=61590072505709&locale=pt_BR";
+
 const footerLinks = {
   servicos: [
     { href: "/gestao-redes-sociais", label: "Gestão de Redes Sociais" },
@@ -79,6 +89,7 @@ export function Footer() {
                 "WhatsApp: +55 11 91491-2488",
                 "E-mail: ag.firmant@gmail.com",
                 "Instagram: @ag.firmant",
+                "Facebook: FIRMANT",
                 "CNPJ: 63.867.205/0001-99",
               ].map((item) => (
                 <p
@@ -101,6 +112,11 @@ export function Footer() {
                   href: "https://www.instagram.com/ag.firmant/",
                   label: "Instagram da FIRMANT",
                   icon: InstagramGlyph,
+                },
+                {
+                  href: FACEBOOK_URL,
+                  label: "Facebook da FIRMANT",
+                  icon: FacebookGlyph,
                 },
                 {
                   href: "mailto:ag.firmant@gmail.com",

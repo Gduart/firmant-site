@@ -62,6 +62,7 @@ const institutionalData = [
   ["E-mail", "ag.firmant@gmail.com"],
   ["WhatsApp", "+55 11 91491-2488"],
   ["Instagram", "https://www.instagram.com/ag.firmant/"],
+  ["Facebook", "https://web.facebook.com/profile.php?id=61590072505709&locale=pt_BR"],
 ];
 
 const sections: PrivacySection[] = [
@@ -437,6 +438,7 @@ const sections: PrivacySection[] = [
       "E-mail: ag.firmant@gmail.com;",
       "WhatsApp: +55 11 91491-2488;",
       "Instagram: https://www.instagram.com/ag.firmant/;",
+      "Facebook: https://web.facebook.com/profile.php?id=61590072505709&locale=pt_BR;",
       "Atendimento: online para todo o Brasil, de segunda a sexta-feira, com retorno em até 1 dia útil.",
     ],
   },

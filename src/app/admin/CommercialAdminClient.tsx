@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-type AdminMode = "clientes" | "cliente" | "pedidos" | "pedido" | "contratos";
+type AdminMode = "clientes" | "cliente" | "pedidos" | "pedido" | "contratos" | "newsletter";
 
 type CommercialAdminClientProps = {
   mode: AdminMode;
@@ -14,6 +14,7 @@ const navItems = [
   { href: "/admin/clientes", label: "Clientes" },
   { href: "/admin/pedidos", label: "Pedidos" },
   { href: "/admin/contratos", label: "Contratos" },
+  { href: "/admin/newsletter", label: "Newsletter" },
 ];
 
 const contractStatuses = [
@@ -123,6 +124,17 @@ type EventRow = {
   created_at: string;
 };
 
+type NewsletterSubscriberRow = {
+  id: string;
+  name: string;
+  email: string;
+  status: string;
+  source: string;
+  consent_text: string;
+  subscribed_at: string;
+  updated_at: string;
+};
+
 type AdminData = {
   customers?: CustomerRow[];
   customer?: CustomerRow;
@@ -130,6 +142,7 @@ type AdminData = {
   order?: OrderRow;
   contracts?: ContractRow[];
   contract?: ContractRow;
+  subscribers?: NewsletterSubscriberRow[];
   notes?: NoteRow[];
   events?: EventRow[];
 } | null;
@@ -182,6 +195,7 @@ export function CommercialAdminClient({ mode, id }: CommercialAdminClientProps) 
     if (mode === "cliente") return `/api/admin/customers/${id}`;
     if (mode === "pedidos") return `/api/admin/orders${query ? `?${query}` : ""}`;
     if (mode === "pedido") return `/api/admin/orders/${id}`;
+    if (mode === "newsletter") return `/api/admin/newsletter${query ? `?${query}` : ""}`;
     return `/api/admin/contracts${query ? `?${query}` : ""}`;
   }, [contractStatus, contractType, dateFrom, dateTo, id, mode, paymentStatus, q]);
 
@@ -426,9 +440,9 @@ export function CommercialAdminClient({ mode, id }: CommercialAdminClientProps) 
           ))}
         </nav>
 
-        {(mode === "clientes" || mode === "pedidos" || mode === "contratos") && (
+        {(mode === "clientes" || mode === "pedidos" || mode === "contratos" || mode === "newsletter") && (
           <div className="commercial-admin-filters">
-            <input value={q} onChange={(event) => setQ(event.target.value)} placeholder="Buscar por nome, CPF, e-mail, telefone, Instagram, pedido ou serviço" />
+            <input value={q} onChange={(event) => setQ(event.target.value)} placeholder={mode === "newsletter" ? "Buscar por nome ou e-mail" : "Buscar por nome, CPF, e-mail, telefone, Instagram, pedido ou serviço"} />
             {mode === "pedidos" && (
               <select value={paymentStatus} onChange={(event) => setPaymentStatus(event.target.value)}>
                 <option value="">Status pagamento</option>
@@ -465,6 +479,7 @@ export function CommercialAdminClient({ mode, id }: CommercialAdminClientProps) 
         {mode === "clientes" && <CustomersTable rows={data?.customers ?? []} />}
         {mode === "cliente" && <CustomerDetails data={data} note={note} setNote={setNote} saveNote={saveNote} />}
         {mode === "pedidos" && <OrdersTable rows={data?.orders ?? []} />}
+        {mode === "newsletter" && <NewsletterTable rows={data?.subscribers ?? []} />}
         {mode === "pedido" && (
           <OrderDetails
             data={data}
@@ -529,6 +544,49 @@ function CustomersTable({ rows }: { rows: CustomerRow[] }) {
                   <Link href={`/admin/clientes/${row.id}`}>Ver</Link>
                   <button type="button" onClick={() => void navigator.clipboard.writeText(row.email)}>Copiar e-mail</button>
                   <a href={`https://wa.me/55${row.phone}`} target="_blank" rel="noopener noreferrer">WhatsApp</a>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function NewsletterTable({ rows }: { rows: NewsletterSubscriberRow[] }) {
+  if (rows.length === 0) {
+    return <EmptyState text="Nenhum inscrito na newsletter." />;
+  }
+
+  return (
+    <div className="commercial-admin-card commercial-admin-wide">
+      <h2>Inscritos da newsletter</h2>
+      <div className="commercial-admin-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>E-mail</th>
+              <th>Status</th>
+              <th>Origem</th>
+              <th>Consentimento</th>
+              <th>Inscrição</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.id}>
+                <td>{row.name}</td>
+                <td>{row.email}</td>
+                <td>{row.status}</td>
+                <td>{row.source}</td>
+                <td>{row.consent_text}</td>
+                <td>{formatDate(row.subscribed_at)}</td>
+                <td className="commercial-admin-actions">
+                  <button type="button" onClick={() => void navigator.clipboard.writeText(row.email)}>Copiar e-mail</button>
+                  <a href={`mailto:${row.email}`}>E-mail</a>
                 </td>
               </tr>
             ))}
@@ -923,6 +981,7 @@ function getTitle(mode: AdminMode) {
     pedidos: "Pedidos",
     pedido: "Detalhes do pedido",
     contratos: "Contratos",
+    newsletter: "Newsletter",
   };
   return titles[mode];
 }

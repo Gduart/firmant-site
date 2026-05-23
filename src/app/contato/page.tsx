@@ -40,7 +40,10 @@ const organizationSchema = {
     "@type": "PostalAddress",
     addressCountry: "BR",
   },
-  sameAs: ["https://www.instagram.com/ag.firmant/"],
+  sameAs: [
+    "https://www.instagram.com/ag.firmant/",
+    "https://web.facebook.com/profile.php?id=61590072505709&locale=pt_BR",
+  ],
   contactPoint: {
     "@type": "ContactPoint",
     telephone: "+55 11 91491-2488",

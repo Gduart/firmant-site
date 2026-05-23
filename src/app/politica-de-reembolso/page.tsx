@@ -63,6 +63,7 @@ const institutionalData = [
   ["E-mail", "ag.firmant@gmail.com"],
   ["WhatsApp", "+55 11 91491-2488"],
   ["Instagram", "https://www.instagram.com/ag.firmant/"],
+  ["Facebook", "https://web.facebook.com/profile.php?id=61590072505709&locale=pt_BR"],
 ];
 
 const sections: RefundSection[] = [
@@ -500,6 +501,7 @@ const sections: RefundSection[] = [
       "E-mail: ag.firmant@gmail.com;",
       "WhatsApp: +55 11 91491-2488;",
       "Instagram: https://www.instagram.com/ag.firmant/;",
+      "Facebook: https://web.facebook.com/profile.php?id=61590072505709&locale=pt_BR;",
       "Atendimento: 100% online para todo o Brasil, de segunda a sexta-feira, com retorno em até 1 dia útil.",
     ],
   },

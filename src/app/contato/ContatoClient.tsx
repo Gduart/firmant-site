@@ -13,7 +13,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import Link from "next/link";
-import { type CSSProperties, type ReactNode, useRef } from "react";
+import { type CSSProperties, type FormEvent, type ReactNode, useRef, useState } from "react";
 
 const WHATSAPP_MAIN =
   "https://wa.me/5511914912488?text=Ol%C3%A1%2C%20FIRMANT.%20Vim%20pelo%20site%20e%20gostaria%20de%20tirar%20uma%20d%C3%BAvida%20sobre%20os%20servi%C3%A7os.";
@@ -23,6 +23,7 @@ const WHATSAPP_DOUBT =
   "https://wa.me/5511914912488?text=Ol%C3%A1%2C%20FIRMANT.%20Vim%20pelo%20site%20e%20estou%20em%20d%C3%BAvida%20sobre%20qual%20servi%C3%A7o%20escolher.";
 const WHATSAPP_FINAL =
   "https://wa.me/5511914912488?text=Ol%C3%A1%2C%20FIRMANT.%20Vim%20pelo%20site%20e%20gostaria%20de%20entender%20melhor%20os%20servi%C3%A7os.";
+const FACEBOOK_URL = "https://web.facebook.com/profile.php?id=61590072505709&locale=pt_BR";
 
 const easeCurve: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
@@ -56,6 +57,14 @@ function InstagramGlyph({ size = 22, color = "currentColor" }: { size?: number; 
       <rect x="3" y="3" width="18" height="18" rx="5" />
       <circle cx="12" cy="12" r="4" />
       <circle cx="17" cy="7" r="1" fill={color} stroke="none" />
+    </svg>
+  );
+}
+
+function FacebookGlyph({ size = 22, color = "currentColor" }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={color} aria-hidden="true">
+      <path d="M14.2 8.2h2.4V4.4c-.42-.06-1.86-.18-3.54-.18-3.5 0-5.9 2.14-5.9 6.08v3.42H3.4V18h3.76v6h4.62v-6h3.62l.58-4.28h-4.2v-3c0-1.24.34-2.52 2.42-2.52Z" />
     </svg>
   );
 }
@@ -206,6 +215,12 @@ const officialChannels = [
     icon: InstagramGlyph,
   },
   {
+    label: "Facebook",
+    value: "FIRMANT no Facebook",
+    href: FACEBOOK_URL,
+    icon: FacebookGlyph,
+  },
+  {
     label: "Atendimento",
     value: "Online para todo o Brasil",
     icon: MapPin,
@@ -225,7 +240,7 @@ const officialChannels = [
 const onlineHighlights = [
   "Atendimento digital e organizado",
   "Retorno em até 1 dia útil",
-  "Comunicação por WhatsApp, e-mail e Instagram",
+  "Comunicação por WhatsApp, e-mail, Instagram e Facebook",
   "Possibilidade de criação de pacote personalizado pelo site",
   "Orientação antes da contratação, quando necessário",
 ];
@@ -503,25 +518,96 @@ function DoubtSection() {
 }
 
 function FutureNewsletterSection() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [company, setCompany] = useState("");
+  const [message, setMessage] = useState("");
+  const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setIsSubmitting(true);
+    setStatus("idle");
+    setMessage("");
+
+    try {
+      const response = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, company }),
+      });
+      const payload = await response.json() as { message?: string; error?: string };
+
+      if (!response.ok) {
+        throw new Error(payload.error ?? "Falha ao cadastrar.");
+      }
+
+      setStatus("success");
+      setMessage(payload.message ?? "Cadastro realizado com sucesso.");
+      setName("");
+      setEmail("");
+      setCompany("");
+    } catch (error) {
+      setStatus("error");
+      setMessage(error instanceof Error ? error.message : "Falha ao cadastrar.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return (
     <section style={{ backgroundColor: "var(--bg-secondary)", paddingTop: 56, paddingBottom: 56 }}>
       <div style={inner}>
         <AnimatedSection>
-          <motion.div variants={fadeInUp} className="contact-future-panel" aria-disabled="true">
+          <motion.div variants={fadeInUp} className="contact-newsletter-panel">
             <div>
-              <span className="contact-kicker">Em breve</span>
+              <span className="contact-kicker">Newsletter</span>
               <h2>Receba insights sobre IA, conteúdo e presença digital</h2>
               <p>
-                A newsletter da FIRMANT será ativada futuramente, após a estrutura de privacidade estar pronta. Neste momento, os canais prioritários são WhatsApp, e-mail e criação de pacote pelo site.
+                Cadastre-se para receber novidades, conteúdos e atualizações da FIRMANT por e-mail. Seus dados ficam registrados com consentimento e podem ser consultados no painel administrativo.
               </p>
             </div>
-            <div className="contact-disabled-fields">
-              <span>Nome</span>
-              <span>E-mail</span>
-              <button type="button" disabled>
-                Quero receber novidades
+            <form className="contact-newsletter-form" onSubmit={handleSubmit}>
+              <input
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder="Nome"
+                aria-label="Nome"
+                minLength={2}
+                maxLength={120}
+                required
+              />
+              <input
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="E-mail"
+                aria-label="E-mail"
+                type="email"
+                required
+              />
+              <input
+                value={company}
+                onChange={(event) => setCompany(event.target.value)}
+                name="company"
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+                style={{ display: "none" }}
+              />
+              <button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Cadastrando..." : "Quero receber novidades"}
               </button>
-            </div>
+              <p className="contact-newsletter-consent">
+                Ao cadastrar, você autoriza comunicações da FIRMANT por e-mail. Você pode solicitar remoção a qualquer momento. Consulte a{" "}
+                <Link href="/politica-privacidade">Política de Privacidade</Link>.
+              </p>
+              {message && (
+                <p className={status === "success" ? "contact-newsletter-success" : "contact-newsletter-error"} role="status">
+                  {message}
+                </p>
+              )}
+            </form>
           </motion.div>
         </AnimatedSection>
       </div>
@@ -589,6 +675,7 @@ function MiniInfoSection() {
         <p>WhatsApp: +55 11 91491-2488</p>
         <p>E-mail: ag.firmant@gmail.com</p>
         <p>Instagram: @ag.firmant</p>
+        <p>Facebook: FIRMANT</p>
         <p>CNPJ: 63.867.205/0001-99</p>
       </div>
     </section>

@@ -1017,3 +1017,372 @@ Working tree: limpo após commit/push
 a960535 feat: adicionar newsletter e facebook
 ```
 
+---
+
+## 17. Atualização Comercial Home / CTAs / LP Vídeos UGC - 2026-06-14
+
+Esta seção registra o ciclo de atualização comercial feito em 14/06/2026, incluindo ajustes aprovados, erro operacional encontrado, correção aplicada e procedimento correto para próximas edições.
+
+### 17.1 Escopo executado
+
+Foram aplicadas alterações cirúrgicas de copy, CTAs e organização visual/comercial, sem mexer em Asaas, pagamentos, banco de dados ou estrutura pesada do layout.
+
+Arquivos alterados:
+
+```text
+src/app/page.tsx
+src/components/Navbar.tsx
+src/components/Footer.tsx
+src/app/edicao-video-ugc/page.tsx
+src/app/contato/ContatoClient.tsx
+src/app/gestao-redes-sociais/page.tsx
+src/app/desenvolvimento/page.tsx
+src/app/blog/page.tsx
+src/app/blog/[slug]/page.tsx
+src/app/layout.tsx
+```
+
+### 17.2 Home - Hero principal
+
+Hero antigo substituído por uma promessa mais direta.
+
+H1 aprovado:
+
+```text
+Sua marca mais profissional e posicionada no digital.
+```
+
+Observação visual:
+
+- O trecho `posicionada no digital.` deve manter a classe `text-gradient`.
+- Não deixar o H1 inteiro branco.
+- Não alterar a identidade visual de marca, cores ou formatos estruturais sem aprovação.
+
+Subheadline aprovada:
+
+```text
+Criamos vídeos, conteúdos, sites e soluções digitais com apoio de IA, estratégia e revisão humana — para sua marca aparecer melhor, vender com mais clareza e crescer no digital.
+```
+
+CTAs da Home:
+
+```text
+Primário: Montar meu pacote digital
+Secundário: Falar com a FIRMANT no WhatsApp
+```
+
+### 17.3 Home - Serviços principais
+
+Nova ordem aprovada:
+
+```text
+1. Vídeo & UGC com IA
+2. Gestão de Redes Sociais
+3. Desenvolvimento Web
+```
+
+Importante:
+
+- Antes estava `Desenvolvimento Web/Mobile`.
+- O card da Home deve exibir `Desenvolvimento Web`.
+- A navegação superior também deve usar a nova ordem, com `Vídeos & UGC` antes de `Redes Sociais`.
+
+Copies aprovadas dos cards:
+
+```text
+Vídeo & UGC com IA
+Reels, Stories, Shorts e vídeos UGC com IA para sua marca aparecer com mais profissionalismo, velocidade e consistência.
+
+Gestão de Redes Sociais
+Planejamento, criação, aprovação e publicação de conteúdos com método, IA e revisão humana.
+
+Desenvolvimento Web
+Sites, landing pages e soluções digitais sob medida para transformar sua presença online em uma operação mais profissional.
+```
+
+### 17.4 Home - Sobre a FIRMANT
+
+Métricas ajustadas:
+
+```text
+Nichos de atuação: 3
+Tempo de resposta: 2 horas
+```
+
+### 17.5 CTAs padronizados
+
+Padronização comercial aplicada nas páginas públicas relevantes:
+
+```text
+Monte Seu Pacote -> Montar meu pacote digital
+Fale Conosco -> Falar com a FIRMANT no WhatsApp
+Ver Serviços -> Ver soluções para minha empresa
+Enviar -> Quero receber uma proposta
+```
+
+Observação:
+
+- Formulários e áreas com contexto específico, como newsletter ou admin, não devem ser alterados automaticamente se o texto não for CTA comercial.
+- Antes de trocar qualquer `Enviar`, verificar se é botão comercial ou botão técnico/administrativo.
+
+### 17.6 WhatsApp com mensagem pronta
+
+Mensagem geral aprovada para CTAs comerciais de WhatsApp:
+
+```text
+Olá, quero entender qual pacote da FIRMANT faz mais sentido para minha empresa.
+```
+
+URL codificada usada:
+
+```text
+https://wa.me/5511914912488?text=Ol%C3%A1%2C%20quero%20entender%20qual%20pacote%20da%20FIRMANT%20faz%20mais%20sentido%20para%20minha%20empresa.
+```
+
+### 17.7 LP Vídeos/UGC - `/edicao-video-ugc`
+
+Hero atualizado para tráfego frio.
+
+H1 aprovado:
+
+```text
+Vídeos curtos e UGC para sua marca vender melhor no digital.
+```
+
+Subheadline aprovada:
+
+```text
+A FIRMANT cria vídeos para Reels, Stories, Shorts, anúncios e ofertas com roteiro, edição, apoio de IA e revisão humana — sem sua empresa depender de uma produção pesada.
+```
+
+CTAs aprovados:
+
+```text
+Primário: Quero orçamento de vídeos pelo WhatsApp
+Secundário: Ver pacotes de vídeo
+```
+
+Linha de confiança aprovada:
+
+```text
+Vídeos para redes sociais · UGC · Anúncios · Ofertas · Atendimento online para todo o Brasil
+```
+
+Implementação:
+
+- O CTA secundário aponta para `#pacotes-video`.
+- O `id="pacotes-video"` fica na seção de pacotes/preços, não no hero.
+
+### 17.8 Metadados SEO atualizados
+
+Após validação em produção, foi identificado que a frase antiga `Tecnologia invisível, resultados visíveis` ainda aparecia no HTML por causa dos metadados globais.
+
+Correção aplicada em:
+
+```text
+src/app/layout.tsx
+```
+
+Novos metadados globais:
+
+```text
+description:
+Vídeos, conteúdos, sites e soluções digitais com apoio de IA, estratégia e revisão humana para marcas que querem crescer no digital.
+
+openGraph.description:
+Vídeos, conteúdos, sites e soluções digitais com IA, estratégia e revisão humana para sua marca aparecer melhor no digital.
+```
+
+### 17.9 Erro operacional ocorrido neste ciclo
+
+Erro:
+
+```text
+As alterações foram publicadas primeiro em staging, mas não tinham sido commitadas, enviadas para o GitHub e publicadas no worker de produção.
+```
+
+Impacto:
+
+```text
+O staging refletia os ajustes, mas o domínio oficial https://firmant.com.br continuava exibindo a versão antiga.
+```
+
+Causa:
+
+```text
+O fluxo parou em deploy:staging e validação de staging.
+Faltou concluir o ciclo obrigatório:
+1. git commit
+2. git push origin main
+3. build OpenNext produção
+4. deploy OpenNext produção
+5. validação no domínio oficial
+```
+
+Correção aplicada:
+
+```text
+Commit das alterações comerciais.
+Push para origin/main.
+Build/deploy no worker de produção firmant-site.
+Validação final diretamente em https://firmant.com.br.
+```
+
+### 17.10 Dificuldades técnicas encontradas
+
+No Windows, o OpenNext apresentou limitações já conhecidas:
+
+```text
+WARN OpenNext is not fully compatible with Windows.
+```
+
+Falhas encontradas:
+
+```text
+EPERM ao remover/acessar .open-next em execução anterior.
+spawn EPERM ao iniciar subprocesso do esbuild dentro do build OpenNext.
+```
+
+Solução usada:
+
+```text
+Rodar comandos críticos de build/deploy com permissão elevada quando o sandbox/Windows bloquear subprocessos ou escrita em artefatos.
+Não apagar .open-next sem confirmar o caminho absoluto dentro do workspace.
+```
+
+Também houve bloqueio ao preparar commit:
+
+```text
+fatal: Unable to create '.git/index.lock': Permission denied
+```
+
+Solução:
+
+```text
+Executar git add/git commit com permissão elevada quando houver bloqueio de escrita no índice Git.
+```
+
+### 17.11 Procedimento correto para próximas atualizações
+
+Antes de editar:
+
+```text
+git status --short --branch
+Ler Atualização_Projeto_V5.md
+Confirmar se a alteração envolve apenas conteúdo/layout ou se toca pagamentos/admin/banco
+```
+
+Durante a edição:
+
+```text
+Fazer alterações cirúrgicas nos arquivos necessários
+Não alterar Asaas/pagamentos se o pedido for apenas visual/textual
+Manter identidade visual da FIRMANT: cores, gradientes e estrutura visual base
+Validar textos exatos aprovados pelo cliente
+```
+
+Validação local mínima:
+
+```text
+npm run lint
+npm run build
+```
+
+Quando houver staging:
+
+```text
+npm run deploy:staging
+Validar URL staging:
+https://firmant-site-staging.geraldo1fduarte.workers.dev
+```
+
+Produção obrigatória após aprovação:
+
+```text
+git status --short --branch
+git add <arquivos alterados>
+git commit -m "<mensagem clara>"
+git push origin main
+node scripts\patch-opennext-cloudflare-sockets.cjs
+node node_modules\@opennextjs\cloudflare\dist\cli\index.js build
+node scripts\patch-opennext-worker-sockets.cjs
+node node_modules\@opennextjs\cloudflare\dist\cli\index.js deploy
+```
+
+Importante:
+
+```text
+npm run deploy:staging publica apenas staging.
+npm run deploy é bloqueado de propósito por scripts/blocked-production-deploy.cjs.
+Para produção, usar os comandos OpenNext diretos acima.
+```
+
+Validação final obrigatória em produção:
+
+```text
+https://firmant.com.br/
+https://firmant.com.br/edicao-video-ugc
+https://firmant.com.br/contato
+```
+
+Usar cache bust quando necessário:
+
+```text
+https://firmant.com.br/?deploy-check=<version-id-ou-hash>
+```
+
+Sempre registrar ao final:
+
+```text
+Commits criados
+Push para origin/main
+Version ID do Cloudflare
+URLs testadas
+Resultado dos testes
+Git status final
+```
+
+### 17.12 Commits e deploys deste ciclo
+
+Commits:
+
+```text
+3d44495 feat: atualizar copy comercial do site
+02adf7f fix: atualizar metadados comerciais
+```
+
+Deploys:
+
+```text
+Staging validado:
+24407621-cad0-4a4d-8104-accdfe7b9092
+
+Produção intermediária:
+6714fe93-ed52-4be7-8f90-489cb7f07acc
+
+Produção final validada:
+0105a9fb-bd90-4d25-9e78-60e9124ea5e1
+```
+
+Validações finais em produção:
+
+```text
+Home: 200
+Novo H1: OK
+Subheadline nova: OK
+CTA Montar meu pacote digital: OK
+CTA WhatsApp com mensagem pronta: OK
+Ordem Vídeo & UGC antes de Redes Sociais: OK
+Desenvolvimento Web: OK
+Frase antiga Tecnologia invisível removida do HTML/SEO: OK
+
+/edicao-video-ugc: 200
+Novo H1: OK
+CTA Quero orçamento de vídeos pelo WhatsApp: OK
+CTA Ver pacotes de vídeo: OK
+Linha de confiança: OK
+
+Git final após deploy:
+main sincronizada com origin/main
+working tree limpo
+```

@@ -91,7 +91,7 @@ export default async function BlogPostPage({ params }: PageProps) {
               Monte um pacote com redes sociais, vídeos, UGC, desenvolvimento e IA
               de acordo com a necessidade do seu negócio.
             </p>
-            <Link href="/monte-seu-pacote">Monte seu pacote</Link>
+            <Link href="/monte-seu-pacote">Montar meu pacote digital</Link>
           </div>
         </div>
 

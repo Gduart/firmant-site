@@ -166,7 +166,7 @@ function HeroSection() {
                 textDecoration: "none",
               }}
             >
-              Monte Seu Pacote
+              Montar meu pacote digital
             </Link>
           </motion.div>
         </motion.div>

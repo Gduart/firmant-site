@@ -22,13 +22,15 @@ function FacebookGlyph({ size = 16 }: { size?: number }) {
 }
 
 const FACEBOOK_URL = "https://web.facebook.com/profile.php?id=61590072505709&locale=pt_BR";
+const WHATSAPP_GENERAL =
+  "https://wa.me/5511914912488?text=Ol%C3%A1%2C%20quero%20entender%20qual%20pacote%20da%20FIRMANT%20faz%20mais%20sentido%20para%20minha%20empresa.";
 
 const footerLinks = {
   servicos: [
     { href: "/gestao-redes-sociais", label: "Gestão de Redes Sociais" },
     { href: "/edicao-video-ugc", label: "Vídeos para Negócios & UGC" },
-    { href: "/desenvolvimento", label: "Desenvolvimento Web/Mobile" },
-    { href: "/monte-seu-pacote", label: "Monte Seu Pacote" },
+    { href: "/desenvolvimento", label: "Desenvolvimento Web" },
+    { href: "/monte-seu-pacote", label: "Montar meu pacote digital" },
   ],
   empresa: [
     { href: "/blog", label: "Blog" },
@@ -259,7 +261,7 @@ export function Footer() {
 
       {/* WhatsApp flutuante */}
       <a
-        href="https://wa.me/5511914912488?text=Ol%C3%A1%2C%20FIRMANT.%20Vim%20pelo%20site%20e%20gostaria%20de%20entender%20melhor%20os%20servi%C3%A7os."
+        href={WHATSAPP_GENERAL}
         target="_blank"
         rel="noopener noreferrer"
         style={{

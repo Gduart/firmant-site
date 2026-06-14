@@ -15,14 +15,8 @@ import {
 import Link from "next/link";
 import { type CSSProperties, type FormEvent, type ReactNode, useRef, useState } from "react";
 
-const WHATSAPP_MAIN =
-  "https://wa.me/5511914912488?text=Ol%C3%A1%2C%20FIRMANT.%20Vim%20pelo%20site%20e%20gostaria%20de%20tirar%20uma%20d%C3%BAvida%20sobre%20os%20servi%C3%A7os.";
-const WHATSAPP_PACKAGE =
-  "https://wa.me/5511914912488?text=Ol%C3%A1%2C%20FIRMANT.%20Vim%20pelo%20site%20e%20gostaria%20de%20tirar%20uma%20d%C3%BAvida%20antes%20de%20montar%20meu%20pacote.";
-const WHATSAPP_DOUBT =
-  "https://wa.me/5511914912488?text=Ol%C3%A1%2C%20FIRMANT.%20Vim%20pelo%20site%20e%20estou%20em%20d%C3%BAvida%20sobre%20qual%20servi%C3%A7o%20escolher.";
-const WHATSAPP_FINAL =
-  "https://wa.me/5511914912488?text=Ol%C3%A1%2C%20FIRMANT.%20Vim%20pelo%20site%20e%20gostaria%20de%20entender%20melhor%20os%20servi%C3%A7os.";
+const WHATSAPP_GENERAL =
+  "https://wa.me/5511914912488?text=Ol%C3%A1%2C%20quero%20entender%20qual%20pacote%20da%20FIRMANT%20faz%20mais%20sentido%20para%20minha%20empresa.";
 const FACEBOOK_URL = "https://web.facebook.com/profile.php?id=61590072505709&locale=pt_BR";
 
 const easeCurve: [number, number, number, number] = [0.16, 1, 0.3, 1];
@@ -199,7 +193,7 @@ const officialChannels = [
   {
     label: "WhatsApp",
     value: "+55 11 91491-2488",
-    href: WHATSAPP_MAIN,
+    href: WHATSAPP_GENERAL,
     icon: MessageCircle,
   },
   {
@@ -316,7 +310,7 @@ function HeroSection() {
             </p>
           </motion.div>
           <motion.div variants={fadeInUp} style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
-            <PrimaryButton href={WHATSAPP_MAIN}>Falar pelo WhatsApp</PrimaryButton>
+            <PrimaryButton href={WHATSAPP_GENERAL}>Falar com a FIRMANT no WhatsApp</PrimaryButton>
             <SecondaryButton href="mailto:ag.firmant@gmail.com">Enviar e-mail</SecondaryButton>
           </motion.div>
         </motion.div>
@@ -383,10 +377,10 @@ function PackageSection() {
             <p>É ajudar você a escolher uma solução coerente com seu momento, sua estrutura e seus objetivos.</p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 26 }}>
               <Link href="/monte-seu-pacote" className="contact-link-button">
-                Criar meu pacote
+                Montar meu pacote digital
               </Link>
-              <a href={WHATSAPP_PACKAGE} target="_blank" rel="noopener noreferrer" className="contact-outline-button">
-                Tirar dúvidas
+              <a href={WHATSAPP_GENERAL} target="_blank" rel="noopener noreferrer" className="contact-outline-button">
+                Falar com a FIRMANT no WhatsApp
               </a>
             </div>
           </motion.aside>
@@ -509,7 +503,7 @@ function DoubtSection() {
             Fale conosco e explique brevemente o que você precisa. A partir disso, orientamos o melhor próximo passo.
           </motion.p>
           <motion.div variants={fadeInUp}>
-            <PrimaryButton href={WHATSAPP_DOUBT}>Falar com a FIRMANT</PrimaryButton>
+            <PrimaryButton href={WHATSAPP_GENERAL}>Falar com a FIRMANT no WhatsApp</PrimaryButton>
           </motion.div>
         </AnimatedSection>
       </div>
@@ -657,7 +651,7 @@ function FinalCTASection() {
             Se você já sabe quais serviços deseja, monte seu pacote diretamente pelo site. Se ainda tem dúvidas, fale com a FIRMANT e receba uma orientação inicial para entender qual solução faz mais sentido para o seu objetivo.
           </motion.p>
           <motion.div variants={fadeInUp} style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 16 }}>
-            <PrimaryButton href={WHATSAPP_FINAL}>Falar com a FIRMANT no WhatsApp</PrimaryButton>
+            <PrimaryButton href={WHATSAPP_GENERAL}>Falar com a FIRMANT no WhatsApp</PrimaryButton>
             <SecondaryButton href="mailto:ag.firmant@gmail.com">Enviar e-mail</SecondaryButton>
           </motion.div>
         </AnimatedSection>

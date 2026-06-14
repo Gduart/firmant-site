@@ -47,24 +47,27 @@ function AnimatedSection({
 
 const services = [
   {
-    title: "Gestão de Redes Sociais",
-    description: "Da copy à arte final — planejadas, criadas e entregues com IA. Você envia o tema, nós devolvemos a publicação pronta.",
-    href: "/gestao-redes-sociais",
+    title: "Vídeo & UGC com IA",
+    description: "Reels, Stories, Shorts e vídeos UGC com IA para sua marca aparecer com mais profissionalismo, velocidade e consistência.",
+    href: "/edicao-video-ugc",
     number: "01",
   },
   {
-    title: "Vídeo & UGC com IA",
-    description: "Reels, Stories e Shorts editados profissionalmente + conteúdo UGC com avatares de IA que vendem por você.",
-    href: "/edicao-video-ugc",
+    title: "Gestão de Redes Sociais",
+    description: "Planejamento, criação, aprovação e publicação de conteúdos com método, IA e revisão humana.",
+    href: "/gestao-redes-sociais",
     number: "02",
   },
   {
-    title: "Desenvolvimento Web/Mobile",
-    description: "Aplicações sob medida em Python — do MVP ao sistema completo — com desenvolvimento assistido por IA.",
+    title: "Desenvolvimento Web",
+    description: "Sites, landing pages e soluções digitais sob medida para transformar sua presença online em uma operação mais profissional.",
     href: "/desenvolvimento",
     number: "03",
   },
 ];
+
+const WHATSAPP_GENERAL =
+  "https://wa.me/5511914912488?text=Ol%C3%A1%2C%20quero%20entender%20qual%20pacote%20da%20FIRMANT%20faz%20mais%20sentido%20para%20minha%20empresa.";
 
 const socialMediaCapabilities = [
   {
@@ -197,7 +200,7 @@ function HeroSection() {
         <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at center, transparent 40%, rgba(10,22,40,0.6) 100%)" }} />
       </div>
 
-      <div style={{ position: "relative", zIndex: 10, maxWidth: "960px", margin: "0 auto", padding: "0 48px", textAlign: "center" }}>
+      <div style={{ position: "relative", zIndex: 10, maxWidth: "1120px", margin: "0 auto", padding: "0 48px", textAlign: "center" }}>
         <motion.div initial="hidden" animate="visible" variants={stagger}>
           <motion.div variants={fadeInUp}>
             <span
@@ -224,29 +227,28 @@ function HeroSection() {
             style={{
               fontFamily: "var(--font-heading)",
               color: "var(--text-primary)",
-              marginBottom: "40px",
-              fontSize: "clamp(3.5rem, 8vw, 6.5rem)",
-              lineHeight: 1.02,
-              letterSpacing: "-0.03em",
+              marginBottom: "36px",
+              fontSize: "clamp(3.2rem, 7vw, 6.2rem)",
+              lineHeight: 1.04,
+              letterSpacing: 0,
             }}
           >
-            Tecnologia invisível.
-            <br />
-            <span className="text-gradient">Resultados visíveis.</span>
+            Sua marca mais profissional e{" "}
+            <span className="text-gradient">posicionada no digital.</span>
           </motion.h1>
 
           <motion.p
             variants={fadeInUp}
             style={{
               margin: "0 auto 48px",
-              maxWidth: "600px",
+              maxWidth: "760px",
               fontSize: "1.15rem",
               lineHeight: 1.9,
               color: "var(--text-secondary)",
               fontFamily: "var(--font-body)",
             }}
           >
-            Gestão de redes sociais, edição de vídeo, conteúdo UGC com IA e desenvolvimento web/mobile. Seu negócio cresce enquanto a tecnologia trabalha nos bastidores.
+            Criamos vídeos, conteúdos, sites e soluções digitais com apoio de IA, estratégia e revisão humana — para sua marca aparecer melhor, vender com mais clareza e crescer no digital.
           </motion.p>
 
           <motion.div variants={fadeInUp} style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "center", gap: "20px" }}>
@@ -269,13 +271,15 @@ function HeroSection() {
                 transition: "all 0.5s cubic-bezier(0.16,1,0.3,1)",
               }}
             >
-              Monte Seu Pacote
+              Montar meu pacote digital
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
               </svg>
             </Link>
-            <Link
-              href="/contato"
+            <a
+              href={WHATSAPP_GENERAL}
+              target="_blank"
+              rel="noopener noreferrer"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -292,8 +296,8 @@ function HeroSection() {
                 transition: "all 0.5s cubic-bezier(0.16,1,0.3,1)",
               }}
             >
-              Fale Conosco
-            </Link>
+              Falar com a FIRMANT no WhatsApp
+            </a>
           </motion.div>
         </motion.div>
       </div>
@@ -745,10 +749,12 @@ function ApproachModal({ onClose }: { onClose: () => void }) {
               textDecoration: "none",
             }}
           >
-            Monte seu pacote
+            Montar meu pacote digital
           </Link>
-          <Link
-            href="/contato"
+          <a
+            href={WHATSAPP_GENERAL}
+            target="_blank"
+            rel="noopener noreferrer"
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -764,8 +770,8 @@ function ApproachModal({ onClose }: { onClose: () => void }) {
               textDecoration: "none",
             }}
           >
-            Fale conosco
-          </Link>
+            Falar com a FIRMANT no WhatsApp
+          </a>
         </div>
       </motion.div>
     </motion.div>
@@ -876,10 +882,10 @@ function AboutSection() {
               }}
             >
               {[
-                { number: "4", label: "Nichos de atuação" },
+                { number: "3", label: "Nichos de atuação" },
                 { number: "IA", label: "Como infraestrutura" },
                 { number: "100%", label: "Revisão humana" },
-                { number: "24h", label: "Tempo de resposta" },
+                { number: "2 horas", label: "Tempo de resposta" },
               ].map((stat) => (
                 <motion.div
                   key={stat.label}
@@ -1108,13 +1114,15 @@ function CTASection() {
                 transition: "all 0.5s cubic-bezier(0.16,1,0.3,1)",
               }}
             >
-              Monte Seu Pacote
+              Montar meu pacote digital
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
               </svg>
             </Link>
-            <Link
-              href="/contato"
+            <a
+              href={WHATSAPP_GENERAL}
+              target="_blank"
+              rel="noopener noreferrer"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -1131,8 +1139,8 @@ function CTASection() {
                 transition: "all 0.5s cubic-bezier(0.16,1,0.3,1)",
               }}
             >
-              Fale Conosco
-            </Link>
+              Falar com a FIRMANT no WhatsApp
+            </a>
           </motion.div>
         </AnimatedSection>
       </div>

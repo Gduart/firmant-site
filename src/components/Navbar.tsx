@@ -4,11 +4,11 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 
-// "Monte Seu Pacote" removido daqui — já é o botão CTA separado
+// "Montar meu pacote digital" fica como CTA separado.
 const navLinks = [
-  { href: "/gestao-redes-sociais", label: "Redes Sociais" },
   { href: "/edicao-video-ugc", label: "Vídeos & UGC" },
-  { href: "/desenvolvimento", label: "Desenvolvimento" },
+  { href: "/gestao-redes-sociais", label: "Redes Sociais" },
+  { href: "/desenvolvimento", label: "Desenvolvimento Web" },
   { href: "/blog", label: "Blog" },
   { href: "/contato", label: "Contato" },
 ];
@@ -109,7 +109,7 @@ export function Navbar() {
                 transition: "all 0.3s ease",
               }}
             >
-              Monte Seu Pacote
+              Montar meu pacote digital
             </Link>
           </div>
 
@@ -156,7 +156,7 @@ export function Navbar() {
             }}
           >
             <nav style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "28px" }}>
-              {[...navLinks, { href: "/monte-seu-pacote", label: "Monte Seu Pacote" }].map((link, i) => (
+              {[...navLinks, { href: "/monte-seu-pacote", label: "Montar meu pacote digital" }].map((link, i) => (
                 <motion.div
                   key={link.href}
                   initial={{ opacity: 0, y: 24 }}

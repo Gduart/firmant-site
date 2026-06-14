@@ -250,7 +250,7 @@ function HeroSection() {
                 textDecoration: "none",
               }}
             >
-              Monte seu pacote
+              Montar meu pacote digital
             </Link>
           </motion.div>
         </motion.div>
@@ -547,7 +547,7 @@ function PriceDetailModal({ card, onClose }: { card: PriceCard; onClose: () => v
               textDecoration: "none",
             }}
           >
-            Monte seu pacote
+            Montar meu pacote digital
           </Link>
         </div>
       </motion.div>
@@ -654,7 +654,7 @@ function CTASection() {
                 textDecoration: "none",
               }}
             >
-              Monte seu pacote
+              Montar meu pacote digital
             </Link>
           </motion.div>
         </AnimatedSection>

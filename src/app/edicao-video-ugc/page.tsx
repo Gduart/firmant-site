@@ -38,6 +38,8 @@ const inner: CSSProperties = {
 
 const CYAN = "#22D3EE";
 const PURPLE = "#A78BFA";
+const WHATSAPP_GENERAL =
+  "https://wa.me/5511914912488?text=Ol%C3%A1%2C%20quero%20entender%20qual%20pacote%20da%20FIRMANT%20faz%20mais%20sentido%20para%20minha%20empresa.";
 
 const videoShowcase = [
   {
@@ -147,7 +149,7 @@ function HeroSection() {
               fontFamily: "var(--font-body)",
             }}
           >
-            02 — Vídeos para Negócios & UGC
+            Vídeos para marcas e anúncios
           </motion.span>
 
           <motion.h1
@@ -159,8 +161,8 @@ function HeroSection() {
               maxWidth: 900,
             }}
           >
-            Vídeos que chamam atenção, explicam valor e ajudam sua marca a{" "}
-            <span className="text-gradient">vender.</span>
+            Vídeos curtos e UGC para sua marca{" "}
+            <span className="text-gradient">vender melhor no digital.</span>
           </motion.h1>
 
           <motion.p
@@ -174,12 +176,14 @@ function HeroSection() {
               marginBottom: 44,
             }}
           >
-            Criamos vídeos para negócios em formatos curtos, UGC e conteúdos visuais de alto impacto para redes sociais, campanhas, anúncios e ofertas.
+            A FIRMANT cria vídeos para Reels, Stories, Shorts, anúncios e ofertas com roteiro, edição, apoio de IA e revisão humana — sem sua empresa depender de uma produção pesada.
           </motion.p>
 
           <motion.div variants={fadeInUp} style={{ display: "flex", flexWrap: "wrap", gap: 20, alignItems: "center" }}>
-            <Link
-              href="/contato"
+            <a
+              href={WHATSAPP_GENERAL}
+              target="_blank"
+              rel="noopener noreferrer"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -197,10 +201,10 @@ function HeroSection() {
                 textDecoration: "none",
               }}
             >
-              Quero produzir vídeos para minha marca
-            </Link>
+              Quero orçamento de vídeos pelo WhatsApp
+            </a>
             <Link
-              href="/monte-seu-pacote"
+              href="#pacotes-video"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -218,9 +222,25 @@ function HeroSection() {
                 textDecoration: "none",
               }}
             >
-              Monte seu pacote
+              Ver pacotes de vídeo
             </Link>
           </motion.div>
+
+          <motion.p
+            variants={fadeInUp}
+            style={{
+              marginTop: 24,
+              fontFamily: "var(--font-body)",
+              fontSize: 12,
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              lineHeight: 1.7,
+              textTransform: "uppercase",
+              color: "var(--text-tertiary)",
+            }}
+          >
+            Vídeos para redes sociais · UGC · Anúncios · Ofertas · Atendimento online para todo o Brasil
+          </motion.p>
 
           <motion.div className="ugc-video-panel" variants={fadeInUp}>
             <motion.div className="ugc-video-grid" variants={stagger}>
@@ -526,7 +546,7 @@ function PriceSection() {
   const [activeTab, setActiveTab] = useState<"video" | "ugc">("video");
 
   return (
-    <section style={{ backgroundColor: "var(--bg-primary)", paddingTop: 80, paddingBottom: 80 }}>
+    <section id="pacotes-video" style={{ backgroundColor: "var(--bg-primary)", paddingTop: 80, paddingBottom: 80 }}>
       <div style={inner}>
         <AnimatedSection>
           <motion.span
@@ -601,8 +621,10 @@ function CTASection() {
             Se a sua marca precisa aparecer melhor, comunicar valor com mais força e transformar ideias em conteúdo em vídeo com aplicação real, a Firmant pode estruturar isso com mais praticidade.
           </motion.p>
           <motion.div variants={fadeInUp} style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 18 }}>
-            <Link
-              href="/contato"
+            <a
+              href={WHATSAPP_GENERAL}
+              target="_blank"
+              rel="noopener noreferrer"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -620,8 +642,8 @@ function CTASection() {
                 textDecoration: "none",
               }}
             >
-              Quero produzir vídeos para minha marca
-            </Link>
+              Quero orçamento de vídeos pelo WhatsApp
+            </a>
             <Link
               href="/monte-seu-pacote"
               style={{
@@ -640,7 +662,7 @@ function CTASection() {
                 textDecoration: "none",
               }}
             >
-              Monte seu pacote
+              Montar meu pacote digital
             </Link>
           </motion.div>
         </AnimatedSection>

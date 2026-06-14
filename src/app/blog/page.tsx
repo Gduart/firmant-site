@@ -84,7 +84,7 @@ export default async function BlogPage() {
               <p>
                 Os primeiros artigos serão publicados pelo painel administrativo.
               </p>
-              <Link href="/monte-seu-pacote">Monte seu pacote</Link>
+              <Link href="/monte-seu-pacote">Montar meu pacote digital</Link>
             </div>
           )}
         </div>

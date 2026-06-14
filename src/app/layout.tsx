@@ -24,7 +24,7 @@ const jakarta = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: "FIRMANT — Agência Digital com IA",
   description:
-    "Gestão de redes sociais, edição de vídeo, conteúdo UGC com IA e desenvolvimento web/mobile. Tecnologia invisível, resultados visíveis.",
+    "Vídeos, conteúdos, sites e soluções digitais com apoio de IA, estratégia e revisão humana para marcas que querem crescer no digital.",
   keywords: [
     "agência digital",
     "inteligência artificial",
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "FIRMANT — Agência Digital com IA",
     description:
-      "Tecnologia invisível, resultados visíveis. Gestão de redes sociais, vídeo, UGC e desenvolvimento.",
+      "Vídeos, conteúdos, sites e soluções digitais com IA, estratégia e revisão humana para sua marca aparecer melhor no digital.",
     url: "https://firmant.com.br",
     siteName: "FIRMANT",
     locale: "pt_BR",

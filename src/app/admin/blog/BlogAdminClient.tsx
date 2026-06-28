@@ -370,8 +370,10 @@ export function BlogAdminClient() {
                 placeholder="/blog/minha-imagem.jpg ou https://..."
               />
               <small className="blog-admin-help">
-                Salve o arquivo em public/blog/ e use /blog/nome-da-imagem.jpg.
-                Recomendado: 1600x900 px, 16:9, JPG/WebP, até 500 KB.
+                O painel salva apenas o endereço; ele não envia a imagem.
+                Salve o arquivo em public/blog/ e use /blog/nome-da-imagem.webp.
+                WebP é o formato recomendado por ser mais leve, mas JPG e PNG
+                também funcionam. Use 1600x900 px, proporção 16:9 e até 500 KB.
               </small>
             </Field>
 
@@ -398,6 +400,11 @@ export function BlogAdminClient() {
                 rows={16}
                 placeholder={"Use parágrafos separados por linha em branco.\n\n## Subtítulo\n\n- Item de lista"}
               />
+              <small className="blog-admin-help">
+                Formatação disponível: ## seção, ### subtítulo, - lista,
+                1. lista numerada, &gt; citação, --- separador e tabelas no
+                padrão Markdown. Separe cada bloco com uma linha em branco.
+              </small>
             </Field>
 
             <div className="blog-admin-two-cols">

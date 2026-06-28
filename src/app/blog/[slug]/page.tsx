@@ -55,7 +55,15 @@ export default async function BlogPostPage({ params }: PageProps) {
 
   return (
     <article style={{ backgroundColor: "var(--bg-primary)", minHeight: "100vh" }}>
-      <section style={{ backgroundColor: "var(--bg-secondary)", paddingTop: 140, paddingBottom: 72 }}>
+      <section
+        id="inicio-do-artigo"
+        style={{
+          backgroundColor: "var(--bg-secondary)",
+          paddingTop: 140,
+          paddingBottom: 72,
+          scrollMarginTop: 88,
+        }}
+      >
         <div className="blog-shell">
           <Link href="/blog" className="blog-back-link">Voltar ao Blog</Link>
           <span className="blog-kicker">{post.category}</span>
@@ -94,9 +102,9 @@ export default async function BlogPostPage({ params }: PageProps) {
             <Link href="/monte-seu-pacote">Montar meu pacote digital</Link>
           </div>
 
-          <Link href="/" className="blog-return-home">
-            Voltar ao início
-          </Link>
+          <a href="#inicio-do-artigo" className="blog-return-home">
+            Voltar ao início do artigo
+          </a>
         </div>
 
         {relatedPosts.length > 0 && (

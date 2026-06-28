@@ -93,6 +93,10 @@ export default async function BlogPostPage({ params }: PageProps) {
             </p>
             <Link href="/monte-seu-pacote">Montar meu pacote digital</Link>
           </div>
+
+          <Link href="/" className="blog-return-home">
+            Voltar ao início
+          </Link>
         </div>
 
         {relatedPosts.length > 0 && (

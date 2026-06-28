@@ -29,6 +29,12 @@
 			"database_id": "6a806da5-8569-407c-a32d-0df2234fbc78"
 		}
 	],
+	"kv_namespaces": [
+		{
+			"binding": "BLOG_IMAGES",
+			"id": "ab02d6b716f4406f8f4176754c6ca34c"
+		}
+	],
 	"services": [
 		{
 			"binding": "WORKER_SELF_REFERENCE",

@@ -722,6 +722,24 @@ input:focus, textarea:focus, select:focus {
   margin-bottom: 28px;
 }
 
+.blog-return-home {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 36px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent-gold);
+}
+
+.blog-return-home::before {
+  content: "←";
+  margin-right: 10px;
+  font-size: 1.1rem;
+}
+
 .blog-related-title {
   margin-bottom: 32px;
   font-size: clamp(1.8rem, 3.5vw, 2.7rem);
@@ -869,6 +887,44 @@ input:focus, textarea:focus, select:focus {
   font-size: 12px;
   line-height: 1.6;
   color: var(--text-muted);
+}
+
+.blog-admin-image-upload {
+  position: relative;
+  display: grid;
+  min-height: 96px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px dashed rgba(201, 168, 76, 0.46);
+  border-radius: 14px;
+  background: rgba(201, 168, 76, 0.06);
+  transition: border-color 200ms ease, background-color 200ms ease;
+}
+
+.blog-admin-image-upload:hover,
+.blog-admin-image-upload:focus-within {
+  border-color: var(--accent-gold);
+  background: rgba(201, 168, 76, 0.1);
+}
+
+.blog-admin-image-upload input {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.blog-admin-image-upload input:disabled {
+  cursor: wait;
+}
+
+.blog-admin-image-upload strong {
+  padding: 18px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--accent-gold);
+  text-align: center;
 }
 
 .blog-admin-field select {

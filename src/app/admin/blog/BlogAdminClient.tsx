@@ -52,6 +52,20 @@ const categories = [
   "Cases e Guias",
 ];
 
+const MAX_COVER_BYTES = 500 * 1024;
+const MAX_SOURCE_BYTES = 15 * 1024 * 1024;
+const COVER_SIZES = [
+  { width: 1600, height: 900 },
+  { width: 1440, height: 810 },
+  { width: 1280, height: 720 },
+];
+const WEBP_QUALITIES = [0.86, 0.78, 0.7, 0.62, 0.54, 0.46];
+const ALLOWED_SOURCE_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);
+
 export function BlogAdminClient() {
   const [token, setToken] = useState("");
   const [posts, setPosts] = useState<BlogPost[]>([]);
@@ -60,6 +74,7 @@ export function BlogAdminClient() {
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
   const [isSlugEdited, setIsSlugEdited] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -155,6 +170,55 @@ export function BlogAdminClient() {
       );
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function uploadCoverImage(file: File) {
+    if (!token) {
+      setErrorMessage("Informe o token administrativo.");
+      return;
+    }
+
+    setIsUploadingCover(true);
+    setErrorMessage("");
+    setStatusMessage("");
+
+    try {
+      const converted = await convertCoverToWebp(file);
+      const imageFormData = new FormData();
+      imageFormData.set("file", converted.blob, "capa.webp");
+      imageFormData.set(
+        "slug",
+        form.slug || normalizeSlug(form.title) || "capa-blog",
+      );
+
+      const response = await fetch("/api/admin/blog/images", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: imageFormData,
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error ?? "Falha ao enviar imagem.");
+      }
+
+      setForm((current) => ({
+        ...current,
+        coverImage: data.url,
+      }));
+      setStatusMessage(
+        `Capa convertida para WebP (${converted.width}x${converted.height}, `
+        + `${formatFileSize(converted.blob.size)}) e salva com sucesso.`,
+      );
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "Falha ao enviar imagem.",
+      );
+    } finally {
+      setIsUploadingCover(false);
     }
   }
 
@@ -364,16 +428,34 @@ export function BlogAdminClient() {
             </div>
 
             <Field label="Imagem de capa">
+              <div className="blog-admin-image-upload">
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  disabled={isUploadingCover}
+                  onChange={(event) => {
+                    const file = event.currentTarget.files?.[0];
+                    if (file) {
+                      void uploadCoverImage(file);
+                    }
+                    event.currentTarget.value = "";
+                  }}
+                />
+                <strong>
+                  {isUploadingCover
+                    ? "Convertendo e enviando..."
+                    : "Selecione JPG, PNG ou WebP"}
+                </strong>
+              </div>
               <input
                 value={form.coverImage}
                 onChange={(event) => updateField("coverImage", event.target.value)}
-                placeholder="/blog/minha-imagem.jpg ou https://..."
+                placeholder="O endereço será preenchido após o upload"
               />
               <small className="blog-admin-help">
-                O painel salva apenas o endereço; ele não envia a imagem.
-                Salve o arquivo em public/blog/ e use /blog/nome-da-imagem.webp.
-                WebP é o formato recomendado por ser mais leve, mas JPG e PNG
-                também funcionam. Use 1600x900 px, proporção 16:9 e até 500 KB.
+                O painel recorta a imagem em 16:9, converte para WebP, reduz para
+                no máximo 500 KB, salva e preenche o endereço automaticamente.
+                A imagem original pode ser JPG, PNG ou WebP de até 15 MB.
               </small>
             </Field>
 
@@ -492,4 +574,80 @@ function Field({
       {children}
     </label>
   );
+}
+
+async function convertCoverToWebp(file: File) {
+  if (!ALLOWED_SOURCE_TYPES.has(file.type)) {
+    throw new Error("Use uma imagem JPG, PNG ou WebP.");
+  }
+
+  if (file.size === 0 || file.size > MAX_SOURCE_BYTES) {
+    throw new Error("A imagem original deve ter no máximo 15 MB.");
+  }
+
+  const bitmap = await createImageBitmap(file);
+
+  try {
+    for (const size of COVER_SIZES) {
+      const canvas = document.createElement("canvas");
+      canvas.width = size.width;
+      canvas.height = size.height;
+
+      const context = canvas.getContext("2d");
+      if (!context) {
+        throw new Error("Seu navegador não conseguiu processar a imagem.");
+      }
+
+      const scale = Math.max(
+        size.width / bitmap.width,
+        size.height / bitmap.height,
+      );
+      const renderedWidth = bitmap.width * scale;
+      const renderedHeight = bitmap.height * scale;
+      const offsetX = (size.width - renderedWidth) / 2;
+      const offsetY = (size.height - renderedHeight) / 2;
+
+      context.drawImage(
+        bitmap,
+        offsetX,
+        offsetY,
+        renderedWidth,
+        renderedHeight,
+      );
+
+      for (const quality of WEBP_QUALITIES) {
+        const blob = await canvasToWebp(canvas, quality);
+        if (blob.size <= MAX_COVER_BYTES) {
+          return {
+            blob,
+            width: size.width,
+            height: size.height,
+          };
+        }
+      }
+    }
+  } finally {
+    bitmap.close();
+  }
+
+  throw new Error(
+    "Não foi possível reduzir a imagem para 500 KB. Escolha uma imagem mais simples.",
+  );
+}
+
+function canvasToWebp(canvas: HTMLCanvasElement, quality: number) {
+  return new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (!blob || blob.type !== "image/webp") {
+        reject(new Error("Seu navegador não oferece conversão para WebP."));
+        return;
+      }
+
+      resolve(blob);
+    }, "image/webp", quality);
+  });
+}
+
+function formatFileSize(bytes: number) {
+  return `${Math.max(1, Math.round(bytes / 1024))} KB`;
 }

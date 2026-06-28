@@ -16,6 +16,19 @@ export type FirmantD1Database = {
   prepare(query: string): D1PreparedStatement;
 };
 
+type KvPutOptions = {
+  metadata?: Record<string, string>;
+};
+
+export type FirmantKvNamespace = {
+  get(key: string, type: "arrayBuffer"): Promise<ArrayBuffer | null>;
+  put(
+    key: string,
+    value: ArrayBuffer,
+    options?: KvPutOptions,
+  ): Promise<void>;
+};
+
 export async function getRuntimeEnv(): Promise<RuntimeEnv> {
   try {
     const { env } = await getCloudflareContext({ async: true });
@@ -61,4 +74,15 @@ export async function getD1Database() {
   }
 
   return database as FirmantD1Database;
+}
+
+export async function getBlogImagesStore() {
+  const runtimeEnv = await getRuntimeEnv();
+  const store = runtimeEnv.BLOG_IMAGES;
+
+  if (!store) {
+    throw new Error("Cloudflare KV binding `BLOG_IMAGES` is not configured.");
+  }
+
+  return store as FirmantKvNamespace;
 }

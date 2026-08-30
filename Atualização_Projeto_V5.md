@@ -1017,8 +1017,6 @@ Working tree: limpo após commit/push
 a960535 feat: adicionar newsletter e facebook
 ```
 
----
-
 ## 17. Atualização Comercial Home / CTAs / LP Vídeos UGC - 2026-06-14
 
 Esta seção registra o ciclo de atualização comercial feito em 14/06/2026, incluindo ajustes aprovados, erro operacional encontrado, correção aplicada e procedimento correto para próximas edições.
@@ -1385,4 +1383,91 @@ Linha de confiança: OK
 Git final após deploy:
 main sincronizada com origin/main
 working tree limpo
+```
+
+---
+
+## 18. Propostas e Portal de Aprovação - 2026-08-30
+
+Novo fluxo comercial publicado:
+
+```text
+Briefing público por link exclusivo
+Anexos privados JPG/PNG no R2, até 10 MB cada e expiração em sete dias
+Admin/Aprovação Geral
+Criação, versionamento, PDF, envio, aceite e recusa de propostas
+Etapas de pagamento integradas ao fluxo Asaas existente
+Portal privado de aprovação de imagem, carrossel e vídeo MP4
+Comentários gerais, por slide e por timecode
+Registro de aceite, revisão, aprovação e auditoria
+```
+
+Novas migrations:
+
+```text
+0006_commercial_workflow.sql
+0007_briefing_billing_address.sql
+```
+
+Recursos Cloudflare:
+
+```text
+R2 staging: firmant-private-assets-staging
+R2 produção: firmant-private-assets
+Lifecycle: prefixo briefings/ expira após sete dias
+Binding: PRIVATE_ASSETS
+Secret: FIRMANT_ADMIN_SESSION_SECRET
+```
+
+Validações em staging:
+
+```text
+Briefing: rascunho, upload, leitura privada, exclusão e envio final: OK
+Proposta: leitura pública e aceite: OK
+Asaas Sandbox Pix: checkout criado em sandbox.asaas.com: OK
+Idempotência do checkout: mesmo pedido reutilizado: OK
+Projeto após aceite: AWAITING_DEPOSIT: OK
+Portal de conteúdo: mídia privada com range HTTP: OK
+Solicitação de revisão e feedback: OK
+Aprovação formal por versão: OK
+Dados temporários D1/R2 removidos: OK
+```
+
+Correções encontradas durante a homologação Asaas:
+
+```text
+items[].name limitado a 30 caracteres conforme validação do Asaas
+Briefing passou a coletar número, complemento, bairro e CEP
+Cadastro parcial não é enviado ao checkout para briefings antigos
+```
+
+Produção:
+
+```text
+Commit funcional: da3f238 feat: adicionar propostas e portal de aprovacao
+Push: origin/main confirmado
+Migrations 0006 e 0007: aplicadas
+Migrations pendentes: nenhuma
+Bucket e lifecycle de produção: confirmados
+Deploy staging final: 4213adff-92e3-4294-86cd-72ed9bf944d6
+Deploy produção: 04c49c21-934c-4d89-a99c-c2abe20206a1
+```
+
+Smoke tests HTTP de produção:
+
+```text
+/: 200
+/admin/aprovacao-geral: 200, no-store e noindex
+/admin/propostas: 200, no-store e noindex
+/admin/conteudos: 200, no-store e noindex
+/api/admin/briefings sem sessão: 401
+Tokens públicos inválidos de briefing, proposta e review: 404
+X-Frame-Options: DENY
+```
+
+Observação:
+
+```text
+Não foi criada cobrança real de teste em produção. O checkout foi validado no
+Asaas Sandbox; a produção recebeu apenas smoke tests HTTP sem mutação de dados.
 ```

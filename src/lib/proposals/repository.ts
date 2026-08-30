@@ -144,16 +144,21 @@ export async function getProposalDetails(id: string) {
     [id],
   );
   if (!proposal) return null;
-  const [items, milestones, versions] = await Promise.all([
+  const [items, milestones, versions, project] = await Promise.all([
     listProposalItems(id),
     listProposalMilestones(id),
     workflowAll<ProposalVersionRecord>(
       "SELECT * FROM proposal_versions WHERE proposal_id = ? ORDER BY version_number DESC",
       [id],
     ),
+    workflowFirst<{ id: string; project_number: string; status: string }>(
+      "SELECT id, project_number, status FROM projects WHERE proposal_id = ? LIMIT 1",
+      [id],
+    ),
   ]);
   return {
     proposal: toEditableProposal(proposal),
+    project: project ?? null,
     items,
     milestones,
     versions: versions.map((version) => ({

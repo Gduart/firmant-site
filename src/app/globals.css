@@ -1868,6 +1868,15 @@ input:focus, textarea:focus, select:focus {
   align-items: start;
 }
 
+.proposal-content-workflow { grid-column: 1 / -1; }
+.proposal-content-workflow-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: .8rem; }
+.proposal-content-workflow-header h2 { margin: .25rem 0 0; }
+.proposal-content-workflow-header > div > span { color: var(--accent); font-size: .76rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.proposal-content-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .75rem; list-style: none; margin: 1rem 0; padding: 0; }
+.proposal-content-steps li { display: grid; gap: .35rem; min-height: 92px; padding: .9rem; border: 1px solid rgba(255,255,255,.12); border-radius: 12px; background: rgba(255,255,255,.025); }
+.proposal-content-steps li.is-complete { border-color: rgba(59, 210, 144, .45); background: rgba(59, 210, 144, .08); }
+.proposal-content-steps span, .proposal-content-note { color: var(--text-muted); font-size: .9rem; }
+
 .proposal-editor-main fieldset {
   border: 0;
   padding: 0;
@@ -1950,6 +1959,7 @@ input:focus, textarea:focus, select:focus {
 
 @media (max-width: 900px) {
   .proposal-editor-grid, .proposal-public-grid { grid-template-columns: 1fr; }
+  .proposal-content-steps { grid-template-columns: 1fr; }
   .proposal-editor-sidebar, .proposal-public-grid > aside { position: static; }
   .proposal-line-item, .proposal-milestone { grid-template-columns: 1fr 1fr; }
 }

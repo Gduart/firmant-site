@@ -1493,3 +1493,28 @@ Homepage, contato e Admin Clientes: HTTP 200
 API administrativa sem sessão: HTTP 401 esperado
 Deploy produção: cd55bdba-4612-4686-ae95-beaa39b5491f
 ```
+
+---
+
+## 20. Integração visual entre proposta e aprovação de conteúdo - 2026-08-30
+
+A edição da proposta passou a exibir uma seção própria chamada `Mídias e
+aprovação do cliente`. Em propostas ainda não aceitas, a seção explica os
+quatro passos do fluxo e por que o projeto de conteúdo ainda não existe. Após
+o aceite, a API da proposta retorna o projeto criado e a seção oferece acesso
+direto ao upload de imagens, carrosséis e vídeos e à geração do link privado de
+revisão do cliente.
+
+```text
+Proposta -> publicação -> aceite do cliente -> projeto automático
+Projeto -> upload da prévia -> gerar link de revisão -> aprovação do cliente
+```
+
+Validações:
+
+```text
+Lint: OK
+Build Next.js e TypeScript: OK
+Proposta FIR-2026-1D2F3A3C: DRAFT, sem projeto e sem mídia (estado esperado)
+Deploy produção: e964a948-db26-4d6c-8329-6e143c7c60e5
+```

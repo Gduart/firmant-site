@@ -164,7 +164,8 @@ function getCookieValue(header: string | null, name: string) {
 }
 
 async function signSessionPayload(encodedPayload: string) {
-  const password = await getEnvValue("FIRMANT_ADMIN_PASSWORD");
+  const password = await getEnvValue("FIRMANT_ADMIN_SESSION_SECRET")
+    ?? await getEnvValue("FIRMANT_ADMIN_PASSWORD");
 
   if (!password) {
     return "";

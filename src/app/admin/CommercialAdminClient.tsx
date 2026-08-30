@@ -11,10 +11,14 @@ type CommercialAdminClientProps = {
 };
 
 const navItems = [
+  { href: "/admin/aprovacao-geral", label: "Aprovação Geral" },
+  { href: "/admin/propostas", label: "Propostas" },
+  { href: "/admin/conteudos", label: "Conteúdos" },
   { href: "/admin/clientes", label: "Clientes" },
   { href: "/admin/pedidos", label: "Pedidos" },
   { href: "/admin/contratos", label: "Contratos" },
   { href: "/admin/newsletter", label: "Newsletter" },
+  { href: "/admin/blog", label: "Blog" },
 ];
 
 const contractStatuses = [

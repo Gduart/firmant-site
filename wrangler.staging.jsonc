@@ -35,6 +35,12 @@
 			"id": "ab02d6b716f4406f8f4176754c6ca34c"
 		}
 	],
+	"r2_buckets": [
+		{
+			"binding": "PRIVATE_ASSETS",
+			"bucket_name": "firmant-private-assets-staging"
+		}
+	],
 	"services": [
 		{
 			"binding": "WORKER_SELF_REFERENCE",

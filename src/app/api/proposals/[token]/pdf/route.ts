@@ -1,0 +1,4 @@
+import { buildProposalPdf } from "@/lib/proposals/proposal-pdf";
+import { getPublicProposal } from "@/lib/proposals/repository";
+type RouteContext = { params: Promise<{ token: string }> };
+export async function GET(_request: Request, context: RouteContext) { const { token } = await context.params; const result = await getPublicProposal(token, false); if (!result) return Response.json({ error: "Proposta não encontrada." }, { status: 404 }); if (result.expired || !result.snapshot) return Response.json({ error: "Esta proposta expirou." }, { status: 410 }); const pdf = buildProposalPdf(result.snapshot); return new Response(pdf, { headers: { "Content-Type": "application/pdf", "Content-Disposition": `inline; filename="${result.snapshot.proposal.proposal_number}.pdf"`, "Cache-Control": "private, no-store" } }); }

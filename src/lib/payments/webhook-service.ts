@@ -19,6 +19,7 @@ import {
   markWebhookEventProcessed,
 } from "@/lib/payments/webhook-events-repository";
 import type { OrderStatus } from "@/lib/payments/types";
+import { syncMilestoneFromOrder } from "@/lib/proposals/repository";
 
 export async function validateAsaasWebhookToken(token?: string | null) {
   const expectedToken = await getRequiredEnvValue("ASAAS_WEBHOOK_AUTH_TOKEN");
@@ -105,6 +106,18 @@ export async function processAsaasWebhook(payload: AsaasWebhookPayload) {
       billingType: payment.billingType ?? null,
       rawPayload: JSON.stringify(payload),
     });
+  }
+
+  try {
+    await syncMilestoneFromOrder(
+      order.id,
+      nextStatus,
+      payment?.clientPaymentDate ?? payment?.confirmedDate ?? null,
+    );
+  } catch (error) {
+    // The proposal module is additive. Its absence must never interrupt the
+    // payment/webhook flow that already exists in production.
+    console.warn("Failed to sync proposal milestone", { orderId: order.id, error });
   }
 
   await markWebhookEventProcessed(providerEventId, "PROCESSED");

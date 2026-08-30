@@ -29,6 +29,39 @@ export type FirmantKvNamespace = {
   ): Promise<void>;
 };
 
+type R2HttpMetadata = {
+  contentType?: string;
+  contentDisposition?: string;
+  cacheControl?: string;
+};
+
+type R2ObjectBody = {
+  body: ReadableStream<Uint8Array>;
+  size: number;
+  range?: { offset: number; length: number };
+  httpEtag: string;
+  httpMetadata?: R2HttpMetadata;
+  customMetadata?: Record<string, string>;
+  writeHttpMetadata(headers: Headers): void;
+};
+
+export type FirmantR2Bucket = {
+  put(
+    key: string,
+    value: ArrayBuffer | ReadableStream<Uint8Array>,
+    options?: {
+      httpMetadata?: R2HttpMetadata;
+      customMetadata?: Record<string, string>;
+    },
+  ): Promise<unknown>;
+  get(
+    key: string,
+    options?: { range?: Headers | { offset: number; length?: number } },
+  ): Promise<R2ObjectBody | null>;
+  head(key: string): Promise<Omit<R2ObjectBody, "body"> | null>;
+  delete(key: string): Promise<void>;
+};
+
 export async function getRuntimeEnv(): Promise<RuntimeEnv> {
   try {
     const { env } = await getCloudflareContext({ async: true });
@@ -85,4 +118,15 @@ export async function getBlogImagesStore() {
   }
 
   return store as FirmantKvNamespace;
+}
+
+export async function getPrivateAssetsStore() {
+  const runtimeEnv = await getRuntimeEnv();
+  const store = runtimeEnv.PRIVATE_ASSETS;
+
+  if (!store) {
+    throw new Error("Cloudflare R2 binding `PRIVATE_ASSETS` is not configured.");
+  }
+
+  return store as FirmantR2Bucket;
 }

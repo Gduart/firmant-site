@@ -42,6 +42,12 @@
 			"id": "ece274a20f5947d598d50c8fe0a69810"
 		}
 	],
+	"r2_buckets": [
+		{
+			"binding": "PRIVATE_ASSETS",
+			"bucket_name": "firmant-private-assets"
+		}
+	],
 	"services": [
 		{
 			"binding": "WORKER_SELF_REFERENCE",

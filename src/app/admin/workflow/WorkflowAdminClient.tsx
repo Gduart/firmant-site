@@ -36,6 +36,7 @@ export function WorkflowAdminClient({ mode, id }: { mode: AdminMode; id?: string
   const [briefings, setBriefings] = useState<BriefingRow[]>([]);
   const [briefing, setBriefing] = useState<BriefingRow | null>(null);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [selectedBriefingId, setSelectedBriefingId] = useState<string | null>(null);
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("");
   const [leadName, setLeadName] = useState("");
@@ -53,6 +54,8 @@ export function WorkflowAdminClient({ mode, id }: { mode: AdminMode; id?: string
     if (status) params.set("status", status);
     return `/api/admin/briefings${params.size ? `?${params}` : ""}`;
   }, [id, mode, q, status]);
+
+  const activeBriefingId = mode === "briefing" ? id : selectedBriefingId ?? undefined;
 
   const loadData = useCallback(async (silentUnauthorized = false) => {
     setIsLoading(true);
@@ -137,14 +140,42 @@ export function WorkflowAdminClient({ mode, id }: { mode: AdminMode; id?: string
     }
   }
 
+  async function openBriefing(briefingId: string) {
+    setIsLoading(true);
+    setError("");
+    setMessage("");
+    try {
+      const response = await fetch(`/api/admin/briefings/${briefingId}`, {
+        cache: "no-store",
+        credentials: "same-origin",
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? "Falha ao carregar a solicitação.");
+      setBriefing(data.briefing ?? null);
+      setAttachments(data.attachments ?? []);
+      setSelectedBriefingId(briefingId);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Falha ao carregar a solicitação.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  function closeBriefing() {
+    setSelectedBriefingId(null);
+    setBriefing(null);
+    setAttachments([]);
+  }
+
   async function copyGeneratedUrl() {
     await navigator.clipboard.writeText(generatedUrl);
     setMessage("Link copiado para a área de transferência.");
   }
 
   async function deleteAttachment(attachmentId: string) {
-    if (!id || !window.confirm("Excluir este anexo antes do prazo automático?")) return;
-    const response = await fetch(`/api/admin/briefings/${id}/attachments/${attachmentId}`, {
+    if (!activeBriefingId || !window.confirm("Excluir este anexo antes do prazo automático?")) return;
+    const response = await fetch(`/api/admin/briefings/${activeBriefingId}/attachments/${attachmentId}`, {
       method: "DELETE",
       credentials: "same-origin",
     });
@@ -187,7 +218,14 @@ export function WorkflowAdminClient({ mode, id }: { mode: AdminMode; id?: string
         {error && <div className="commercial-admin-alert commercial-admin-alert-error">{error}</div>}
         {message && <div className="commercial-admin-alert commercial-admin-alert-success">{message}</div>}
 
-        {mode === "briefings" ? (
+        {mode === "briefings" && selectedBriefingId ? (
+          <>
+            <div className="commercial-admin-actions commercial-admin-actions-block">
+              <button type="button" onClick={closeBriefing}>Voltar para solicitações</button>
+            </div>
+            <BriefingDetails briefing={briefing} attachments={attachments} deleteAttachment={deleteAttachment} />
+          </>
+        ) : mode === "briefings" ? (
           <>
             <section className="commercial-admin-card workflow-admin-create">
               <div><h2>Novo link de briefing</h2><p>Crie um link exclusivo para enviar ao contato.</p></div>
@@ -202,7 +240,7 @@ export function WorkflowAdminClient({ mode, id }: { mode: AdminMode; id?: string
               <select value={status} onChange={(event) => setStatus(event.target.value)}><option value="">Todos os status</option>{statusOptions.map((item) => <option key={item}>{item}</option>)}</select>
               <button type="button" onClick={() => void loadData()}>Filtrar</button>
             </div>
-            <BriefingTable rows={briefings} />
+            <BriefingTable rows={briefings} onOpen={openBriefing} isLoading={isLoading} />
           </>
         ) : (
           <BriefingDetails briefing={briefing} attachments={attachments} deleteAttachment={deleteAttachment} />
@@ -212,12 +250,12 @@ export function WorkflowAdminClient({ mode, id }: { mode: AdminMode; id?: string
   );
 }
 
-function BriefingTable({ rows }: { rows: BriefingRow[] }) {
+function BriefingTable({ rows, onOpen, isLoading }: { rows: BriefingRow[]; onOpen: (id: string) => Promise<void>; isLoading: boolean }) {
   return (
     <section className="commercial-admin-card">
       <h2>Solicitações</h2>
       <div className="commercial-admin-table-wrap"><table><thead><tr><th>Referência</th><th>Cliente</th><th>Projeto</th><th>Status</th><th>Anexos</th><th>Recebido</th><th>Ação</th></tr></thead><tbody>
-        {rows.map((row) => <tr key={row.id}><td>{row.reference_number}</td><td><strong>{row.responsible_name || "Não preenchido"}</strong><br />{row.email}</td><td>{row.project_name || "Aguardando preenchimento"}<br /><small>{row.brand_name}</small></td><td><StatusBadge status={row.status} /></td><td>{row.attachments_count ?? 0}</td><td>{formatDate(row.submitted_at ?? row.created_at)}</td><td><div className="commercial-admin-actions"><Link href={`/admin/solicitacoes/${row.id}`}>Abrir</Link></div></td></tr>)}
+        {rows.map((row) => <tr key={row.id}><td>{row.reference_number}</td><td><strong>{row.responsible_name || "Não preenchido"}</strong><br />{row.email}</td><td>{row.project_name || "Aguardando preenchimento"}<br /><small>{row.brand_name}</small></td><td><StatusBadge status={row.status} /></td><td>{row.attachments_count ?? 0}</td><td>{formatDate(row.submitted_at ?? row.created_at)}</td><td><div className="commercial-admin-actions"><button type="button" disabled={isLoading} onClick={() => void onOpen(row.id)}>Abrir</button></div></td></tr>)}
         {rows.length === 0 && <tr><td colSpan={7}>Nenhuma solicitação encontrada.</td></tr>}
       </tbody></table></div>
     </section>

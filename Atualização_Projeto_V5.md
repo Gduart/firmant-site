@@ -1471,3 +1471,25 @@ Observação:
 Não foi criada cobrança real de teste em produção. O checkout foi validado no
 Asaas Sandbox; a produção recebeu apenas smoke tests HTTP sem mutação de dados.
 ```
+
+---
+
+## 19. Hotfix de abertura do briefing - 2026-08-30
+
+O botão `Abrir` da Aprovação Geral deixou de navegar para a rota SSR dinâmica
+`/admin/solicitacoes/[id]`. Os detalhes agora são carregados pela API e exibidos
+dentro da própria página estática `/admin/aprovacao-geral`, evitando uma nova
+renderização do Next.js/OpenNext no Worker.
+
+Validações:
+
+```text
+Lint: OK
+Build Next.js 16.2.1: OK
+TypeScript: OK
+/admin/aprovacao-geral confirmada como página estática: OK
+Página em produção, 10 requisições consecutivas: 10 x HTTP 200
+Homepage, contato e Admin Clientes: HTTP 200
+API administrativa sem sessão: HTTP 401 esperado
+Deploy produção: cd55bdba-4612-4686-ae95-beaa39b5491f
+```

@@ -7,6 +7,8 @@
 - Proposta comercial criada a partir do briefing, itens, etapas de pagamento, termos, versões imutáveis, PDF e envio por Gmail SMTP.
 - Aceite/recusa com versão, hash, nome, e-mail, data, IP e navegador.
 - Primeira etapa cobrada pelo fluxo já existente de pedidos e Asaas; o webhook sincroniza a etapa e o projeto sem interromper pedidos antigos.
+- Pagamento de propostas fixado em duas etapas: entrada de 50% após o aceite e saldo de 50% após a aprovação, antes da entrega final. O projeto permanece bloqueado para produção até a confirmação da entrada.
+- O Admin abre detalhes de proposta dentro da rota estática `/admin/propostas`, repetindo o hotfix já usado para briefings e evitando depender de uma nova navegação SSR dinâmica no Cloudflare.
 - Portal privado para aprovar imagem, carrossel e vídeo MP4, com comentários gerais, por slide ou timecode.
 - Aprovação e rodadas de revisão registradas por versão.
 

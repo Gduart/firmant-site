@@ -1911,6 +1911,23 @@ input:focus, textarea:focus, select:focus {
 .proposal-admin-milestone { display: grid; gap: .35rem; padding: .75rem 0; border-bottom: 1px solid rgba(255,255,255,.12); }
 .proposal-admin-milestone span { color: rgba(255,255,255,.65); font-size: .78rem; }
 .proposal-admin-milestone a, .proposal-admin-milestone button { color: #c7ff6b; border: 0; padding: 0; background: transparent; text-align: left; text-decoration: underline; cursor: pointer; }
+.proposal-payment-plan { display: grid; gap: 1rem; margin-top: 2rem; border: 1px solid rgba(201,168,76,.35); border-radius: 16px; padding: 1.25rem; background: rgba(201,168,76,.055); }
+.proposal-payment-plan h3 { margin: .3rem 0 !important; }
+.proposal-payment-plan > div > span, .proposal-payment-plan-steps article > span, .proposal-payment-summary > span { color: var(--accent-gold); font-size: .7rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+.proposal-payment-plan p, .proposal-payment-summary p { margin: .35rem 0 0; color: rgba(255,255,255,.68); line-height: 1.5; }
+.proposal-payment-plan-steps { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+.proposal-payment-plan-steps article { display: grid; gap: .35rem; border: 1px solid rgba(255,255,255,.12); border-radius: 12px; padding: 1rem; background: rgba(255,255,255,.035); }
+.proposal-payment-plan-steps strong { color: #c7ff6b; font-size: 1.3rem; }
+.proposal-payment-summary { display: grid; gap: .45rem; margin: 1rem 0 1.25rem; border: 1px solid rgba(255,255,255,.13); border-radius: 12px; padding: 1rem; background: rgba(255,255,255,.035); }
+.proposal-payment-summary > span:not(:first-child) { margin-top: .65rem; }
+.payment-status { display: inline-flex; width: fit-content; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; padding: .38rem .65rem; font-size: .72rem; font-weight: 800; }
+.payment-status-paid { border-color: rgba(52,211,153,.45); color: #86efac; background: rgba(20,83,45,.2); }
+.payment-status-pending { border-color: rgba(251,191,36,.45); color: #fcd34d; background: rgba(120,53,15,.18); }
+.payment-status-danger { border-color: rgba(248,113,113,.45); color: #fca5a5; background: rgba(127,29,29,.18); }
+.payment-status-neutral { color: rgba(255,255,255,.7); }
+.proposal-admin-milestone b { color: #fff; font-size: 1rem; }
+.proposal-production-blocked { border: 1px solid rgba(251,191,36,.4); border-radius: 14px; padding: 1rem; background: rgba(120,53,15,.15); }
+.proposal-production-blocked > strong { color: #fcd34d; font-size: 1.05rem; }
 
 .proposal-public-page { min-height: 100vh; background: #eeece5; color: #17201b; padding: 2rem 1rem; }
 .proposal-public-shell { max-width: 1180px; margin: 0 auto; }
@@ -1968,6 +1985,7 @@ input:focus, textarea:focus, select:focus {
   .proposal-public-hero { align-items: flex-start; flex-direction: column; }
   .proposal-public-meta { text-align: left; }
   .proposal-line-item, .proposal-milestone, .proposal-public-facts { grid-template-columns: 1fr; }
+  .proposal-payment-plan-steps { grid-template-columns: 1fr; }
 }
 
 .review-admin-project { display: grid; gap: 1rem; }

@@ -101,8 +101,8 @@ export async function createProposalFromBriefing(input: {
     unitPriceCents: 0,
   }], now);
   await insertMilestones(id, [
-    { type: "DEPOSIT", label: "Entrada para início", percentageBasisPoints: 5000, amountCents: 0, dueTrigger: "Após o aceite" },
-    { type: "BALANCE", label: "Saldo antes da entrega master", percentageBasisPoints: 5000, amountCents: 0, dueTrigger: "Após a aprovação" },
+    { type: "DEPOSIT", label: "Entrada de 50% para iniciar o projeto", percentageBasisPoints: 5000, amountCents: 0, dueTrigger: "Após o aceite da proposta" },
+    { type: "BALANCE", label: "Saldo final de 50%", percentageBasisPoints: 5000, amountCents: 0, dueTrigger: "Após a aprovação, antes da entrega final" },
   ], now);
   await recordAuditEvent({
     entityType: "PROPOSAL",
@@ -128,11 +128,15 @@ export async function listProposals(params: { q?: string; status?: string }) {
     values.push(q, q, q, q);
   }
   const where = clauses.length ? `WHERE ${clauses.join(" AND ")}` : "";
-  return workflowAll<ProposalRecord & { first_checkout_url: string | null }>(
+  return workflowAll<ProposalRecord & {
+    deposit_status: string | null;
+    deposit_paid_at: string | null;
+  }>(
     `SELECT p.*,
-      (SELECT o.checkoutUrl FROM proposal_payment_milestones pm
-       JOIN orders o ON o.id = pm.order_id
-       WHERE pm.proposal_id = p.id ORDER BY pm.position LIMIT 1) AS first_checkout_url
+      (SELECT pm.status FROM proposal_payment_milestones pm
+       WHERE pm.proposal_id = p.id ORDER BY pm.position LIMIT 1) AS deposit_status,
+      (SELECT pm.paid_at FROM proposal_payment_milestones pm
+       WHERE pm.proposal_id = p.id ORDER BY pm.position LIMIT 1) AS deposit_paid_at
      FROM proposals p ${where} ORDER BY p.created_at DESC LIMIT 300`,
     values,
   );
@@ -190,7 +194,7 @@ export async function updateProposal(id: string, input: ProposalEditorInput) {
   const now = workflowNow();
   const normalizedItems = normalizeItems(input.items);
   const totalCents = normalizedItems.reduce((sum, item) => sum + item.totalCents, 0);
-  const milestones = normalizeMilestones(input.milestones, totalCents);
+  const milestones = normalizeMilestones(totalCents);
 
   await workflowRun(
     `UPDATE proposals SET
@@ -611,15 +615,24 @@ function normalizeItems(items: ProposalItemInput[]) {
   });
 }
 
-function normalizeMilestones(items: PaymentMilestoneInput[], totalCents: number) {
-  if (!items.length) return [{ type: "FULL" as const, label: "Pagamento integral", percentageBasisPoints: 10000, amountCents: totalCents }];
-  return items.map((item) => ({
-    ...item,
-    amountCents: Math.max(0, Math.round(Number(item.amountCents) || 0)),
-    percentageBasisPoints: item.percentageBasisPoints == null
-      ? null
-      : Math.min(10000, Math.max(0, Math.round(item.percentageBasisPoints))),
-  }));
+function normalizeMilestones(totalCents: number): PaymentMilestoneInput[] {
+  const depositCents = Math.floor(totalCents / 2);
+  return [
+    {
+      type: "DEPOSIT",
+      label: "Entrada de 50% para iniciar o projeto",
+      percentageBasisPoints: 5000,
+      amountCents: depositCents,
+      dueTrigger: "Após o aceite da proposta",
+    },
+    {
+      type: "BALANCE",
+      label: "Saldo final de 50%",
+      percentageBasisPoints: 5000,
+      amountCents: totalCents - depositCents,
+      dueTrigger: "Após a aprovação, antes da entrega final",
+    },
+  ];
 }
 
 function validateEditorInput(input: ProposalEditorInput) {

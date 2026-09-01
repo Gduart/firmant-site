@@ -6,9 +6,6 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-type PageProps = { searchParams: Promise<{ briefingId?: string }> };
-
-export default async function ProposalsPage({ searchParams }: PageProps) {
-  const { briefingId } = await searchParams;
-  return <ProposalAdminClient mode="list" briefingId={briefingId} />;
+export default function ProposalsPage() {
+  return <ProposalAdminClient mode="list" />;
 }

@@ -36,7 +36,12 @@ type ProposalLinkRecord = {
   token_hash: string;
   active: number;
   expires_at: string;
+  first_viewed_at: string | null;
+  last_viewed_at: string | null;
   view_count: number;
+  created_at: string;
+  revoked_at: string | null;
+  version_number?: number;
 };
 
 const TERMS_VERSION = "TERMOS_PROPOSTA_V1";
@@ -131,12 +136,18 @@ export async function listProposals(params: { q?: string; status?: string }) {
   return workflowAll<ProposalRecord & {
     deposit_status: string | null;
     deposit_paid_at: string | null;
+    link_active: number | null;
+    link_expires_at: string | null;
   }>(
     `SELECT p.*,
       (SELECT pm.status FROM proposal_payment_milestones pm
        WHERE pm.proposal_id = p.id ORDER BY pm.position LIMIT 1) AS deposit_status,
       (SELECT pm.paid_at FROM proposal_payment_milestones pm
        WHERE pm.proposal_id = p.id ORDER BY pm.position LIMIT 1) AS deposit_paid_at
+      ,(SELECT pal.active FROM proposal_access_links pal
+        WHERE pal.proposal_id = p.id ORDER BY pal.created_at DESC LIMIT 1) AS link_active
+      ,(SELECT pal.expires_at FROM proposal_access_links pal
+        WHERE pal.proposal_id = p.id ORDER BY pal.created_at DESC LIMIT 1) AS link_expires_at
      FROM proposals p ${where} ORDER BY p.created_at DESC LIMIT 300`,
     values,
   );
@@ -148,7 +159,7 @@ export async function getProposalDetails(id: string) {
     [id],
   );
   if (!proposal) return null;
-  const [items, milestones, versions, project] = await Promise.all([
+  const [items, milestones, versions, project, accessLink] = await Promise.all([
     listProposalItems(id),
     listProposalMilestones(id),
     workflowAll<ProposalVersionRecord>(
@@ -159,12 +170,32 @@ export async function getProposalDetails(id: string) {
       "SELECT id, project_number, status FROM projects WHERE proposal_id = ? LIMIT 1",
       [id],
     ),
+    workflowFirst<ProposalLinkRecord>(
+      `SELECT pal.*, pv.version_number
+       FROM proposal_access_links pal
+       JOIN proposal_versions pv ON pv.id = pal.proposal_version_id
+       WHERE pal.proposal_id = ? ORDER BY pal.created_at DESC LIMIT 1`,
+      [id],
+    ),
   ]);
   return {
     proposal: toEditableProposal(proposal),
     project: project ?? null,
     items,
     milestones,
+    accessLink: accessLink ? {
+      id: accessLink.id,
+      proposal_version_id: accessLink.proposal_version_id,
+      version_number: accessLink.version_number ?? proposal.current_version,
+      active: accessLink.active === 1,
+      expires_at: accessLink.expires_at,
+      expired: new Date(accessLink.expires_at).getTime() < Date.now(),
+      first_viewed_at: accessLink.first_viewed_at,
+      last_viewed_at: accessLink.last_viewed_at,
+      view_count: accessLink.view_count,
+      created_at: accessLink.created_at,
+      revoked_at: accessLink.revoked_at,
+    } : null,
     versions: versions.map((version) => ({
       id: version.id,
       proposal_id: version.proposal_id,
@@ -174,6 +205,59 @@ export async function getProposalDetails(id: string) {
       created_at: version.created_at,
     })),
   };
+}
+
+export async function setProposalAccessLinkActive(input: {
+  proposalId: string;
+  linkId: string;
+  active: boolean;
+  actorId: string;
+}) {
+  const link = await workflowFirst<ProposalLinkRecord>(
+    `SELECT pal.*, pv.version_number
+     FROM proposal_access_links pal
+     JOIN proposal_versions pv ON pv.id = pal.proposal_version_id
+     WHERE pal.id = ? AND pal.proposal_id = ?
+     ORDER BY pal.created_at DESC LIMIT 1`,
+    [input.linkId, input.proposalId],
+  );
+  if (!link) throw new Error("Link da proposta não encontrado.");
+
+  const latest = await workflowFirst<{ id: string }>(
+    "SELECT id FROM proposal_access_links WHERE proposal_id = ? ORDER BY created_at DESC LIMIT 1",
+    [input.proposalId],
+  );
+  if (latest?.id !== link.id) throw new Error("Um link substituído não pode ser reativado.");
+  if (input.active && new Date(link.expires_at).getTime() < Date.now()) {
+    throw new Error("Este link expirou e não pode ser reativado. Publique uma nova versão.");
+  }
+
+  const now = workflowNow();
+  if (input.active) {
+    await workflowRun(
+      "UPDATE proposal_access_links SET active = 0, revoked_at = COALESCE(revoked_at, ?) WHERE proposal_id = ? AND id <> ? AND active = 1",
+      [now, input.proposalId, link.id],
+    );
+    await workflowRun(
+      "UPDATE proposal_access_links SET active = 1, revoked_at = NULL WHERE id = ?",
+      [link.id],
+    );
+  } else {
+    await workflowRun(
+      "UPDATE proposal_access_links SET active = 0, revoked_at = ? WHERE id = ?",
+      [now, link.id],
+    );
+  }
+
+  await recordAuditEvent({
+    entityType: "PROPOSAL",
+    entityId: input.proposalId,
+    eventType: input.active ? "PROPOSAL_LINK_REACTIVATED" : "PROPOSAL_LINK_REVOKED",
+    actorType: "ADMIN",
+    actorId: input.actorId,
+    metadata: { linkId: link.id, versionNumber: link.version_number },
+  });
+  return getProposalDetails(input.proposalId);
 }
 
 export async function getLatestProposalSnapshot(id: string) {

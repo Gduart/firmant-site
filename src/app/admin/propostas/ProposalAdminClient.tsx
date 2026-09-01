@@ -15,6 +15,8 @@ type ProposalRow = {
   updated_at: string;
   deposit_status?: string | null;
   deposit_paid_at?: string | null;
+  link_active?: number | null;
+  link_expires_at?: string | null;
 };
 
 type Item = { id?: string; name: string; description: string; quantity: number; unit: string; unit_price_cents: number };
@@ -28,6 +30,19 @@ type ProposalDetails = {
   project: { id: string; project_number: string; status: string } | null;
   items: Item[];
   milestones: Milestone[];
+  accessLink: {
+    id: string;
+    proposal_version_id: string;
+    version_number: number;
+    active: boolean;
+    expires_at: string;
+    expired: boolean;
+    first_viewed_at: string | null;
+    last_viewed_at: string | null;
+    view_count: number;
+    created_at: string;
+    revoked_at: string | null;
+  } | null;
   versions: Array<{ id: string; version_number: number; content_hash: string; created_at: string }>;
 };
 
@@ -194,6 +209,30 @@ export function ProposalAdminClient({ mode, id, briefingId }: { mode: "list" | "
     finally { setLoading(false); }
   }
 
+  async function setAccessLinkActive(active: boolean) {
+    if (!activeProposalId || !details?.accessLink) return;
+    const action = active ? "reativar" : "invalidar";
+    const warning = active
+      ? "Reativar este link permitirá que o cliente volte a acessar esta proposta. Continuar?"
+      : "Invalidar este link bloqueará imediatamente o acesso do cliente. O aceite e os pagamentos já registrados não serão apagados. Continuar?";
+    if (!window.confirm(warning)) return;
+    setLoading(true); setError(""); setMessage("");
+    try {
+      const response = await fetch(`/api/admin/proposals/${activeProposalId}/links/${details.accessLink.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ active }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? `Falha ao ${action} o link.`);
+      setDetails(data);
+      setMessage(active ? "Link do cliente reativado." : "Link do cliente invalidado imediatamente.");
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : `Falha ao ${action} o link.`);
+    } finally { setLoading(false); }
+  }
+
   function updateProposal(patch: Partial<ProposalDetails["proposal"]>) { setDetails((value) => value ? { ...value, proposal: { ...value.proposal, ...patch } } : value); }
   function updateItem(index: number, patch: Partial<Item>) { setDetails((value) => value ? { ...value, items: value.items.map((item, itemIndex) => itemIndex === index ? { ...item, ...patch } : item) } : value); }
   async function openProposal(proposalId: string) {
@@ -213,15 +252,15 @@ export function ProposalAdminClient({ mode, id, briefingId }: { mode: "list" | "
     <header className="commercial-admin-header"><div><span>Admin FIRMANT</span><h1>{mode === "editor" ? "Proposta comercial" : "Propostas"}</h1><p>Orçamentos versionados, aceite registrado e cobrança integrada ao Asaas.</p></div><form className="commercial-admin-login" onSubmit={(event) => { event.preventDefault(); void login(); }}><label>Usuário<input value={user} onChange={(event) => setUser(event.target.value)} /></label><label>Senha<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} /></label><button disabled={loading}>{loading ? "Carregando..." : "Entrar"}</button></form></header>
     <nav className="commercial-admin-nav">{nav.map(([href, label]) => <Link key={href} href={href}>{label}</Link>)}</nav>
     {error && <div className="commercial-admin-alert commercial-admin-alert-error">{error}</div>}{message && <div className="commercial-admin-alert commercial-admin-alert-success">{message}</div>}
-    {mode === "list" && selectedProposalId && details ? <><div className="commercial-admin-actions commercial-admin-actions-block"><button type="button" onClick={closeProposal}>Voltar para propostas</button></div><ProposalEditor details={details} updateProposal={updateProposal} updateItem={updateItem} setDetails={setDetails} save={save} publish={publish} startRevision={startRevision} createMilestoneCheckout={createMilestoneCheckout} milestoneUrls={milestoneUrls} loading={loading} publicUrl={publicUrl} setMessage={setMessage} /></> : mode === "list" ? <><div className="commercial-admin-filters workflow-admin-filters"><input placeholder="Buscar proposta, projeto ou cliente" value={q} onChange={(event) => setQ(event.target.value)} /><select value={status} onChange={(event) => setStatus(event.target.value)}><option value="">Todos os status</option>{["DRAFT", "SENT", "VIEWED", "ACCEPTED", "REJECTED", "EXPIRED"].map((value) => <option key={value}>{proposalStatusLabel(value)}</option>)}</select><button type="button" onClick={() => void load(false, { q, status })}>Filtrar</button></div><ProposalTable rows={rows} onOpen={openProposal} loading={loading} /></> : details ? <ProposalEditor details={details} updateProposal={updateProposal} updateItem={updateItem} setDetails={setDetails} save={save} publish={publish} startRevision={startRevision} createMilestoneCheckout={createMilestoneCheckout} milestoneUrls={milestoneUrls} loading={loading} publicUrl={publicUrl} setMessage={setMessage} /> : <section className="commercial-admin-card"><p>Entre no Admin para consultar a proposta.</p></section>}
+    {mode === "list" && selectedProposalId && details ? <><div className="commercial-admin-actions commercial-admin-actions-block"><button type="button" onClick={closeProposal}>Voltar para propostas</button></div><ProposalEditor details={details} updateProposal={updateProposal} updateItem={updateItem} setDetails={setDetails} save={save} publish={publish} startRevision={startRevision} createMilestoneCheckout={createMilestoneCheckout} setAccessLinkActive={setAccessLinkActive} milestoneUrls={milestoneUrls} loading={loading} publicUrl={publicUrl} setMessage={setMessage} /></> : mode === "list" ? <><div className="commercial-admin-filters workflow-admin-filters"><input placeholder="Buscar proposta, projeto ou cliente" value={q} onChange={(event) => setQ(event.target.value)} /><select value={status} onChange={(event) => setStatus(event.target.value)}><option value="">Todos os status</option>{["DRAFT", "SENT", "VIEWED", "ACCEPTED", "REJECTED", "EXPIRED"].map((value) => <option key={value}>{proposalStatusLabel(value)}</option>)}</select><button type="button" onClick={() => void load(false, { q, status })}>Filtrar</button></div><ProposalTable rows={rows} onOpen={openProposal} loading={loading} /></> : details ? <ProposalEditor details={details} updateProposal={updateProposal} updateItem={updateItem} setDetails={setDetails} save={save} publish={publish} startRevision={startRevision} createMilestoneCheckout={createMilestoneCheckout} setAccessLinkActive={setAccessLinkActive} milestoneUrls={milestoneUrls} loading={loading} publicUrl={publicUrl} setMessage={setMessage} /> : <section className="commercial-admin-card"><p>Entre no Admin para consultar a proposta.</p></section>}
   </div></section>;
 }
 
 function ProposalTable({ rows, onOpen, loading }: { rows: ProposalRow[]; onOpen: (id: string) => Promise<void>; loading: boolean }) {
-  return <section className="commercial-admin-card"><h2>Propostas comerciais</h2><div className="commercial-admin-table-wrap"><table><thead><tr><th>Número</th><th>Cliente</th><th>Projeto</th><th>Valor</th><th>Proposta</th><th>Entrada de 50%</th><th>Versão</th><th>Ação</th></tr></thead><tbody>{rows.map((row) => { const payment = paymentStatusInfo(row.deposit_status); return <tr key={row.id}><td>{row.proposal_number}</td><td><strong>{row.client_name}</strong><br /><small>{row.client_email}</small></td><td>{row.project_name}</td><td>{money(row.total_cents)}</td><td><span className={`workflow-status workflow-status-${row.status.toLowerCase()}`}>{proposalStatusLabel(row.status)}</span></td><td><span className={`payment-status payment-status-${payment.tone}`}>{row.status === "ACCEPTED" ? payment.label : "Ainda não exigida"}</span></td><td>v{row.current_version || "rascunho"}</td><td><div className="commercial-admin-actions"><button type="button" disabled={loading} onClick={() => void onOpen(row.id)}>Abrir</button></div></td></tr>; })}{!rows.length && <tr><td colSpan={8}>Nenhuma proposta encontrada.</td></tr>}</tbody></table></div></section>;
+  return <section className="commercial-admin-card"><h2>Propostas comerciais</h2><div className="commercial-admin-table-wrap"><table><thead><tr><th>Número</th><th>Cliente</th><th>Projeto</th><th>Valor</th><th>Proposta</th><th>Link do cliente</th><th>Entrada de 50%</th><th>Versão</th><th>Ação</th></tr></thead><tbody>{rows.map((row) => { const payment = paymentStatusInfo(row.deposit_status); const access = accessLinkStatus(row.link_active, row.link_expires_at); return <tr key={row.id}><td>{row.proposal_number}</td><td><strong>{row.client_name}</strong><br /><small>{row.client_email}</small></td><td>{row.project_name}</td><td>{money(row.total_cents)}</td><td><span className={`workflow-status workflow-status-${row.status.toLowerCase()}`}>{proposalStatusLabel(row.status)}</span></td><td><span className={`payment-status payment-status-${access.tone}`}>{access.label}</span></td><td><span className={`payment-status payment-status-${payment.tone}`}>{row.status === "ACCEPTED" ? payment.label : "Ainda não exigida"}</span></td><td>v{row.current_version || "rascunho"}</td><td><div className="commercial-admin-actions"><button type="button" disabled={loading} onClick={() => void onOpen(row.id)}>Abrir</button></div></td></tr>; })}{!rows.length && <tr><td colSpan={9}>Nenhuma proposta encontrada.</td></tr>}</tbody></table></div></section>;
 }
 
-function ProposalEditor(props: { details: ProposalDetails; updateProposal: (patch: Partial<ProposalDetails["proposal"]>) => void; updateItem: (index: number, patch: Partial<Item>) => void; setDetails: React.Dispatch<React.SetStateAction<ProposalDetails | null>>; save: () => Promise<boolean>; publish: (sendEmail?: boolean) => Promise<void>; startRevision: () => Promise<void>; createMilestoneCheckout: (milestone: Milestone) => Promise<void>; milestoneUrls: Record<string, string>; loading: boolean; publicUrl: string; setMessage: (value: string) => void }) {
+function ProposalEditor(props: { details: ProposalDetails; updateProposal: (patch: Partial<ProposalDetails["proposal"]>) => void; updateItem: (index: number, patch: Partial<Item>) => void; setDetails: React.Dispatch<React.SetStateAction<ProposalDetails | null>>; save: () => Promise<boolean>; publish: (sendEmail?: boolean) => Promise<void>; startRevision: () => Promise<void>; createMilestoneCheckout: (milestone: Milestone) => Promise<void>; setAccessLinkActive: (active: boolean) => Promise<void>; milestoneUrls: Record<string, string>; loading: boolean; publicUrl: string; setMessage: (value: string) => void }) {
   const { details, updateProposal, updateItem, setDetails } = props;
   const p = details.proposal; const editable = p.status === "DRAFT";
   const totalCents = details.items.reduce((sum, item) => sum + Math.round(item.quantity * item.unit_price_cents), 0);
@@ -234,7 +273,25 @@ function ProposalEditor(props: { details: ProposalDetails; updateProposal: (patc
     <div className="workflow-field-grid proposal-terms-grid"><label className="workflow-field"><span>Incluído (uma linha por item)</span><textarea rows={7} value={p.included.join("\n")} onChange={(e) => updateProposal({ included: e.target.value.split("\n") })} /></label><label className="workflow-field"><span>Não incluído</span><textarea rows={7} value={p.excluded.join("\n")} onChange={(e) => updateProposal({ excluded: e.target.value.split("\n") })} /></label><label className="workflow-field"><span>Revisões incluídas</span><input type="number" min="0" value={p.revisions_included} onChange={(e) => updateProposal({ revisions_included: Number(e.target.value) })} /></label><label className="workflow-field"><span>Prazo estimado</span><input value={p.estimated_deadline ?? ""} onChange={(e) => updateProposal({ estimated_deadline: e.target.value })} /></label><label className="workflow-field workflow-field-wide"><span>Definição de revisão</span><textarea value={p.revision_definition} onChange={(e) => updateProposal({ revision_definition: e.target.value })} /></label><label className="workflow-field workflow-field-wide"><span>Licença e uso</span><textarea value={p.license_terms} onChange={(e) => updateProposal({ license_terms: e.target.value })} /></label><label className="workflow-field workflow-field-wide"><span>Cancelamento</span><textarea value={p.cancellation_terms} onChange={(e) => updateProposal({ cancellation_terms: e.target.value })} /></label></div>
     <fieldset className="workflow-options"><legend>Formas de pagamento</legend><div>{[["PIX", "Pix"], ["CREDIT_CARD", "Cartão"], ["BOLETO", "Boleto"]].map(([value, label]) => <label key={value}><input type="checkbox" checked={p.paymentMethods.includes(value)} onChange={(e) => updateProposal({ paymentMethods: e.target.checked ? [...p.paymentMethods, value] : p.paymentMethods.filter((item) => item !== value) })} /><span>{label}</span></label>)}</div></fieldset>
     <section className="proposal-payment-plan"><div><span>Regra fixa de pagamento</span><h3>50% para começar + 50% antes da entrega final</h3><p>Os valores são calculados automaticamente sobre o total da proposta e não podem ser alterados.</p></div><div className="proposal-payment-plan-steps"><article><span>1 · ENTRADA FIXA</span><strong>{money(Math.floor(totalCents / 2))}</strong><p>50% após o aceite. Somente a compensação desta entrada libera o início do trabalho.</p></article><article><span>2 · SALDO FINAL</span><strong>{money(totalCents - Math.floor(totalCents / 2))}</strong><p>50% após a aprovação e antes da entrega dos arquivos finais.</p></article></div></section>
-  </fieldset></section><aside className="commercial-admin-card proposal-editor-sidebar"><h2>Resumo</h2><strong className="proposal-total">{money(totalCents)}</strong><p>{details.items.length} item(ns) · pagamento fixo em 2 etapas</p><section className="proposal-payment-summary"><span>STATUS DA PROPOSTA</span><strong>{proposalStatusLabel(p.status)}</strong><span>STATUS DA ENTRADA (50%)</span><strong className={`payment-status payment-status-${payment.tone}`}>{p.status === "ACCEPTED" ? payment.label : "Aguardando aceite"}</strong><p>{deposit?.paid_at ? `Pagamento registrado em ${new Date(deposit.paid_at).toLocaleDateString("pt-BR")}.` : p.status === "ACCEPTED" ? "Produção bloqueada até a confirmação do pagamento da entrada." : "A entrada será cobrada após o aceite do cliente."}</p></section>{editable ? <div className="workflow-form-actions"><button type="button" onClick={() => void props.save()} disabled={props.loading}>Salvar rascunho</button><button className="workflow-primary-action" type="button" onClick={() => void props.publish()} disabled={props.loading}>Publicar versão</button><button type="button" onClick={() => void props.publish(true)} disabled={props.loading}>Publicar e enviar por e-mail</button></div> : <><p>Esta versão está protegida contra sobrescrita.</p><div className="commercial-admin-actions commercial-admin-actions-block"><a href={`/api/admin/proposals/${p.id}/pdf`} target="_blank" rel="noreferrer">Abrir PDF</a>{["SENT", "VIEWED", "REJECTED", "EXPIRED"].includes(p.status) && <button type="button" onClick={() => void props.startRevision()}>Iniciar nova versão</button>}</div></>}{props.publicUrl && <div className="workflow-generated-link proposal-public-link"><input readOnly value={props.publicUrl} /><button type="button" onClick={() => { void navigator.clipboard.writeText(props.publicUrl); props.setMessage("Link copiado."); }}>Copiar</button></div>}{p.status === "ACCEPTED" && <><h3>Cobranças por etapa</h3>{details.milestones.map((milestone, index) => { const url = milestone.checkout_url || (milestone.id ? props.milestoneUrls[milestone.id] : ""); const state = paymentStatusInfo(milestone.status); return <div className="proposal-admin-milestone" key={milestone.id}><span>{index === 0 ? "1ª etapa · 50%" : "2ª etapa · 50%"}</span><strong>{milestone.label}</strong><b>{money(milestone.amount_cents)}</b><span className={`payment-status payment-status-${state.tone}`}>{state.label}</span>{url ? <a href={url} target="_blank" rel="noreferrer">Abrir cobrança</a> : <button type="button" disabled={props.loading} onClick={() => void props.createMilestoneCheckout(milestone)}>Gerar cobrança no Asaas</button>}</div>; })}</>}<h3>Versões</h3>{details.versions.map((version) => <p key={version.id}>v{version.version_number} · {new Date(version.created_at).toLocaleDateString("pt-BR")}<br /><small>{version.content_hash.slice(0, 16)}…</small></p>)}</aside><ContentApprovalCard proposalStatus={p.status} project={details.project} depositStatus={deposit?.status} /></div>;
+  </fieldset></section><aside className="commercial-admin-card proposal-editor-sidebar"><h2>Resumo</h2><strong className="proposal-total">{money(totalCents)}</strong><p>{details.items.length} item(ns) · pagamento fixo em 2 etapas</p><section className="proposal-payment-summary"><span>STATUS DA PROPOSTA</span><strong>{proposalStatusLabel(p.status)}</strong><span>STATUS DA ENTRADA (50%)</span><strong className={`payment-status payment-status-${payment.tone}`}>{p.status === "ACCEPTED" ? payment.label : "Aguardando aceite"}</strong><p>{deposit?.paid_at ? `Pagamento registrado em ${new Date(deposit.paid_at).toLocaleDateString("pt-BR")}.` : p.status === "ACCEPTED" ? "Produção bloqueada até a confirmação do pagamento da entrada." : "A entrada será cobrada após o aceite do cliente."}</p></section><ProposalAccessLinkControl link={details.accessLink} loading={props.loading} onChange={props.setAccessLinkActive} />{editable ? <div className="workflow-form-actions"><button type="button" onClick={() => void props.save()} disabled={props.loading}>Salvar rascunho</button><button className="workflow-primary-action" type="button" onClick={() => void props.publish()} disabled={props.loading}>Publicar versão</button><button type="button" onClick={() => void props.publish(true)} disabled={props.loading}>Publicar e enviar por e-mail</button></div> : <><p>Esta versão está protegida contra sobrescrita.</p><div className="commercial-admin-actions commercial-admin-actions-block"><a href={`/api/admin/proposals/${p.id}/pdf`} target="_blank" rel="noreferrer">Abrir PDF</a>{["SENT", "VIEWED", "REJECTED", "EXPIRED"].includes(p.status) && <button type="button" onClick={() => void props.startRevision()}>Iniciar nova versão</button>}</div></>}{props.publicUrl && <div className="workflow-generated-link proposal-public-link"><input readOnly value={props.publicUrl} /><button type="button" onClick={() => { void navigator.clipboard.writeText(props.publicUrl); props.setMessage("Link copiado."); }}>Copiar</button></div>}{p.status === "ACCEPTED" && <><h3>Cobranças por etapa</h3>{details.milestones.map((milestone, index) => { const url = milestone.checkout_url || (milestone.id ? props.milestoneUrls[milestone.id] : ""); const state = paymentStatusInfo(milestone.status); return <div className="proposal-admin-milestone" key={milestone.id}><span>{index === 0 ? "1ª etapa · 50%" : "2ª etapa · 50%"}</span><strong>{milestone.label}</strong><b>{money(milestone.amount_cents)}</b><span className={`payment-status payment-status-${state.tone}`}>{state.label}</span>{url ? <a href={url} target="_blank" rel="noreferrer">Abrir cobrança</a> : <button type="button" disabled={props.loading} onClick={() => void props.createMilestoneCheckout(milestone)}>Gerar cobrança no Asaas</button>}</div>; })}</>}<h3>Versões</h3>{details.versions.map((version) => <p key={version.id}>v{version.version_number} · {new Date(version.created_at).toLocaleDateString("pt-BR")}<br /><small>{version.content_hash.slice(0, 16)}…</small></p>)}</aside><ContentApprovalCard proposalStatus={p.status} project={details.project} depositStatus={deposit?.status} /></div>;
+}
+
+function ProposalAccessLinkControl({ link, loading, onChange }: { link: ProposalDetails["accessLink"]; loading: boolean; onChange: (active: boolean) => Promise<void> }) {
+  const status = accessLinkStatus(link ? Number(link.active) : null, link?.expires_at ?? null);
+  return <section className="proposal-payment-summary proposal-access-link-control">
+    <span>LINK INDIVIDUAL DO CLIENTE</span>
+    <strong className={`payment-status payment-status-${status.tone}`}>{status.label}</strong>
+    {!link ? <p>O link será criado quando a primeira versão for publicada.</p> : <>
+      <p>Versão v{link.version_number} · válido até {new Date(link.expires_at).toLocaleDateString("pt-BR")}.</p>
+      <p>{link.view_count ? `${link.view_count} acesso(s). Último acesso em ${link.last_viewed_at ? new Date(link.last_viewed_at).toLocaleString("pt-BR") : "não registrado"}.` : "O cliente ainda não acessou este link."}</p>
+      <div className="commercial-admin-actions commercial-admin-actions-block">
+        {link.active && !link.expired
+          ? <button type="button" disabled={loading} onClick={() => void onChange(false)}>Invalidar link</button>
+          : <button type="button" disabled={loading || link.expired} onClick={() => void onChange(true)}>{link.expired ? "Link expirado" : "Reativar link"}</button>}
+      </div>
+      <small>Invalidar bloqueia o acesso imediatamente sem apagar aceite, auditoria ou pagamento.</small>
+    </>}
+  </section>;
 }
 
 function ContentApprovalCard({ proposalStatus, project, depositStatus }: { proposalStatus: string; project: ProposalDetails["project"]; depositStatus?: string }) {
@@ -279,4 +336,11 @@ function paymentStatusInfo(status?: string | null) {
   if (status === "CANCELED" || status === "REFUNDED" || status === "FAILED") return { label: "Pagamento não concluído", tone: "danger" };
   if (status === "CHECKOUT_CREATED" || status === "AWAITING_PAYMENT") return { label: "Aguardando pagamento", tone: "pending" };
   return { label: "Cobrança ainda não gerada", tone: "neutral" };
+}
+
+function accessLinkStatus(active?: number | null, expiresAt?: string | null) {
+  if (!expiresAt) return { label: "Não publicado", tone: "neutral" };
+  if (new Date(expiresAt).getTime() < Date.now()) return { label: "Expirado", tone: "danger" };
+  if (active === 1) return { label: "Ativo", tone: "paid" };
+  return { label: "Inativo", tone: "danger" };
 }

@@ -82,10 +82,17 @@ export function ProposalAdminClient({ mode, id, briefingId }: { mode: "list" | "
 
   useEffect(() => {
     setUser(window.localStorage.getItem("firmant-admin-user") ?? "");
+    const query = new URLSearchParams(window.location.search);
     if (mode === "list" && !briefingId) {
-      setRequestedBriefingId(new URLSearchParams(window.location.search).get("briefingId") ?? "");
+      setRequestedBriefingId(query.get("briefingId") ?? "");
     }
-    void load(true);
+    const proposalId = mode === "list" ? query.get("proposalId") : null;
+    if (proposalId) {
+      setSelectedProposalId(proposalId);
+      void load(true, {}, proposalId);
+    } else {
+      void load(true);
+    }
   }, [briefingId, load, mode]);
 
   useEffect(() => {
@@ -116,7 +123,7 @@ export function ProposalAdminClient({ mode, id, briefingId }: { mode: "list" | "
       const response = await fetch("/api/admin/session", { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "same-origin", body: JSON.stringify({ user, password }) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "Falha ao iniciar sessão.");
-      window.localStorage.setItem("firmant-admin-user", user); setPassword(""); setMessage("Sessão iniciada."); await load(false, { q, status });
+      window.localStorage.setItem("firmant-admin-user", user); setPassword(""); setMessage("Sessão iniciada."); await load(false, { q, status }, activeProposalId);
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Falha ao iniciar sessão."); }
     finally { setLoading(false); }
   }
@@ -192,6 +199,7 @@ export function ProposalAdminClient({ mode, id, briefingId }: { mode: "list" | "
   async function openProposal(proposalId: string) {
     await load(false, {}, proposalId);
     setSelectedProposalId(proposalId);
+    window.history.replaceState(null, "", `/admin/propostas?proposalId=${encodeURIComponent(proposalId)}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
   function closeProposal() {
@@ -199,6 +207,7 @@ export function ProposalAdminClient({ mode, id, briefingId }: { mode: "list" | "
     setDetails(null);
     setPublicUrl("");
     setMilestoneUrls({});
+    window.history.replaceState(null, "", "/admin/propostas");
   }
   return <section className="commercial-admin-page"><div className="commercial-admin-shell">
     <header className="commercial-admin-header"><div><span>Admin FIRMANT</span><h1>{mode === "editor" ? "Proposta comercial" : "Propostas"}</h1><p>Orçamentos versionados, aceite registrado e cobrança integrada ao Asaas.</p></div><form className="commercial-admin-login" onSubmit={(event) => { event.preventDefault(); void login(); }}><label>Usuário<input value={user} onChange={(event) => setUser(event.target.value)} /></label><label>Senha<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} /></label><button disabled={loading}>{loading ? "Carregando..." : "Entrar"}</button></form></header>

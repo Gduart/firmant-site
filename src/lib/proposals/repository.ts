@@ -8,7 +8,12 @@ import {
   workflowNow,
   workflowRun,
 } from "@/lib/workflow/db";
-import { createOpaqueToken, hashOpaqueToken } from "@/lib/workflow/tokens";
+import {
+  createOpaqueToken,
+  decryptOpaqueToken,
+  encryptOpaqueToken,
+  hashOpaqueToken,
+} from "@/lib/workflow/tokens";
 import type {
   PaymentMilestoneInput,
   ProposalEditorInput,
@@ -34,6 +39,7 @@ type ProposalLinkRecord = {
   proposal_id: string;
   proposal_version_id: string;
   token_hash: string;
+  token_ciphertext: string | null;
   active: number;
   expires_at: string;
   first_viewed_at: string | null;
@@ -178,6 +184,10 @@ export async function getProposalDetails(id: string) {
       [id],
     ),
   ]);
+  const publicToken = accessLink?.token_ciphertext
+    ? await decryptOpaqueToken(accessLink.token_ciphertext)
+    : null;
+  const baseUrl = publicToken ? await getEnvValue("APP_BASE_URL") : null;
   return {
     proposal: toEditableProposal(proposal),
     project: project ?? null,
@@ -195,6 +205,9 @@ export async function getProposalDetails(id: string) {
       view_count: accessLink.view_count,
       created_at: accessLink.created_at,
       revoked_at: accessLink.revoked_at,
+      public_url: publicToken && baseUrl
+        ? `${baseUrl.replace(/\/$/, "")}/proposta/${publicToken}`
+        : null,
     } : null,
     versions: versions.map((version) => ({
       id: version.id,
@@ -258,6 +271,50 @@ export async function setProposalAccessLinkActive(input: {
     metadata: { linkId: link.id, versionNumber: link.version_number },
   });
   return getProposalDetails(input.proposalId);
+}
+
+export async function rotateProposalAccessLink(input: {
+  proposalId: string;
+  actorId: string;
+}) {
+  const link = await workflowFirst<ProposalLinkRecord>(
+    `SELECT pal.*, pv.version_number
+     FROM proposal_access_links pal
+     JOIN proposal_versions pv ON pv.id = pal.proposal_version_id
+     WHERE pal.proposal_id = ? ORDER BY pal.created_at DESC LIMIT 1`,
+    [input.proposalId],
+  );
+  if (!link) throw new Error("Publique a proposta antes de gerar o link do cliente.");
+  if (new Date(link.expires_at).getTime() < Date.now()) {
+    throw new Error("A proposta expirou. Publique uma nova versão para gerar outro link.");
+  }
+
+  const token = createOpaqueToken();
+  const tokenHash = await hashOpaqueToken(token);
+  const tokenCiphertext = await encryptOpaqueToken(token);
+  const now = workflowNow();
+  const newLinkId = crypto.randomUUID();
+  await workflowRun(
+    "UPDATE proposal_access_links SET active = 0, revoked_at = ? WHERE proposal_id = ? AND active = 1",
+    [now, input.proposalId],
+  );
+  await workflowRun(
+    `INSERT INTO proposal_access_links (
+      id, proposal_id, proposal_version_id, token_hash, token_ciphertext, active,
+      expires_at, first_viewed_at, last_viewed_at, view_count, created_at, revoked_at
+    ) VALUES (?, ?, ?, ?, ?, 1, ?, NULL, NULL, 0, ?, NULL)`,
+    [newLinkId, input.proposalId, link.proposal_version_id, tokenHash, tokenCiphertext, link.expires_at, now],
+  );
+  await recordAuditEvent({
+    entityType: "PROPOSAL",
+    entityId: input.proposalId,
+    eventType: "PROPOSAL_LINK_ROTATED",
+    actorType: "ADMIN",
+    actorId: input.actorId,
+    metadata: { previousLinkId: link.id, newLinkId, versionNumber: link.version_number },
+  });
+  const proposal = await getProposalDetails(input.proposalId);
+  return { proposal, publicUrl: proposal?.accessLink?.public_url ?? null };
 }
 
 export async function getLatestProposalSnapshot(id: string) {
@@ -327,6 +384,7 @@ export async function publishProposal(input: { proposalId: string; createdBy: st
   const contentHash = await hashOpaqueToken(snapshotJson);
   const token = createOpaqueToken();
   const tokenHash = await hashOpaqueToken(token);
+  const tokenCiphertext = await encryptOpaqueToken(token);
 
   await workflowRun(
     `INSERT INTO proposal_versions (
@@ -341,10 +399,10 @@ export async function publishProposal(input: { proposalId: string; createdBy: st
   );
   await workflowRun(
     `INSERT INTO proposal_access_links (
-      id, proposal_id, proposal_version_id, token_hash, active, expires_at,
+      id, proposal_id, proposal_version_id, token_hash, token_ciphertext, active, expires_at,
       first_viewed_at, last_viewed_at, view_count, created_at, revoked_at
-    ) VALUES (?, ?, ?, ?, 1, ?, NULL, NULL, 0, ?, NULL)`,
-    [crypto.randomUUID(), input.proposalId, versionId, tokenHash, validUntil, now],
+    ) VALUES (?, ?, ?, ?, ?, 1, ?, NULL, NULL, 0, ?, NULL)`,
+    [crypto.randomUUID(), input.proposalId, versionId, tokenHash, tokenCiphertext, validUntil, now],
   );
   await workflowRun(
     `UPDATE proposals SET status = 'SENT', current_version = ?, valid_until = ?,

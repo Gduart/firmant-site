@@ -17,6 +17,7 @@
 		"ASAAS_EXPIRED_URL": "https://firmant-site-staging.geraldo1fduarte.workers.dev/pagamento/expirado",
 		"ASAAS_SUCCESS_URL": "https://firmant-site-staging.geraldo1fduarte.workers.dev/pagamento/sucesso",
 		"FIRMANT_ADMIN_USER": "FIRMANT_ADMIN",
+		"REVIEW_UPLOAD_BASE_URL": "https://firmant-proposal-edge-staging.geraldo1fduarte.workers.dev",
 		"GMAIL_SMTP_USER": "ag.firmant@gmail.com",
 		"GA_MEASUREMENT_ID": "G-Y390WCJ9SY",
 		"GOOGLE_ADS_ID": "AW-7226193568",

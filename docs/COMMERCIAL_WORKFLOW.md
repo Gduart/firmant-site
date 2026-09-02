@@ -21,6 +21,8 @@ Depois da aprovação formal, a versão aprovada também fica visível na propos
 
 O HTML público da proposta é servido diretamente pelo Static Assets em `/proposta.html`. As rotas antigas `/proposta/:token`, a leitura pública no D1 e o streaming privado no R2 passam pelo Worker mínimo `firmant-proposal-edge`, evitando carregar Next/React/OpenNext nessas requisições. As ações de aceite, pagamento e PDF são encaminhadas ao Worker principal.
 
+O upload de prévias também usa esse Worker leve. O Admin cria uma sessão opaca válida por 20 minutos, envia cada arquivo em um `PUT` bruto diretamente ao R2 e só então pede ao Worker principal para registrar a versão. O MP4 não passa por `formData()` nem `arrayBuffer()` no Next/OpenNext. Tamanho, MIME, assinatura binária e presença no R2 são verificados antes da finalização no D1.
+
 Comandos operacionais:
 
 ```powershell
@@ -90,3 +92,10 @@ Asaas solicita os dados ao cliente, evitando rejeição da sessão.
 - Idempotência: nova solicitação de pagamento reutilizou o mesmo pedido e checkout.
 - Portal de conteúdo: streaming privado de imagem, feedback de revisão e aprovação formal.
 - Limpeza: registros D1 e objetos R2 usados nos testes foram removidos.
+
+## Validação do upload por streaming em 2026-09-02
+
+- Migration `0009_review_upload_sessions.sql` aplicada em staging.
+- Worker leve publicado em staging e testado com envio bruto de MP4 ao R2.
+- Resposta HTTP 200, tamanho armazenado confirmado e registro D1 verificado.
+- Arquivo, sessão, projeto e proposta descartáveis removidos ao final do teste.

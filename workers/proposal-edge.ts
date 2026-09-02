@@ -2,7 +2,12 @@ type D1Result<T> = { results: T[] };
 type Statement = { bind(...values: unknown[]): Statement; first<T>(): Promise<T | null>; all<T>(): Promise<D1Result<T>>; run(): Promise<unknown> };
 type D1Database = { prepare(sql: string): Statement };
 type R2Object = { body: ReadableStream; size: number; range?: { offset: number; length: number }; writeHttpMetadata(headers: Headers): void };
-type R2Bucket = { get(key: string, options?: { range?: Headers }): Promise<R2Object | null> };
+type R2Bucket = {
+  put(key: string, value: ReadableStream, options?: { httpMetadata?: Record<string, string>; customMetadata?: Record<string, string> }): Promise<unknown>;
+  get(key: string, options?: { range?: Headers | { offset: number; length: number } }): Promise<R2Object | null>;
+  head(key: string): Promise<{ size: number } | null>;
+  delete(key: string): Promise<void>;
+};
 type Env = { FIRMANT_DB: D1Database; PRIVATE_ASSETS: R2Bucket; APP_BASE_URL: string };
 type Context = { waitUntil(promise: Promise<unknown>): void };
 
@@ -21,6 +26,13 @@ const proposalEdge = {
       return match[2]
         ? serveMedia(request, env, token, decodeURIComponent(match[2]))
         : serveProposal(env, context, token);
+    }
+
+    const uploadMatch = url.pathname.match(/^\/api\/admin\/review-uploads\/([^/]+)\/(\d+)$/);
+    if (uploadMatch) {
+      if (request.method === "OPTIONS") return uploadPreflight(request, env);
+      if (request.method !== "PUT") return withUploadCors(request, env, json({ error: "Método não permitido." }, 405));
+      return uploadReviewFile(request, env, decodeURIComponent(uploadMatch[1]), Number(uploadMatch[2]));
     }
 
     // Decisão, pagamento e PDF continuam no Worker principal.
@@ -104,6 +116,110 @@ async function serveMedia(request: Request, env: Env, token: string, assetId: st
   }
   headers.set("Content-Length", String(object.size));
   return new Response(object.body, { headers });
+}
+
+type UploadSession = {
+  id: string;
+  project_id: string;
+  asset_type: "IMAGE" | "CAROUSEL" | "VIDEO";
+  expected_files_json: string;
+  expires_at: string;
+};
+type UploadDescriptor = { name: string; size: number; mimeType: string };
+
+async function uploadReviewFile(request: Request, env: Env, token: string, position: number) {
+  if (!isAllowedUploadOrigin(request, env)) return json({ error: "Origem não autorizada." }, 403);
+  if (token.length < 32 || !Number.isInteger(position) || position < 0) {
+    return withUploadCors(request, env, json({ error: "Sessão de upload inválida." }, 404));
+  }
+  const session = await env.FIRMANT_DB.prepare(
+    `SELECT id, project_id, asset_type, expected_files_json, expires_at
+     FROM review_upload_sessions WHERE token_hash = ? AND status = 'PENDING' LIMIT 1`,
+  ).bind(await hashToken(token)).first<UploadSession>();
+  if (!session) return withUploadCors(request, env, json({ error: "Sessão de upload não encontrada." }, 404));
+  if (new Date(session.expires_at).getTime() < Date.now()) {
+    await env.FIRMANT_DB.prepare("UPDATE review_upload_sessions SET status = 'EXPIRED' WHERE id = ?").bind(session.id).run();
+    return withUploadCors(request, env, json({ error: "A sessão de upload expirou." }, 410));
+  }
+
+  const expectedFiles = JSON.parse(session.expected_files_json) as UploadDescriptor[];
+  const expected = expectedFiles[position];
+  const declaredSize = Number(request.headers.get("x-file-size"));
+  const contentType = request.headers.get("content-type")?.split(";", 1)[0].trim().toLowerCase() ?? "";
+  if (!expected || !Number.isInteger(declaredSize) || declaredSize !== expected.size || contentType !== expected.mimeType) {
+    return withUploadCors(request, env, json({ error: "O arquivo não corresponde à sessão de upload." }, 400));
+  }
+  if (!request.body) return withUploadCors(request, env, json({ error: "Arquivo vazio." }, 400));
+
+  const storageKey = `reviews/${session.project_id}/uploads/${session.id}/${position}`;
+  try {
+    await env.PRIVATE_ASSETS.put(storageKey, request.body, {
+      httpMetadata: { contentType, contentDisposition: "inline", cacheControl: "private, no-store" },
+      customMetadata: { projectId: session.project_id, uploadSessionId: session.id, uploadedAt: new Date().toISOString() },
+    });
+    const stored = await env.PRIVATE_ASSETS.head(storageKey);
+    if (!stored || stored.size !== expected.size) throw new Error("O tamanho armazenado não corresponde ao arquivo enviado.");
+    const prefix = await env.PRIVATE_ASSETS.get(storageKey, { range: { offset: 0, length: Math.min(16, stored.size) } });
+    const bytes = prefix ? new Uint8Array(await new Response(prefix.body).arrayBuffer()) : new Uint8Array();
+    const detected = detectUploadType(bytes, session.asset_type);
+    if (!detected || detected.mimeType !== expected.mimeType) throw new Error("O conteúdo do arquivo não corresponde ao formato informado.");
+
+    await env.FIRMANT_DB.prepare(
+      `INSERT INTO review_upload_files (session_id, position, storage_key, original_filename, mime_type, size_bytes, uploaded_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(session_id, position) DO UPDATE SET storage_key = excluded.storage_key,
+         original_filename = excluded.original_filename, mime_type = excluded.mime_type,
+         size_bytes = excluded.size_bytes, uploaded_at = excluded.uploaded_at`,
+    ).bind(session.id, position, storageKey, expected.name, detected.mimeType, stored.size, new Date().toISOString()).run();
+    return withUploadCors(request, env, json({ uploaded: true, position, size: stored.size }));
+  } catch (error) {
+    await env.PRIVATE_ASSETS.delete(storageKey).catch(() => undefined);
+    return withUploadCors(
+      request,
+      env,
+      json({ error: error instanceof Error ? error.message : "Falha ao armazenar arquivo." }, 400),
+    );
+  }
+}
+
+function detectUploadType(bytes: Uint8Array, assetType: UploadSession["asset_type"]) {
+  if (assetType === "VIDEO") {
+    return bytes.length >= 12 && bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70
+      ? { mimeType: "video/mp4" }
+      : null;
+  }
+  if (bytes.length >= 8 && bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47
+    && bytes[4] === 0x0d && bytes[5] === 0x0a && bytes[6] === 0x1a && bytes[7] === 0x0a) {
+    return { mimeType: "image/png" };
+  }
+  return bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff
+    ? { mimeType: "image/jpeg" }
+    : null;
+}
+
+function uploadPreflight(request: Request, env: Env) {
+  if (!isAllowedUploadOrigin(request, env)) return json({ error: "Origem não autorizada." }, 403);
+  return withUploadCors(request, env, new Response(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Methods": "PUT, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, X-File-Size",
+      "Access-Control-Max-Age": "600",
+    },
+  }));
+}
+
+function isAllowedUploadOrigin(request: Request, env: Env) {
+  const origin = request.headers.get("origin");
+  return Boolean(origin && origin === new URL(env.APP_BASE_URL).origin);
+}
+
+function withUploadCors(request: Request, env: Env, response: Response) {
+  if (isAllowedUploadOrigin(request, env)) {
+    response.headers.set("Access-Control-Allow-Origin", new URL(env.APP_BASE_URL).origin);
+    response.headers.set("Vary", "Origin");
+  }
+  return response;
 }
 
 async function hashToken(token: string) {

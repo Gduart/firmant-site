@@ -6,7 +6,8 @@
   "workers_dev": false,
   "routes": [
     { "pattern": "firmant.com.br/proposta/*", "zone_name": "firmant.com.br" },
-    { "pattern": "firmant.com.br/api/proposals/*", "zone_name": "firmant.com.br" }
+    { "pattern": "firmant.com.br/api/proposals/*", "zone_name": "firmant.com.br" },
+    { "pattern": "firmant.com.br/api/admin/review-uploads/*", "zone_name": "firmant.com.br" }
   ],
   "vars": { "APP_BASE_URL": "https://firmant.com.br" },
   "d1_databases": [

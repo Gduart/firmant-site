@@ -9,8 +9,11 @@
 - Primeira etapa cobrada pelo fluxo já existente de pedidos e Asaas; o webhook sincroniza a etapa e o projeto sem interromper pedidos antigos.
 - Pagamento de propostas fixado em duas etapas: entrada de 50% após o aceite e saldo de 50% após a aprovação, antes da entrega final. O projeto permanece bloqueado para produção até a confirmação da entrada.
 - O Admin abre detalhes de proposta dentro da rota estática `/admin/propostas`, repetindo o hotfix já usado para briefings e evitando depender de uma nova navegação SSR dinâmica no Cloudflare.
+- O link público `/proposta/:token` redireciona para a página estática `/proposta?token=...`; os dados são buscados pela API depois do carregamento, evitando Error 1102 ao reativar links no Cloudflare.
 - Portal privado para aprovar imagem, carrossel e vídeo MP4, com comentários gerais, por slide ou timecode.
 - Aprovação e rodadas de revisão registradas por versão.
+
+As mídias não são expostas pelo token da proposta. Depois do aceite e da confirmação da entrada fixa de 50%, a equipe envia as prévias e gera um token separado no portal de revisão. A separação evita que um link comercial conceda acesso automático a arquivos de produção.
 
 ## Recursos Cloudflare necessários
 

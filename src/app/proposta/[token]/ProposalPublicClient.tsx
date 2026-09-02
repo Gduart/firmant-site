@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import type { ProposalSnapshot } from "@/lib/proposals/types";
 
 type PublicResult = {
@@ -12,19 +13,56 @@ type PublicResult = {
   payment?: { milestone_id: string; checkout_url: string | null; order_id: string | null; status: string | null; payment_method: string | null } | null;
 };
 
-export function ProposalPublicClient({ token, result }: { token: string; result: PublicResult }) {
-  const snapshot = result.snapshot;
+export function ProposalPublicClient() {
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token")?.trim() ?? "";
+  const [result, setResult] = useState<PublicResult | null>(null);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [signerName, setSignerName] = useState("");
-  const [signerEmail, setSignerEmail] = useState(snapshot?.proposal.client_email ?? "");
+  const [signerEmail, setSignerEmail] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
   const [consent, setConsent] = useState(false);
   const [reason, setReason] = useState("");
   const [showReject, setShowReject] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [decision, setDecision] = useState(result.acceptance?.decision ?? "");
-  const [checkoutUrl, setCheckoutUrl] = useState(result.payment?.checkout_url ?? "");
+  const [decision, setDecision] = useState("");
+  const [checkoutUrl, setCheckoutUrl] = useState("");
+  const snapshot = result?.snapshot ?? null;
   const paymentMethods = useMemo(() => parseArray(snapshot?.proposal.payment_methods_json), [snapshot]);
+
+  useEffect(() => {
+    if (!token) { setInitialLoading(false); return; }
+    const controller = new AbortController();
+    setInitialLoading(true);
+    fetch(`/api/proposals/${encodeURIComponent(token)}`, { cache: "no-store", credentials: "same-origin", signal: controller.signal })
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error ?? "Proposta não encontrada.");
+        return data as PublicResult;
+      })
+      .then((data) => {
+        setResult(data);
+        setSignerEmail(data.snapshot?.proposal.client_email ?? "");
+        setDecision(data.acceptance?.decision ?? "");
+        setCheckoutUrl(data.payment?.checkout_url ?? "");
+        setError("");
+      })
+      .catch((cause) => {
+        if (cause instanceof DOMException && cause.name === "AbortError") return;
+        setError(cause instanceof Error ? cause.message : "Não foi possível carregar a proposta.");
+      })
+      .finally(() => setInitialLoading(false));
+    return () => controller.abort();
+  }, [token]);
+
+  if (initialLoading) {
+    return <main className="proposal-public-page"><section className="proposal-public-shell proposal-expired"><span>FIRMANT</span><h1>Carregando proposta...</h1></section></main>;
+  }
+
+  if (!result) {
+    return <main className="proposal-public-page"><section className="proposal-public-shell proposal-expired"><span>FIRMANT</span><h1>Link indisponível</h1><p>{error || "O endereço da proposta é inválido."}</p></section></main>;
+  }
 
   if (result.expired || !snapshot) {
     return <main className="proposal-public-page"><section className="proposal-public-shell proposal-expired"><span>FIRMANT</span><h1>Esta proposta expirou</h1><p>Solicite à FIRMANT uma nova versão para continuar.</p></section></main>;
@@ -70,6 +108,7 @@ export function ProposalPublicClient({ token, result }: { token: string; result:
       <article className="proposal-public-card"><span className="proposal-section-number">03</span><h2>O que está incluído</h2><ul className="proposal-check-list">{parseArray(proposal.included_json).map((item) => <li key={item}>{item}</li>)}</ul><h3>Não incluído</h3><ul>{parseArray(proposal.excluded_json).map((item) => <li key={item}>{item}</li>)}</ul></article>
       <article className="proposal-public-card"><span className="proposal-section-number">04</span><h2>Prazo e revisões</h2><div className="proposal-public-facts"><div><span>Prazo estimado</span><strong>{proposal.estimated_deadline || "Conforme cronograma acordado"}</strong></div><div><span>Rodadas incluídas</span><strong>{proposal.revisions_included}</strong></div></div><p>{proposal.revision_definition}</p></article>
       <article className="proposal-public-card"><span className="proposal-section-number">05</span><h2>Condições</h2><h3>Licença e uso</h3><p>{proposal.license_terms}</p><h3>Cancelamento</h3><p>{proposal.cancellation_terms}</p><small>Versão dos termos: {snapshot.termsVersion} · Integridade: {result.version?.contentHash.slice(0, 18)}…</small></article>
+      <article className="proposal-public-card"><span className="proposal-section-number">06</span><h2>Como funciona a aprovação das mídias</h2><ol className="proposal-media-steps"><li><strong>Aceite da proposta</strong><span>O escopo e o investimento são formalizados neste link.</span></li><li><strong>Entrada fixa de 50%</strong><span>A produção só é liberada após a confirmação do pagamento.</span></li><li><strong>Produção das mídias</strong><span>A FIRMANT prepara imagens, carrosséis ou vídeos conforme o escopo aprovado.</span></li><li><strong>Revisão em portal privado</strong><span>Você receberá outro link seguro para visualizar as mídias, comentar e aprovar cada versão.</span></li><li><strong>Entrega final</strong><span>Os arquivos finais são liberados após as aprovações e condições previstas.</span></li></ol><p className="proposal-media-note">As mídias não aparecem nesta proposta porque o portal de revisão possui acesso separado e só é criado depois do aceite e da entrada.</p></article>
     </section><aside><section className="proposal-public-card proposal-payment-card"><span className="proposal-section-number">PAGAMENTO</span><h2>Etapas</h2>{milestones.map((milestone) => <div className="proposal-payment-row" key={milestone.id}><div><strong>{milestone.label}</strong><small>{milestone.due_trigger}</small></div><strong>{money(milestone.amount_cents)}</strong></div>)}</section>
       <section className="proposal-public-card proposal-decision-card"><h2>Sua decisão</h2>{decision ? <DecisionResult decision={decision} checkoutUrl={checkoutUrl} retryPayment={retryPayment} loading={loading} error={error} /> : <><label><span>Nome completo</span><input value={signerName} onChange={(e) => setSignerName(e.target.value)} /></label><label><span>E-mail</span><input type="email" value={signerEmail} onChange={(e) => setSignerEmail(e.target.value)} /></label><fieldset><legend>Forma de pagamento</legend>{paymentMethods.map((method) => <label className="proposal-payment-option" key={method}><input type="radio" name="payment" value={method} checked={paymentMethod === method} onChange={() => setPaymentMethod(method)} /><span>{paymentLabel(method)}</span></label>)}</fieldset><label className="proposal-consent"><input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} /><span>Li e aceito integralmente esta proposta e seus termos. Estou ciente de que nome, e-mail, data, IP e versão serão registrados.</span></label>{error && <p className="workflow-alert workflow-alert-error">{error}</p>}<button className="proposal-accept-button" disabled={loading} onClick={() => void submit("ACCEPTED")}>{loading ? "Registrando..." : "Aceitar proposta e continuar"}</button><button className="proposal-reject-toggle" type="button" onClick={() => setShowReject((value) => !value)}>Não desejo aprovar</button>{showReject && <div className="proposal-reject-box"><textarea placeholder="Motivo (opcional)" value={reason} onChange={(e) => setReason(e.target.value)} /><button type="button" disabled={loading} onClick={() => void submit("REJECTED")}>Registrar recusa</button></div>}</>}</section>
     </aside></div><footer className="proposal-public-footer"><strong>FIRMANT</strong><span>Comunicação, criação e tecnologia com processo claro.</span></footer>

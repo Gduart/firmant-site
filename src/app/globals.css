@@ -1960,6 +1960,12 @@ input:focus, textarea:focus, select:focus {
 .proposal-media-steps li::before { content: counter(media-step); grid-row: 1 / 3; display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 50%; background: #243e24; color: #fff; font-weight: 800; }
 .proposal-media-steps span { font-size: .9rem; color: #596159; }
 .proposal-media-note { margin-top: 1.25rem; padding: 1rem; border-left: 4px solid #4d6848; background: #edf5e8; }
+.proposal-approved-media { display: grid; gap: 1rem; }
+.proposal-approved-media > section { padding: 1rem; border: 1px solid #d7d9d2; background: #f7f8f4; }
+.proposal-approved-media-heading { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+.proposal-approved-media-heading div { display: grid; gap: .25rem; }
+.proposal-approved-media-heading span { color: #315f37; font-size: .75rem; font-weight: 800; text-transform: uppercase; }
+.proposal-approved-media video, .proposal-approved-media img { display: block; width: 100%; max-height: 560px; background: #111; object-fit: contain; }
 .proposal-payment-row { padding: 1rem 0; border-bottom: 1px solid #e0e2dc; }
 .proposal-payment-row div { display: grid; gap: .3rem; }
 .proposal-payment-row small { color: #737b74; }

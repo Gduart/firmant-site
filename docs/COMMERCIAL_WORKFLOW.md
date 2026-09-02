@@ -13,7 +13,9 @@
 - Portal privado para aprovar imagem, carrossel e vídeo MP4, com comentários gerais, por slide ou timecode.
 - Aprovação e rodadas de revisão registradas por versão.
 
-As mídias não são expostas pelo token da proposta. Depois do aceite e da confirmação da entrada fixa de 50%, a equipe envia as prévias e gera um token separado no portal de revisão. A separação evita que um link comercial conceda acesso automático a arquivos de produção.
+As mídias ainda em revisão não são expostas pelo token da proposta. Depois do aceite e da confirmação da entrada fixa de 50%, a equipe envia as prévias e gera um token separado no portal de revisão. A separação evita que um link comercial conceda acesso antecipado a arquivos de produção.
+
+Depois da aprovação formal, a versão aprovada também fica visível na proposta aceita. O arquivo continua privado no R2 e a transmissão exige que o token da proposta permaneça ativo e válido; comentários e decisões continuam restritos ao portal de revisão.
 
 ## Recursos Cloudflare necessários
 

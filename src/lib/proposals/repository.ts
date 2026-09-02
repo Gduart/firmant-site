@@ -50,6 +50,17 @@ type ProposalLinkRecord = {
   version_number?: number;
 };
 
+type PublicProposalAsset = {
+  id: string;
+  title: string;
+  assetType: "IMAGE" | "CAROUSEL" | "VIDEO";
+  status: string;
+  versionNumber: number;
+  caption: string | null;
+  mimeType: string | null;
+  sizeBytes: number | null;
+};
+
 const TERMS_VERSION = "TERMOS_PROPOSTA_V1";
 
 export async function createProposalFromBriefing(input: {
@@ -466,7 +477,7 @@ export async function getPublicProposal(token: string, markViewed = true) {
     [link.proposal_version_id],
   );
   if (!version) return null;
-  const [acceptance, currentProposal, payment] = await Promise.all([
+  const [acceptance, currentProposal, payment, project, media] = await Promise.all([
     workflowFirst<{ decision: string; accepted_at: string }>(
       "SELECT decision, accepted_at FROM proposal_acceptances WHERE proposal_version_id = ? LIMIT 1",
       [version.id],
@@ -477,6 +488,19 @@ export async function getPublicProposal(token: string, markViewed = true) {
        FROM proposal_payment_milestones pm
        LEFT JOIN orders o ON o.id = pm.order_id
        WHERE pm.proposal_id = ? ORDER BY pm.position LIMIT 1`,
+      [link.proposal_id],
+    ),
+    workflowFirst<{ id: string; project_number: string; status: string }>(
+      "SELECT id, project_number, status FROM projects WHERE proposal_id = ? LIMIT 1",
+      [link.proposal_id],
+    ),
+    workflowAll<{ id: string; title: string; asset_type: PublicProposalAsset["assetType"]; status: string; version_number: number; caption: string | null; mime_type: string | null; size_bytes: number | null }>(
+      `SELECT a.id, a.title, a.asset_type, a.status, av.version_number, av.caption, av.mime_type, av.size_bytes
+       FROM projects pr
+       JOIN assets a ON a.project_id = pr.id
+       JOIN asset_versions av ON av.id = a.current_version_id
+       WHERE pr.proposal_id = ? AND a.status = 'APPROVED' AND av.processing_status = 'READY'
+       ORDER BY a.updated_at DESC`,
       [link.proposal_id],
     ),
   ]);
@@ -500,7 +524,27 @@ export async function getPublicProposal(token: string, markViewed = true) {
     acceptance: acceptance ?? null,
     currentStatus: currentProposal?.status ?? "SENT",
     payment: payment ?? null,
+    project: project ?? null,
+    media: media.map((asset) => ({ id: asset.id, title: asset.title, assetType: asset.asset_type, status: asset.status, versionNumber: asset.version_number, caption: asset.caption, mimeType: asset.mime_type, sizeBytes: asset.size_bytes } satisfies PublicProposalAsset)),
   };
+}
+
+export async function getPublicProposalMedia(token: string, assetId: string) {
+  if (!token || token.length < 32 || !assetId) return null;
+  const tokenHash = await hashOpaqueToken(token);
+  const media = await workflowFirst<{ storage_key: string; mime_type: string; size_bytes: number }>(
+    `SELECT av.preview_storage_key AS storage_key, COALESCE(av.mime_type, 'application/octet-stream') AS mime_type,
+       COALESCE(av.size_bytes, 0) AS size_bytes
+     FROM proposal_access_links pal
+     JOIN projects pr ON pr.proposal_id = pal.proposal_id
+     JOIN assets a ON a.project_id = pr.id AND a.id = ?
+     JOIN asset_versions av ON av.id = a.current_version_id
+     WHERE pal.token_hash = ? AND pal.active = 1 AND pal.expires_at > ?
+       AND a.status = 'APPROVED' AND av.processing_status = 'READY' AND av.preview_storage_key IS NOT NULL
+     LIMIT 1`,
+    [assetId, tokenHash, workflowNow()],
+  );
+  return media ? { storageKey: media.storage_key, mimeType: media.mime_type, sizeBytes: media.size_bytes } : null;
 }
 
 export async function acceptPublicProposal(input: {

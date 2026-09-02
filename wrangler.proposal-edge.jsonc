@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "firmant-proposal-edge",
+  "main": "workers/proposal-edge.ts",
+  "compatibility_date": "2026-04-11",
+  "workers_dev": false,
+  "routes": [
+    { "pattern": "firmant.com.br/proposta/*", "zone_name": "firmant.com.br" },
+    { "pattern": "firmant.com.br/api/proposals/*", "zone_name": "firmant.com.br" }
+  ],
+  "vars": { "APP_BASE_URL": "https://firmant.com.br" },
+  "d1_databases": [
+    { "binding": "FIRMANT_DB", "database_name": "firmant-payments", "database_id": "f46d991a-d1b2-45b2-af6c-6b15ba50d1f9" }
+  ],
+  "r2_buckets": [
+    { "binding": "PRIVATE_ASSETS", "bucket_name": "firmant-private-assets" }
+  ],
+  "observability": { "enabled": true }
+}

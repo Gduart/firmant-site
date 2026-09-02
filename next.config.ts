@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/proposta/:token",
-        destination: "/proposta?token=:token",
+        destination: "/proposta.html?token=:token",
         permanent: false,
       },
       {

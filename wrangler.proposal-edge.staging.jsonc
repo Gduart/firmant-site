@@ -1,0 +1,15 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "firmant-proposal-edge-staging",
+  "main": "workers/proposal-edge.ts",
+  "compatibility_date": "2026-04-11",
+  "workers_dev": true,
+  "vars": { "APP_BASE_URL": "https://firmant-site-staging.geraldo1fduarte.workers.dev" },
+  "d1_databases": [
+    { "binding": "FIRMANT_DB", "database_name": "firmant-payments-staging", "database_id": "6a806da5-8569-407c-a32d-0df2234fbc78" }
+  ],
+  "r2_buckets": [
+    { "binding": "PRIVATE_ASSETS", "bucket_name": "firmant-private-assets-staging" }
+  ],
+  "observability": { "enabled": true }
+}

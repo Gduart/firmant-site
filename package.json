@@ -12,6 +12,9 @@
     "deploy": "node scripts/blocked-production-deploy.cjs",
     "deploy:staging": "node scripts/patch-opennext-cloudflare-sockets.cjs && node node_modules/@opennextjs/cloudflare/dist/cli/index.js build --config wrangler.staging.jsonc && node scripts/patch-opennext-worker-sockets.cjs && node node_modules/@opennextjs/cloudflare/dist/cli/index.js deploy --config wrangler.staging.jsonc",
     "upload": "node scripts/patch-opennext-cloudflare-sockets.cjs && node node_modules/@opennextjs/cloudflare/dist/cli/index.js build && node scripts/patch-opennext-worker-sockets.cjs && node node_modules/@opennextjs/cloudflare/dist/cli/index.js upload",
+    "deploy:proposal-edge:staging": "wrangler deploy --config wrangler.proposal-edge.staging.jsonc --x-autoconfig=false",
+    "deploy:proposal-edge:preview": "wrangler deploy --config wrangler.proposal-edge.preview.jsonc --x-autoconfig=false",
+    "deploy:proposal-edge": "wrangler deploy --config wrangler.proposal-edge.jsonc --x-autoconfig=false",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "r2:lifecycle": "wrangler r2 bucket lifecycle add firmant-private-assets briefing-attachments-7-days briefings/ --expire-days 7 --force",
     "r2:lifecycle:staging": "wrangler r2 bucket lifecycle add firmant-private-assets-staging briefing-attachments-7-days briefings/ --expire-days 7 --force"

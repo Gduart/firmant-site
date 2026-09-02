@@ -217,7 +217,7 @@ export async function getProposalDetails(id: string) {
       created_at: accessLink.created_at,
       revoked_at: accessLink.revoked_at,
       public_url: publicToken && baseUrl
-        ? `${baseUrl.replace(/\/$/, "")}/proposta/${publicToken}`
+        ? `${baseUrl.replace(/\/$/, "")}/proposta.html?token=${encodeURIComponent(publicToken)}`
         : null,
     } : null,
     versions: versions.map((version) => ({
@@ -437,7 +437,7 @@ export async function publishProposal(input: { proposalId: string; createdBy: st
   const baseUrl = await getEnvValue("APP_BASE_URL") ?? "";
   return {
     proposal: await getProposalDetails(input.proposalId),
-    publicUrl: `${baseUrl.replace(/\/$/, "")}/proposta/${token}`,
+    publicUrl: `${baseUrl.replace(/\/$/, "")}/proposta.html?token=${encodeURIComponent(token)}`,
   };
 }
 

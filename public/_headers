@@ -2,3 +2,18 @@
 # https://opennext.js.org/cloudflare/caching#static-assets-caching
 /_next/static/*
   Cache-Control: public,max-age=31536000,immutable
+
+/proposta.html
+  Cache-Control: no-store
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: no-referrer
+  X-Robots-Tag: noindex, nofollow, noarchive
+
+/proposta-publica.js
+  Cache-Control: public, max-age=300
+  X-Content-Type-Options: nosniff
+
+/proposta-publica.css
+  Cache-Control: public, max-age=300
+  X-Content-Type-Options: nosniff

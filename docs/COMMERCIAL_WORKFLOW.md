@@ -17,6 +17,18 @@ As mídias ainda em revisão não são expostas pelo token da proposta. Depois d
 
 Depois da aprovação formal, a versão aprovada também fica visível na proposta aceita. O arquivo continua privado no R2 e a transmissão exige que o token da proposta permaneça ativo e válido; comentários e decisões continuam restritos ao portal de revisão.
 
+### Worker público leve
+
+O HTML público da proposta é servido diretamente pelo Static Assets em `/proposta.html`. As rotas antigas `/proposta/:token`, a leitura pública no D1 e o streaming privado no R2 passam pelo Worker mínimo `firmant-proposal-edge`, evitando carregar Next/React/OpenNext nessas requisições. As ações de aceite, pagamento e PDF são encaminhadas ao Worker principal.
+
+Comandos operacionais:
+
+```powershell
+npm run deploy:proposal-edge:staging
+npm run deploy:proposal-edge:preview
+npm run deploy:proposal-edge
+```
+
 ## Recursos Cloudflare necessários
 
 Antes do deploy, criar os buckets privados (caso ainda não existam):

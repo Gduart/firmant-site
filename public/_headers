@@ -17,3 +17,10 @@
 /proposta-publica.css
   Cache-Control: public, max-age=300
   X-Content-Type-Options: nosniff
+
+/admin/*
+  Cache-Control: private, no-store, max-age=0
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Robots-Tag: noindex, nofollow, noarchive

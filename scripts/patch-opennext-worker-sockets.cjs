@@ -10,25 +10,40 @@ const target = path.join(
   "handler.mjs",
 );
 
-if (!fs.existsSync(target)) {
-  console.warn("[patch-worker-sockets] handler.mjs não encontrado; patch ignorado.");
-  process.exit(0);
+if (fs.existsSync(target)) {
+  let source = fs.readFileSync(target, "utf8");
+  if (source.includes('require("cloudflare:sockets")')) {
+    if (!source.startsWith('import { connect as __firmantCloudflareSocketConnect } from "cloudflare:sockets";')) {
+      source = `import { connect as __firmantCloudflareSocketConnect } from "cloudflare:sockets";\n${source}`;
+    }
+    source = source.replace(
+      /(\d+):([A-Za-z_$][\w$]*)=>\{\2\.exports=require\("cloudflare:sockets"\)\}/g,
+      '$1:$2=>{$2.exports={connect:__firmantCloudflareSocketConnect}}',
+    );
+    fs.writeFileSync(target, source);
+    console.log("[patch-worker-sockets] require de cloudflare:sockets convertido para import ESM.");
+  }
+} else {
+  console.warn("[patch-worker-sockets] handler.mjs não encontrado; patch de sockets ignorado.");
 }
 
-let source = fs.readFileSync(target, "utf8");
+const prerenderRoot = path.join(process.cwd(), ".next", "server", "app");
+const assetsRoot = path.join(process.cwd(), ".open-next", "assets");
 
-if (!source.includes('require("cloudflare:sockets")')) {
-  process.exit(0);
+function copyPrerenderedHtml(directory) {
+  if (!fs.existsSync(directory)) return;
+  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+    const sourcePath = path.join(directory, entry.name);
+    if (entry.isDirectory()) {
+      copyPrerenderedHtml(sourcePath);
+    } else if (entry.name.endsWith(".html")) {
+      const relativePath = path.relative(prerenderRoot, sourcePath);
+      const destinationPath = path.join(assetsRoot, relativePath);
+      fs.mkdirSync(path.dirname(destinationPath), { recursive: true });
+      fs.copyFileSync(sourcePath, destinationPath);
+    }
+  }
 }
 
-if (!source.startsWith('import { connect as __firmantCloudflareSocketConnect } from "cloudflare:sockets";')) {
-  source = `import { connect as __firmantCloudflareSocketConnect } from "cloudflare:sockets";\n${source}`;
-}
-
-source = source.replace(
-  /(\d+):([A-Za-z_$][\w$]*)=>\{\2\.exports=require\("cloudflare:sockets"\)\}/g,
-  '$1:$2=>{$2.exports={connect:__firmantCloudflareSocketConnect}}',
-);
-
-fs.writeFileSync(target, source);
-console.log("[patch-worker-sockets] require de cloudflare:sockets convertido para import ESM.");
+copyPrerenderedHtml(prerenderRoot);
+console.log("[patch-worker-sockets] HTML pré-renderizado copiado para Static Assets.");

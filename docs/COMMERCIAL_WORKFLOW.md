@@ -8,6 +8,7 @@
 - Aceite/recusa com versão, hash, nome, e-mail, data, IP e navegador.
 - Primeira etapa cobrada pelo fluxo já existente de pedidos e Asaas; o webhook sincroniza a etapa e o projeto sem interromper pedidos antigos.
 - Pagamento de propostas fixado em duas etapas: entrada de 50% após o aceite e saldo de 50% após a aprovação, antes da entrega final. O projeto permanece bloqueado para produção até a confirmação da entrada.
+- Checkouts expirados são identificados no Admin e no link público. A regeneração cria uma nova cobrança, troca o link atual e preserva a cobrança substituída em um histórico somente para consulta.
 - O Admin abre detalhes de proposta dentro da rota estática `/admin/propostas`, repetindo o hotfix já usado para briefings e evitando depender de uma nova navegação SSR dinâmica no Cloudflare.
 - O link público `/proposta/:token` redireciona para a página estática `/proposta?token=...`; os dados são buscados pela API depois do carregamento, evitando Error 1102 ao reativar links no Cloudflare.
 - Portal privado para aprovar imagem, carrossel e vídeo MP4, com comentários gerais, por slide ou timecode.
@@ -51,15 +52,17 @@ As prévias em `reviews/` não usam essa regra de sete dias; sua disponibilidade
 
 ## Banco de dados
 
-Aplicar, nesta ordem, `migrations/0006_commercial_workflow.sql` e
-`migrations/0007_briefing_billing_address.sql`, primeiro em staging e somente
-depois em produção. As migrations são aditivas e não alteram as tabelas
+Aplicar todas as migrations pendentes na ordem numérica, primeiro em staging e
+somente depois em produção. Elas são aditivas e não alteram as tabelas
 existentes de pedidos, pagamentos, contratos ou blog.
 
 A `0007` acrescenta ao briefing os dados exigidos pelo checkout hospedado do
 Asaas: número, complemento, bairro e CEP. Para briefings antigos ou propostas
 sem briefing completo, o checkout não envia um cadastro parcial; o próprio
 Asaas solicita os dados ao cliente, evitando rejeição da sessão.
+
+A `0010` cria o histórico de cobranças substituídas das propostas. Ela deve ser
+aplicada antes do deploy do código que exibe e regenera checkouts expirados.
 
 ## Variáveis e segredos
 

@@ -93,6 +93,9 @@ export type ProposalMilestoneRecord = {
   updated_at: string;
   paid_at: string | null;
   checkout_url?: string | null;
+  order_status?: string | null;
+  order_created_at?: string | null;
+  checkout_expired?: boolean;
 };
 
 export type ProposalSnapshot = {

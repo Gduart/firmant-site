@@ -5,8 +5,14 @@ import type { AsaasBillingType, AsaasCheckoutRequest } from "@/lib/payments/asaa
 import { getOrderById, insertOrder, updateOrder } from "@/lib/payments/orders-repository";
 import type { CheckoutPaymentMethod } from "@/lib/payments/types";
 import {
+  canReuseProposalCheckout,
+  isPaidOrder,
+  isProposalCheckoutExpired,
+} from "@/lib/proposals/payment-status";
+import {
   attachOrderToMilestone,
   getProposalMilestone,
+  replaceOrderOnMilestone,
 } from "@/lib/proposals/repository";
 import type { ProposalSnapshot } from "@/lib/proposals/types";
 
@@ -14,6 +20,7 @@ export async function createProposalMilestoneCheckout(input: {
   milestoneId: string;
   paymentMethod: CheckoutPaymentMethod;
   snapshot: ProposalSnapshot;
+  forceNew?: boolean;
 }) {
   const milestone = await getProposalMilestone(input.milestoneId);
   if (!milestone || milestone.proposal_id !== input.snapshot.proposal.id) {
@@ -23,16 +30,24 @@ export async function createProposalMilestoneCheckout(input: {
     throw new Error("A etapa de pagamento precisa ter valor maior que zero.");
   }
 
-  if (milestone.order_id) {
-    const existingOrder = await getOrderById(milestone.order_id);
-    if (existingOrder?.checkoutUrl) {
+  const existingOrder = milestone.order_id ? await getOrderById(milestone.order_id) : null;
+  if (milestone.status === "PAID" || isPaidOrder(existingOrder?.status)) {
+    throw new Error("Esta etapa já está paga e não pode gerar outra cobrança.");
+  }
+  const existingExpired = existingOrder ? isProposalCheckoutExpired({
+    status: existingOrder.status,
+    createdAt: existingOrder.createdAt,
+    paymentMethod: input.paymentMethod,
+    checkoutUrl: existingOrder.checkoutUrl,
+  }) : false;
+  if (existingOrder && !input.forceNew && canReuseProposalCheckout(existingOrder, input.paymentMethod)) {
       return {
         orderId: existingOrder.id,
         checkoutUrl: existingOrder.checkoutUrl,
         statusUrl: `/pagamento/status/${existingOrder.id}`,
         reused: true,
+        replaced: false,
       };
-    }
   }
 
   const proposal = input.snapshot.proposal;
@@ -115,17 +130,33 @@ export async function createProposalMilestoneCheckout(input: {
     asaasCheckoutId: checkout.id,
     checkoutUrl,
   });
-  await attachOrderToMilestone({
-    milestoneId: milestone.id,
-    orderId,
-    paymentMethod: input.paymentMethod,
-  });
+  if (existingOrder) {
+    await replaceOrderOnMilestone({
+      milestoneId: milestone.id,
+      oldOrderId: existingOrder.id,
+      newOrderId: orderId,
+      oldCheckoutUrl: existingOrder.checkoutUrl,
+      oldOrderStatus: existingOrder.status,
+      paymentMethod: input.paymentMethod,
+      reason: existingExpired ? "EXPIRED" : "REGENERATED",
+    });
+    if (!isPaidOrder(existingOrder.status) && !["FAILED", "CANCELED", "REFUNDED"].includes(existingOrder.status)) {
+      await updateOrder(existingOrder.id, { status: "FAILED" });
+    }
+  } else {
+    await attachOrderToMilestone({
+      milestoneId: milestone.id,
+      orderId,
+      paymentMethod: input.paymentMethod,
+    });
+  }
 
   return {
     orderId,
     checkoutUrl,
     statusUrl: `/pagamento/status/${orderId}`,
     reused: false,
+    replaced: Boolean(existingOrder),
   };
 }
 

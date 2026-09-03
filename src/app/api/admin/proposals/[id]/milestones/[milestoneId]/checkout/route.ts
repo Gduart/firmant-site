@@ -15,6 +15,11 @@ export async function POST(request: Request, context: RouteContext) {
     if (!snapshot || !milestone || milestone.proposal_id !== id) throw new Error("Proposta ou etapa não encontrada.");
     const allowed = JSON.parse(snapshot.proposal.payment_methods_json) as string[];
     if (!allowed.includes(paymentMethod)) throw new Error("Forma de pagamento não permitida nesta proposta.");
-    return Response.json(await createProposalMilestoneCheckout({ milestoneId, paymentMethod, snapshot }));
+    return Response.json(await createProposalMilestoneCheckout({
+      milestoneId,
+      paymentMethod,
+      snapshot,
+      forceNew: body?.regenerate === true,
+    }));
   } catch (error) { return Response.json({ error: error instanceof Error ? error.message : "Falha ao gerar cobrança." }, { status: 400 }); }
 }

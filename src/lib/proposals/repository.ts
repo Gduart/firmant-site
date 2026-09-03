@@ -23,6 +23,7 @@ import type {
   ProposalRecord,
   ProposalSnapshot,
 } from "@/lib/proposals/types";
+import { isProposalCheckoutExpired } from "@/lib/proposals/payment-status";
 
 type ProposalVersionRecord = {
   id: string;
@@ -150,24 +151,44 @@ export async function listProposals(params: { q?: string; status?: string }) {
     values.push(q, q, q, q);
   }
   const where = clauses.length ? `WHERE ${clauses.join(" AND ")}` : "";
-  return workflowAll<ProposalRecord & {
+  const proposals = await workflowAll<ProposalRecord & {
     deposit_status: string | null;
     deposit_paid_at: string | null;
+    deposit_payment_method: string | null;
+    deposit_checkout_url: string | null;
+    deposit_order_status: string | null;
+    deposit_order_created_at: string | null;
     link_active: number | null;
     link_expires_at: string | null;
   }>(
     `SELECT p.*,
-      (SELECT pm.status FROM proposal_payment_milestones pm
-       WHERE pm.proposal_id = p.id ORDER BY pm.position LIMIT 1) AS deposit_status,
-      (SELECT pm.paid_at FROM proposal_payment_milestones pm
-       WHERE pm.proposal_id = p.id ORDER BY pm.position LIMIT 1) AS deposit_paid_at
+      deposit.status AS deposit_status, deposit.paid_at AS deposit_paid_at,
+      deposit.payment_method AS deposit_payment_method,
+      deposit_order.checkoutUrl AS deposit_checkout_url,
+      deposit_order.status AS deposit_order_status,
+      deposit_order.createdAt AS deposit_order_created_at
       ,(SELECT pal.active FROM proposal_access_links pal
         WHERE pal.proposal_id = p.id ORDER BY pal.created_at DESC LIMIT 1) AS link_active
       ,(SELECT pal.expires_at FROM proposal_access_links pal
         WHERE pal.proposal_id = p.id ORDER BY pal.created_at DESC LIMIT 1) AS link_expires_at
-     FROM proposals p ${where} ORDER BY p.created_at DESC LIMIT 300`,
+     FROM proposals p
+     LEFT JOIN proposal_payment_milestones deposit ON deposit.id = (
+       SELECT pm.id FROM proposal_payment_milestones pm
+       WHERE pm.proposal_id = p.id ORDER BY pm.position LIMIT 1
+     )
+     LEFT JOIN orders deposit_order ON deposit_order.id = deposit.order_id
+     ${where} ORDER BY p.created_at DESC LIMIT 300`,
     values,
   );
+  return proposals.map((proposal) => ({
+    ...proposal,
+    deposit_checkout_expired: isProposalCheckoutExpired({
+      status: proposal.deposit_order_status,
+      createdAt: proposal.deposit_order_created_at,
+      paymentMethod: proposal.deposit_payment_method,
+      checkoutUrl: proposal.deposit_checkout_url,
+    }),
+  }));
 }
 
 export async function getProposalDetails(id: string) {
@@ -176,7 +197,7 @@ export async function getProposalDetails(id: string) {
     [id],
   );
   if (!proposal) return null;
-  const [items, milestones, versions, project, accessLink] = await Promise.all([
+  const [items, milestones, versions, project, accessLink, paymentHistory] = await Promise.all([
     listProposalItems(id),
     listProposalMilestones(id),
     workflowAll<ProposalVersionRecord>(
@@ -194,6 +215,7 @@ export async function getProposalDetails(id: string) {
        WHERE pal.proposal_id = ? ORDER BY pal.created_at DESC LIMIT 1`,
       [id],
     ),
+    listProposalPaymentHistory(id),
   ]);
   const publicToken = accessLink?.token_ciphertext
     ? await decryptOpaqueToken(accessLink.token_ciphertext)
@@ -220,6 +242,7 @@ export async function getProposalDetails(id: string) {
         ? `${baseUrl.replace(/\/$/, "")}/proposta.html?token=${encodeURIComponent(publicToken)}`
         : null,
     } : null,
+    paymentHistory,
     versions: versions.map((version) => ({
       id: version.id,
       proposal_id: version.proposal_id,
@@ -483,8 +506,9 @@ export async function getPublicProposal(token: string, markViewed = true) {
       [version.id],
     ),
     workflowFirst<{ status: string }>("SELECT status FROM proposals WHERE id = ?", [link.proposal_id]),
-    workflowFirst<{ milestone_id: string; checkout_url: string | null; order_id: string | null; status: string | null; payment_method: string | null }>(
-      `SELECT pm.id AS milestone_id, o.checkoutUrl AS checkout_url, pm.order_id, pm.status, pm.payment_method
+    workflowFirst<{ milestone_id: string; checkout_url: string | null; order_id: string | null; status: string | null; payment_method: string | null; order_status: string | null; order_created_at: string | null }>(
+      `SELECT pm.id AS milestone_id, o.checkoutUrl AS checkout_url, pm.order_id, pm.status,
+        pm.payment_method, o.status AS order_status, o.createdAt AS order_created_at
        FROM proposal_payment_milestones pm
        LEFT JOIN orders o ON o.id = pm.order_id
        WHERE pm.proposal_id = ? ORDER BY pm.position LIMIT 1`,
@@ -523,7 +547,15 @@ export async function getPublicProposal(token: string, markViewed = true) {
     snapshot: JSON.parse(version.snapshot_json) as ProposalSnapshot,
     acceptance: acceptance ?? null,
     currentStatus: currentProposal?.status ?? "SENT",
-    payment: payment ?? null,
+    payment: payment ? (() => {
+      const checkoutExpired = isProposalCheckoutExpired({
+        status: payment.order_status,
+        createdAt: payment.order_created_at,
+        paymentMethod: payment.payment_method,
+        checkoutUrl: payment.checkout_url,
+      });
+      return { ...payment, checkout_expired: checkoutExpired, checkout_url: checkoutExpired ? null : payment.checkout_url };
+    })() : null,
     project: project ?? null,
     media: media.map((asset) => ({ id: asset.id, title: asset.title, assetType: asset.asset_type, status: asset.status, versionNumber: asset.version_number, caption: asset.caption, mimeType: asset.mime_type, sizeBytes: asset.size_bytes } satisfies PublicProposalAsset)),
   };
@@ -669,6 +701,38 @@ export async function attachOrderToMilestone(input: {
   return getProposalMilestone(input.milestoneId);
 }
 
+export async function replaceOrderOnMilestone(input: {
+  milestoneId: string;
+  oldOrderId: string;
+  newOrderId: string;
+  oldCheckoutUrl: string | null;
+  oldOrderStatus: string;
+  paymentMethod: string;
+  reason: "EXPIRED" | "REGENERATED";
+}) {
+  const milestone = await getProposalMilestone(input.milestoneId);
+  if (!milestone || milestone.order_id !== input.oldOrderId) {
+    throw new Error("A cobrança atual da etapa foi alterada. Recarregue a proposta.");
+  }
+  const now = workflowNow();
+  await workflowRun(
+    `INSERT INTO proposal_payment_history (
+      id, proposal_id, milestone_id, order_id, checkout_url, order_status,
+      reason, replaced_by_order_id, replaced_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      crypto.randomUUID(), milestone.proposal_id, milestone.id, input.oldOrderId,
+      input.oldCheckoutUrl, input.oldOrderStatus, input.reason, input.newOrderId, now,
+    ],
+  );
+  await workflowRun(
+    `UPDATE proposal_payment_milestones SET order_id = ?, payment_method = ?,
+     status = 'CHECKOUT_CREATED', updated_at = ? WHERE id = ? AND order_id = ?`,
+    [input.newOrderId, input.paymentMethod, now, milestone.id, input.oldOrderId],
+  );
+  return getProposalMilestone(input.milestoneId);
+}
+
 export async function syncMilestoneFromOrder(orderId: string, orderStatus: string, paidAt?: string | null) {
   const status = mapOrderStatus(orderStatus);
   const now = workflowNow();
@@ -715,11 +779,41 @@ async function listProposalItems(proposalId: string) {
 }
 
 export async function listProposalMilestones(proposalId: string) {
-  return workflowAll<ProposalMilestoneRecord>(
-    `SELECT pm.*, o.checkoutUrl AS checkout_url
+  const milestones = await workflowAll<ProposalMilestoneRecord>(
+    `SELECT pm.*, o.checkoutUrl AS checkout_url, o.status AS order_status,
+      o.createdAt AS order_created_at
      FROM proposal_payment_milestones pm
      LEFT JOIN orders o ON o.id = pm.order_id
      WHERE pm.proposal_id = ? ORDER BY pm.position`,
+    [proposalId],
+  );
+  return milestones.map((milestone) => ({
+    ...milestone,
+    checkout_expired: isProposalCheckoutExpired({
+      status: milestone.order_status,
+      createdAt: milestone.order_created_at,
+      paymentMethod: milestone.payment_method,
+      checkoutUrl: milestone.checkout_url,
+    }),
+  }));
+}
+
+async function listProposalPaymentHistory(proposalId: string) {
+  return workflowAll<{
+    id: string;
+    milestone_id: string;
+    milestone_label: string;
+    order_id: string;
+    checkout_url: string | null;
+    order_status: string;
+    reason: string;
+    replaced_at: string;
+  }>(
+    `SELECT h.id, h.milestone_id, pm.label AS milestone_label, h.order_id,
+      h.checkout_url, h.order_status, h.reason, h.replaced_at
+     FROM proposal_payment_history h
+     JOIN proposal_payment_milestones pm ON pm.id = h.milestone_id
+     WHERE h.proposal_id = ? ORDER BY h.replaced_at DESC`,
     [proposalId],
   );
 }

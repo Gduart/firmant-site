@@ -12,6 +12,12 @@ export async function createAsaasCheckout(payload: AsaasCheckoutRequest) {
   });
 }
 
+export async function cancelAsaasCheckout(checkoutId: string) {
+  return asaasRequest(`/v3/checkouts/${encodeURIComponent(checkoutId)}/cancel`, {
+    method: "POST",
+  });
+}
+
 export async function buildAsaasCheckoutUrl(checkoutId: string) {
   const explicitBaseUrl = await getEnvValue("ASAAS_CHECKOUT_BASE_URL");
   const apiBaseUrl = await getRequiredEnvValue("ASAAS_API_BASE_URL");

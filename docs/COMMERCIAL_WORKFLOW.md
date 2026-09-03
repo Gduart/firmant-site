@@ -9,6 +9,7 @@
 - Primeira etapa cobrada pelo fluxo já existente de pedidos e Asaas; o webhook sincroniza a etapa e o projeto sem interromper pedidos antigos.
 - Pagamento de propostas fixado em duas etapas: entrada de 50% após o aceite e saldo de 50% após a aprovação, antes da entrega final. O projeto permanece bloqueado para produção até a confirmação da entrada.
 - Checkouts expirados são identificados no Admin e no link público. A regeneração cria uma nova cobrança, troca o link atual e preserva a cobrança substituída em um histórico somente para consulta.
+- O Checkout da proposta oferece Pix e cartão à vista. Parcelamento fica desabilitado para impedir parcelas sem juros configurados; uma cobrança ativa pode ser cancelada e substituída pelo Admin.
 - O Admin abre detalhes de proposta dentro da rota estática `/admin/propostas`, repetindo o hotfix já usado para briefings e evitando depender de uma nova navegação SSR dinâmica no Cloudflare.
 - O link público `/proposta/:token` redireciona para a página estática `/proposta?token=...`; os dados são buscados pela API depois do carregamento, evitando Error 1102 ao reativar links no Cloudflare.
 - Portal privado para aprovar imagem, carrossel e vídeo MP4, com comentários gerais, por slide ou timecode.

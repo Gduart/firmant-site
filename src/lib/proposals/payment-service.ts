@@ -1,5 +1,5 @@
 import { getEnvValue, getRequiredEnvValue } from "@/lib/cloudflare-runtime";
-import { buildAsaasCheckoutUrl, createAsaasCheckout } from "@/lib/payments/asaas/checkouts";
+import { buildAsaasCheckoutUrl, cancelAsaasCheckout, createAsaasCheckout } from "@/lib/payments/asaas/checkouts";
 import { createAsaasPaymentLink } from "@/lib/payments/asaas/payment-links";
 import type { AsaasBillingType, AsaasCheckoutRequest } from "@/lib/payments/asaas/types";
 import { getOrderById, insertOrder, updateOrder } from "@/lib/payments/orders-repository";
@@ -48,6 +48,16 @@ export async function createProposalMilestoneCheckout(input: {
         reused: true,
         replaced: false,
       };
+  }
+
+  let canceledExistingCheckout = false;
+  if (existingOrder && input.forceNew && !existingExpired && input.paymentMethod !== "BOLETO") {
+    if (!existingOrder.asaasCheckoutId) {
+      throw new Error("A cobrança atual não possui identificador para cancelamento.");
+    }
+    await cancelAsaasCheckout(existingOrder.asaasCheckoutId);
+    await updateOrder(existingOrder.id, { status: "CANCELED" });
+    canceledExistingCheckout = true;
   }
 
   const proposal = input.snapshot.proposal;
@@ -119,7 +129,6 @@ export async function createProposalMilestoneCheckout(input: {
       orderId,
       externalReference,
       amount,
-      paymentMethod: input.paymentMethod,
     }));
   const checkoutUrl = "url" in checkout
     ? checkout.url
@@ -141,7 +150,7 @@ export async function createProposalMilestoneCheckout(input: {
       reason: existingExpired ? "EXPIRED" : "REGENERATED",
     });
     if (!isPaidOrder(existingOrder.status) && !["FAILED", "CANCELED", "REFUNDED"].includes(existingOrder.status)) {
-      await updateOrder(existingOrder.id, { status: "FAILED" });
+      await updateOrder(existingOrder.id, { status: canceledExistingCheckout ? "CANCELED" : "FAILED" });
     }
   } else {
     await attachOrderToMilestone({
@@ -166,7 +175,6 @@ async function buildCheckoutPayload(input: {
   orderId: string;
   externalReference: string;
   amount: number;
-  paymentMethod: Exclude<CheckoutPaymentMethod, "BOLETO">;
 }): Promise<AsaasCheckoutRequest> {
   const [baseUrl, successUrl, cancelUrl, expiredUrl] = await Promise.all([
     getRequiredEnvValue("APP_BASE_URL"),
@@ -177,12 +185,14 @@ async function buildCheckoutPayload(input: {
   const proposal = input.snapshot.proposal;
   const briefing = input.snapshot.briefing ?? {};
   const description = buildDescription(input.snapshot, input.milestoneLabel);
+  const allowedMethods = JSON.parse(proposal.payment_methods_json) as string[];
+  const billingTypes = allowedMethods.filter(
+    (method): method is AsaasBillingType => method === "PIX" || method === "CREDIT_CARD",
+  );
 
   return {
-    billingTypes: [input.paymentMethod as AsaasBillingType],
-    chargeTypes: input.paymentMethod === "CREDIT_CARD"
-      ? ["DETACHED", "INSTALLMENT"]
-      : ["DETACHED"],
+    billingTypes: billingTypes.length ? billingTypes : ["PIX"],
+    chargeTypes: ["DETACHED"],
     minutesToExpire: 180,
     externalReference: input.externalReference,
     description,
@@ -198,9 +208,6 @@ async function buildCheckoutPayload(input: {
       value: input.amount,
     }],
     customerData: buildCheckoutCustomerData(proposal, briefing),
-    installment: input.paymentMethod === "CREDIT_CARD"
-      ? { maxInstallmentCount: Math.min(12, Math.max(1, Math.floor(input.amount / 5))) }
-      : undefined,
   };
 }
 

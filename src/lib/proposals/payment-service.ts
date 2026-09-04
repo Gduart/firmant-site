@@ -136,8 +136,10 @@ export async function createProposalMilestoneCheckout(input: {
   });
   if (!order) throw new Error("Falha ao criar o pedido da proposta.");
 
-  const checkout = input.paymentMethod === "BOLETO"
-    ? await createAsaasPaymentLink({
+  let checkout;
+  try {
+    checkout = input.paymentMethod === "BOLETO"
+      ? await createAsaasPaymentLink({
       name: `FIRMANT - ${milestone.label}`.slice(0, 100),
       description: buildDescription(input.snapshot, milestone.label),
       value: amount,
@@ -157,13 +159,18 @@ export async function createProposalMilestoneCheckout(input: {
         briefing,
         customerCpfCnpj,
       })
-      : await createAsaasCheckout(await buildCheckoutPayload({
-      snapshot: input.snapshot,
-      milestoneLabel: milestone.label,
-      orderId,
-      externalReference,
-      amount,
-    }));
+        : await createAsaasCheckout(await buildCheckoutPayload({
+          snapshot: input.snapshot,
+          milestoneLabel: milestone.label,
+          orderId,
+          externalReference,
+          amount,
+          paymentMethod: input.paymentMethod,
+        }));
+  } catch (error) {
+    await updateOrder(orderId, { status: "FAILED" });
+    throw error;
+  }
   let checkoutUrl: string;
   if ("url" in checkout) {
     checkoutUrl = checkout.url;
@@ -255,6 +262,7 @@ async function buildCheckoutPayload(input: {
   orderId: string;
   externalReference: string;
   amount: number;
+  paymentMethod: CheckoutPaymentMethod;
 }): Promise<AsaasCheckoutRequest> {
   const [baseUrl, successUrl, cancelUrl, expiredUrl] = await Promise.all([
     getRequiredEnvValue("APP_BASE_URL"),
@@ -265,10 +273,7 @@ async function buildCheckoutPayload(input: {
   const proposal = input.snapshot.proposal;
   const briefing = input.snapshot.briefing ?? {};
   const description = buildDescription(input.snapshot, input.milestoneLabel);
-  const allowedMethods = JSON.parse(proposal.payment_methods_json) as string[];
-  const billingTypes = allowedMethods.filter(
-    (method): method is AsaasBillingType => method === "PIX" || method === "CREDIT_CARD",
-  );
+  const billingTypes: AsaasBillingType[] = input.paymentMethod === "PIX" ? ["PIX"] : ["CREDIT_CARD"];
 
   return {
     billingTypes: billingTypes.length ? billingTypes : ["PIX"],

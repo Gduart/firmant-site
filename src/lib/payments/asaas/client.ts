@@ -49,8 +49,10 @@ export async function asaasRequest<T>(path: string, options: RequestOptions = {}
       details,
     });
 
+    const apiMessage = getAsaasErrorMessage(details);
+
     throw new AsaasApiError(
-      `Asaas request failed: ${response.status}`,
+      apiMessage || `O Asaas recusou a solicitação (${response.status}).`,
       response.status,
       details,
     );
@@ -61,4 +63,14 @@ export async function asaasRequest<T>(path: string, options: RequestOptions = {}
   }
 
   return response.json() as Promise<T>;
+}
+
+function getAsaasErrorMessage(details: unknown) {
+  if (!details || typeof details !== "object") return "";
+  const errors = (details as { errors?: unknown }).errors;
+  if (!Array.isArray(errors)) return "";
+  return errors
+    .map((item) => item && typeof item === "object" ? String((item as { description?: unknown }).description ?? "") : "")
+    .filter(Boolean)
+    .join(" ");
 }

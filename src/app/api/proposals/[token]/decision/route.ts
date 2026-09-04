@@ -46,11 +46,12 @@ export async function POST(request: Request, context: RouteContext) {
     if (!accepted.firstMilestone || !publicProposal || publicProposal.expired || !publicProposal.snapshot) {
       throw new Error("Aceite registrado, mas não foi possível localizar a primeira etapa de pagamento.");
     }
+    const requestedInstallments = body?.installmentCount;
     const payment = await createProposalMilestoneCheckout({
       milestoneId: accepted.firstMilestone.id,
       paymentMethod,
       snapshot: publicProposal.snapshot,
-      installmentCount: paymentMethod === "CREDIT_CARD" ? Number(body?.installmentCount) : undefined,
+      installmentCount: paymentMethod === "CREDIT_CARD" && requestedInstallments != null ? Number(requestedInstallments) : undefined,
       customerCpfCnpj: paymentMethod === "CREDIT_CARD" ? String(body?.payerDocument ?? "") : undefined,
     });
     return Response.json({ decision: "ACCEPTED", project: accepted.project, payment });

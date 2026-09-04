@@ -85,7 +85,9 @@ export async function createProposalMilestoneCheckout(input: {
 
   const orderId = crypto.randomUUID();
   const amount = cardQuote?.totalValue ?? baseAmount;
-  const externalReference = `firmant:proposal:${proposal.id}:milestone:${milestone.id}:${orderId}`;
+  // O Asaas limita externalReference a 100 caracteres. O UUID do pedido já é
+  // único e o vínculo com proposta/etapa permanece registrado no banco e notes.
+  const externalReference = `firmant:proposal-payment:${orderId}`;
   const order = await insertOrder({
     id: orderId,
     customerName: proposal.client_name,

@@ -60,7 +60,8 @@ async function serveProposal(env: Env, context: Context, token: string) {
     env.FIRMANT_DB.prepare("SELECT decision, accepted_at FROM proposal_acceptances WHERE proposal_version_id = ? LIMIT 1").bind(version.id).first(),
     env.FIRMANT_DB.prepare("SELECT status FROM proposals WHERE id = ?").bind(link.proposal_id).first<{ status: string }>(),
     env.FIRMANT_DB.prepare(`SELECT pm.id AS milestone_id, o.checkoutUrl AS checkout_url, pm.order_id,
-      pm.status, pm.payment_method, o.status AS order_status, o.createdAt AS order_created_at
+      pm.status, pm.payment_method, o.status AS order_status, o.createdAt AS order_created_at,
+      o.asaasCheckoutId AS asaas_checkout_id, o.asaasPaymentId AS asaas_payment_id
       FROM proposal_payment_milestones pm LEFT JOIN orders o ON o.id = pm.order_id
       WHERE pm.proposal_id = ? ORDER BY pm.position LIMIT 1`).bind(link.proposal_id).first(),
     env.FIRMANT_DB.prepare("SELECT id, project_number, status FROM projects WHERE proposal_id = ? LIMIT 1").bind(link.proposal_id).first(),
@@ -71,7 +72,7 @@ async function serveProposal(env: Env, context: Context, token: string) {
       ORDER BY a.updated_at DESC`).bind(link.proposal_id).all(),
   ]);
 
-  const checkoutExpired = isEdgeCheckoutExpired(payment as { checkout_url?: string | null; order_status?: string | null; order_created_at?: string | null; payment_method?: string | null } | null);
+  const checkoutExpired = isEdgeCheckoutExpired(payment as EdgePayment | null);
   const publicPayment = payment ? { ...payment, checkout_expired: checkoutExpired, checkout_url: checkoutExpired ? null : (payment as { checkout_url?: string | null }).checkout_url } : null;
   const now = new Date().toISOString();
   context.waitUntil(Promise.all([
@@ -234,15 +235,20 @@ function json(body: unknown, status = 200) {
   return Response.json(body, { status, headers: { "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff" } });
 }
 
-function isEdgeCheckoutExpired(payment: {
+type EdgePayment = {
   checkout_url?: string | null;
   order_status?: string | null;
   order_created_at?: string | null;
   payment_method?: string | null;
-} | null) {
+  asaas_checkout_id?: string | null;
+  asaas_payment_id?: string | null;
+};
+
+function isEdgeCheckoutExpired(payment: EdgePayment | null) {
   if (!payment?.checkout_url) return false;
   if (["FAILED", "CANCELED", "REFUNDED"].includes(payment.order_status ?? "")) return true;
   if (payment.payment_method === "BOLETO") return false;
+  if (payment.asaas_payment_id && !payment.asaas_checkout_id) return false;
   if (payment.order_status !== "CHECKOUT_CREATED" || !payment.order_created_at) return false;
   return new Date(payment.order_created_at).getTime() + 180 * 60 * 1000 <= Date.now();
 }

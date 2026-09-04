@@ -20,6 +20,7 @@ export async function POST(request: Request, context: RouteContext) {
       paymentMethod,
       snapshot,
       forceNew: body?.regenerate === true,
+      installmentCount: paymentMethod === "CREDIT_CARD" && body?.installmentCount ? Number(body.installmentCount) : undefined,
     }));
   } catch (error) { return Response.json({ error: error instanceof Error ? error.message : "Falha ao gerar cobrança." }, { status: 400 }); }
 }

@@ -3,6 +3,7 @@
   const token = new URLSearchParams(location.search).get("token")?.trim() || "";
   let result = null;
   let busy = false;
+  let cardQuote = null;
 
   const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
   const money = (cents) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(cents || 0) / 100);
@@ -61,9 +62,12 @@
   function decisionSection(proposal) {
     const decision = result.acceptance?.decision;
     if (decision === "REJECTED") return `<h2>Sua decisão</h2><div class="result"><b>Recusa registrada.</b><p>A FIRMANT recebeu sua decisão.</p></div>`;
-    if (decision === "ACCEPTED") return `<h2>Sua decisão</h2><div class="result"><b>Proposta aceita.</b><p>${result.payment?.checkout_expired ? "A cobrança anterior expirou. Gere uma nova cobrança para continuar." : "O aceite desta versão foi registrado."}</p>${result.payment?.checkout_url ? `<a class="primary" href="${esc(result.payment.checkout_url)}">Continuar para o pagamento</a>` : `<button id="retry-payment" class="primary">${result.payment?.checkout_expired ? "Gerar nova cobrança" : "Gerar link de pagamento"}</button>`}</div>`;
+    if (decision === "ACCEPTED") {
+      if (result.payment?.payment_method === "CREDIT_CARD") return `<h2>Sua decisão</h2><div class="result"><b>Proposta aceita.</b><p>Escolha o parcelamento. O valor abaixo já inclui as taxas.</p><div id="card-plan" class="card-plan"><label class="field">CPF ou CNPJ do pagador<input id="payer-document" inputmode="numeric" autocomplete="off"></label><label class="field">Parcelamento<select id="installment-count">${Array.from({ length: 12 }, (_, index) => `<option value="${index + 1}">${index + 1}x</option>`).join("")}</select></label><div id="card-quote" class="quote">Calculando taxas atuais do Asaas…</div></div><button id="retry-payment" class="primary">Gerar cobrança com este parcelamento</button></div>`;
+      return `<h2>Sua decisão</h2><div class="result"><b>Proposta aceita.</b><p>${result.payment?.checkout_expired ? "A cobrança anterior expirou. Gere uma nova cobrança para continuar." : "O aceite desta versão foi registrado."}</p>${result.payment?.checkout_url ? `<a class="primary" href="${esc(result.payment.checkout_url)}">Continuar para o pagamento</a>` : `<button id="retry-payment" class="primary">${result.payment?.checkout_expired ? "Gerar nova cobrança" : "Gerar link de pagamento"}</button>`}</div>`;
+    }
     const methods = array(proposal.payment_methods_json);
-    return `<h2>Sua decisão</h2><label class="field">Nome completo<input id="signer-name"></label><label class="field">E-mail<input id="signer-email" type="email" value="${esc(proposal.client_email)}"></label><fieldset class="methods"><legend>Forma de pagamento</legend>${methods.map((method) => `<label><input type="radio" name="payment" value="${esc(method)}">${paymentName(method)}</label>`).join("")}</fieldset><label class="consent"><input id="consent" type="checkbox"><span>Li e aceito integralmente esta proposta e seus termos.</span></label><p id="form-error" class="alert" hidden></p><button id="accept" class="primary">Aceitar proposta e continuar</button><button id="reject-toggle" class="secondary">Não desejo aprovar</button><div id="reject-box" hidden><label class="field">Motivo (opcional)<textarea id="reason"></textarea></label><button id="reject" class="primary">Registrar recusa</button></div>`;
+    return `<h2>Sua decisão</h2><label class="field">Nome completo<input id="signer-name"></label><label class="field">E-mail<input id="signer-email" type="email" value="${esc(proposal.client_email)}"></label><fieldset class="methods"><legend>Forma de pagamento</legend>${methods.map((method) => `<label><input type="radio" name="payment" value="${esc(method)}">${paymentName(method)}</label>`).join("")}</fieldset>${methods.includes("CREDIT_CARD") ? `<div id="card-plan" class="card-plan" hidden><label class="field">CPF ou CNPJ do pagador<input id="payer-document" inputmode="numeric" autocomplete="off"></label><label class="field">Parcelamento<select id="installment-count">${Array.from({ length: 12 }, (_, index) => `<option value="${index + 1}">${index + 1}x</option>`).join("")}</select></label><div id="card-quote" class="quote">Selecione a quantidade de parcelas.</div></div>` : ""}<label class="consent"><input id="consent" type="checkbox"><span>Li e aceito integralmente esta proposta e seus termos.</span></label><p id="form-error" class="alert" hidden></p><button id="accept" class="primary">Aceitar proposta e continuar</button><button id="reject-toggle" class="secondary">Não desejo aprovar</button><div id="reject-box" hidden><label class="field">Motivo (opcional)<textarea id="reason"></textarea></label><button id="reject" class="primary">Registrar recusa</button></div>`;
   }
 
   function bindActions() {
@@ -71,16 +75,41 @@
     document.querySelector("#accept")?.addEventListener("click", () => submit("ACCEPTED"));
     document.querySelector("#reject")?.addEventListener("click", () => submit("REJECTED"));
     document.querySelector("#retry-payment")?.addEventListener("click", retryPayment);
+    document.querySelectorAll('input[name="payment"]').forEach((input) => input.addEventListener("change", () => {
+      const cardPlan = document.querySelector("#card-plan");
+      if (cardPlan) cardPlan.hidden = input.value !== "CREDIT_CARD";
+      if (input.value === "CREDIT_CARD") void loadCardQuote();
+    }));
+    document.querySelector("#installment-count")?.addEventListener("change", loadCardQuote);
+    if (result.acceptance?.decision === "ACCEPTED" && result.payment?.payment_method === "CREDIT_CARD") void loadCardQuote();
+  }
+
+  async function loadCardQuote() {
+    const box = document.querySelector("#card-quote");
+    const count = Number(document.querySelector("#installment-count")?.value || 1);
+    if (!box) return;
+    box.textContent = "Calculando taxas atuais do Asaas…";
+    cardQuote = null;
+    try {
+      const response = await fetch(`/api/proposals/${encodeURIComponent(token)}/payment/quote`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ installmentCount: count }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Falha ao calcular parcelamento.");
+      cardQuote = data;
+      box.innerHTML = `<b>${esc(data.installmentCount)}x de ${money(Math.round(data.installmentValue * 100))}</b><span>Total no cartão: ${money(Math.round(data.totalValue * 100))}</span><small>Inclui taxa do cartão calculada pelo Asaas e antecipação automática de ${esc(String(data.monthlyAnticipationRate).replace(".", ","))}% a.m.</small>`;
+    } catch (error) { box.textContent = error.message; }
   }
 
   async function submit(decision) {
     if (busy) return;
     const errorBox = document.querySelector("#form-error");
     const consent = document.querySelector("#consent")?.checked || false;
+    const paymentMethod = document.querySelector('input[name="payment"]:checked')?.value || "";
     if (decision === "ACCEPTED" && !consent) { errorBox.hidden = false; errorBox.textContent = "Confirme a leitura e o aceite da proposta."; return; }
+    if (decision === "ACCEPTED" && paymentMethod === "CREDIT_CARD" && !cardQuote) { errorBox.hidden = false; errorBox.textContent = "Aguarde o cálculo do parcelamento antes de continuar."; return; }
+    if (decision === "ACCEPTED" && paymentMethod === "CREDIT_CARD" && String(document.querySelector("#payer-document")?.value || "").replace(/\D/g, "").length < 11) { errorBox.hidden = false; errorBox.textContent = "Informe um CPF ou CNPJ válido para gerar a cobrança."; return; }
     busy = true;
     try {
-      const response = await fetch(`/api/proposals/${encodeURIComponent(token)}/decision`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ decision, signerName: document.querySelector("#signer-name")?.value || "", signerEmail: document.querySelector("#signer-email")?.value || "", paymentMethod: document.querySelector('input[name="payment"]:checked')?.value || "", reason: document.querySelector("#reason")?.value || "", consent }) });
+      const response = await fetch(`/api/proposals/${encodeURIComponent(token)}/decision`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ decision, signerName: document.querySelector("#signer-name")?.value || "", signerEmail: document.querySelector("#signer-email")?.value || "", paymentMethod, installmentCount: Number(document.querySelector("#installment-count")?.value || 1), payerDocument: document.querySelector("#payer-document")?.value || "", reason: document.querySelector("#reason")?.value || "", consent }) });
       const data = await response.json(); if (!response.ok) throw new Error(data.error || "Não foi possível registrar sua decisão.");
       if (data.payment?.checkoutUrl) return location.assign(data.payment.checkoutUrl);
       await load();
@@ -89,7 +118,7 @@
 
   async function retryPayment() {
     if (busy) return; busy = true;
-    try { const response = await fetch(`/api/proposals/${encodeURIComponent(token)}/payment`, { method: "POST" }); const data = await response.json(); if (!response.ok) throw new Error(data.error || "Falha ao gerar pagamento."); location.assign(data.checkoutUrl); } catch (error) { alert(error.message); } finally { busy = false; }
+    try { const installmentCount = Number(document.querySelector("#installment-count")?.value || 1); const payerDocument = document.querySelector("#payer-document")?.value || ""; if (result.payment?.payment_method === "CREDIT_CARD" && String(payerDocument).replace(/\D/g, "").length < 11) throw new Error("Informe um CPF ou CNPJ válido."); const response = await fetch(`/api/proposals/${encodeURIComponent(token)}/payment`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ installmentCount, payerDocument, regenerate: result.payment?.payment_method === "CREDIT_CARD" }) }); const data = await response.json(); if (!response.ok) throw new Error(data.error || "Falha ao gerar pagamento."); location.assign(data.checkoutUrl); } catch (error) { alert(error.message); } finally { busy = false; }
   }
 
   load();

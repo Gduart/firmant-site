@@ -158,6 +158,8 @@ export async function listProposals(params: { q?: string; status?: string }) {
     deposit_checkout_url: string | null;
     deposit_order_status: string | null;
     deposit_order_created_at: string | null;
+    deposit_asaas_checkout_id: string | null;
+    deposit_asaas_payment_id: string | null;
     link_active: number | null;
     link_expires_at: string | null;
   }>(
@@ -166,7 +168,9 @@ export async function listProposals(params: { q?: string; status?: string }) {
       deposit.payment_method AS deposit_payment_method,
       deposit_order.checkoutUrl AS deposit_checkout_url,
       deposit_order.status AS deposit_order_status,
-      deposit_order.createdAt AS deposit_order_created_at
+      deposit_order.createdAt AS deposit_order_created_at,
+      deposit_order.asaasCheckoutId AS deposit_asaas_checkout_id,
+      deposit_order.asaasPaymentId AS deposit_asaas_payment_id
       ,(SELECT pal.active FROM proposal_access_links pal
         WHERE pal.proposal_id = p.id ORDER BY pal.created_at DESC LIMIT 1) AS link_active
       ,(SELECT pal.expires_at FROM proposal_access_links pal
@@ -185,8 +189,10 @@ export async function listProposals(params: { q?: string; status?: string }) {
     deposit_checkout_expired: isProposalCheckoutExpired({
       status: proposal.deposit_order_status,
       createdAt: proposal.deposit_order_created_at,
-      paymentMethod: proposal.deposit_payment_method,
-      checkoutUrl: proposal.deposit_checkout_url,
+        paymentMethod: proposal.deposit_payment_method,
+        checkoutUrl: proposal.deposit_checkout_url,
+        asaasCheckoutId: proposal.deposit_asaas_checkout_id,
+        asaasPaymentId: proposal.deposit_asaas_payment_id,
     }),
   }));
 }
@@ -506,9 +512,10 @@ export async function getPublicProposal(token: string, markViewed = true) {
       [version.id],
     ),
     workflowFirst<{ status: string }>("SELECT status FROM proposals WHERE id = ?", [link.proposal_id]),
-    workflowFirst<{ milestone_id: string; checkout_url: string | null; order_id: string | null; status: string | null; payment_method: string | null; order_status: string | null; order_created_at: string | null }>(
+    workflowFirst<{ milestone_id: string; checkout_url: string | null; order_id: string | null; status: string | null; payment_method: string | null; order_status: string | null; order_created_at: string | null; asaas_checkout_id: string | null; asaas_payment_id: string | null }>(
       `SELECT pm.id AS milestone_id, o.checkoutUrl AS checkout_url, pm.order_id, pm.status,
-        pm.payment_method, o.status AS order_status, o.createdAt AS order_created_at
+        pm.payment_method, o.status AS order_status, o.createdAt AS order_created_at,
+        o.asaasCheckoutId AS asaas_checkout_id, o.asaasPaymentId AS asaas_payment_id
        FROM proposal_payment_milestones pm
        LEFT JOIN orders o ON o.id = pm.order_id
        WHERE pm.proposal_id = ? ORDER BY pm.position LIMIT 1`,
@@ -553,6 +560,8 @@ export async function getPublicProposal(token: string, markViewed = true) {
         createdAt: payment.order_created_at,
         paymentMethod: payment.payment_method,
         checkoutUrl: payment.checkout_url,
+        asaasCheckoutId: payment.asaas_checkout_id,
+        asaasPaymentId: payment.asaas_payment_id,
       });
       return { ...payment, checkout_expired: checkoutExpired, checkout_url: checkoutExpired ? null : payment.checkout_url };
     })() : null,
@@ -781,7 +790,8 @@ async function listProposalItems(proposalId: string) {
 export async function listProposalMilestones(proposalId: string) {
   const milestones = await workflowAll<ProposalMilestoneRecord>(
     `SELECT pm.*, o.checkoutUrl AS checkout_url, o.status AS order_status,
-      o.createdAt AS order_created_at
+      o.createdAt AS order_created_at, o.asaasCheckoutId AS asaas_checkout_id,
+      o.asaasPaymentId AS asaas_payment_id
      FROM proposal_payment_milestones pm
      LEFT JOIN orders o ON o.id = pm.order_id
      WHERE pm.proposal_id = ? ORDER BY pm.position`,
@@ -794,6 +804,8 @@ export async function listProposalMilestones(proposalId: string) {
       createdAt: milestone.order_created_at,
       paymentMethod: milestone.payment_method,
       checkoutUrl: milestone.checkout_url,
+      asaasCheckoutId: milestone.asaas_checkout_id,
+      asaasPaymentId: milestone.asaas_payment_id,
     }),
   }));
 }

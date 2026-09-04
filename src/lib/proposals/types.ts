@@ -95,6 +95,8 @@ export type ProposalMilestoneRecord = {
   checkout_url?: string | null;
   order_status?: string | null;
   order_created_at?: string | null;
+  asaas_checkout_id?: string | null;
+  asaas_payment_id?: string | null;
   checkout_expired?: boolean;
 };
 

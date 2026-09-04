@@ -50,6 +50,8 @@ export async function POST(request: Request, context: RouteContext) {
       milestoneId: accepted.firstMilestone.id,
       paymentMethod,
       snapshot: publicProposal.snapshot,
+      installmentCount: paymentMethod === "CREDIT_CARD" ? Number(body?.installmentCount) : undefined,
+      customerCpfCnpj: paymentMethod === "CREDIT_CARD" ? String(body?.payerDocument ?? "") : undefined,
     });
     return Response.json({ decision: "ACCEPTED", project: accepted.project, payment });
   } catch (error) {

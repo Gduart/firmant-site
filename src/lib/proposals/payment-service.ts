@@ -1,6 +1,8 @@
 import { getEnvValue, getRequiredEnvValue } from "@/lib/cloudflare-runtime";
 import { buildAsaasCheckoutUrl, cancelAsaasCheckout, createAsaasCheckout } from "@/lib/payments/asaas/checkouts";
 import { createAsaasPaymentLink } from "@/lib/payments/asaas/payment-links";
+import { findOrCreateAsaasCustomer } from "@/lib/payments/asaas/customers";
+import { createAsaasDirectPayment, deleteAsaasPayment } from "@/lib/payments/asaas/payments";
 import type { AsaasBillingType, AsaasCheckoutRequest } from "@/lib/payments/asaas/types";
 import { getOrderById, insertOrder, updateOrder } from "@/lib/payments/orders-repository";
 import type { CheckoutPaymentMethod } from "@/lib/payments/types";
@@ -15,12 +17,15 @@ import {
   replaceOrderOnMilestone,
 } from "@/lib/proposals/repository";
 import type { ProposalSnapshot } from "@/lib/proposals/types";
+import { normalizeInstallmentCount, quoteProposalCardPayment } from "@/lib/proposals/card-installments";
 
 export async function createProposalMilestoneCheckout(input: {
   milestoneId: string;
   paymentMethod: CheckoutPaymentMethod;
   snapshot: ProposalSnapshot;
   forceNew?: boolean;
+  installmentCount?: number;
+  customerCpfCnpj?: string;
 }) {
   const milestone = await getProposalMilestone(input.milestoneId);
   if (!milestone || milestone.proposal_id !== input.snapshot.proposal.id) {
@@ -39,6 +44,8 @@ export async function createProposalMilestoneCheckout(input: {
     createdAt: existingOrder.createdAt,
     paymentMethod: input.paymentMethod,
     checkoutUrl: existingOrder.checkoutUrl,
+    asaasCheckoutId: existingOrder.asaasCheckoutId,
+    asaasPaymentId: existingOrder.asaasPaymentId,
   }) : false;
   if (existingOrder && !input.forceNew && canReuseProposalCheckout(existingOrder, input.paymentMethod)) {
       return {
@@ -50,20 +57,34 @@ export async function createProposalMilestoneCheckout(input: {
       };
   }
 
+  const installmentCount = input.paymentMethod === "CREDIT_CARD"
+    ? normalizeInstallmentCount(input.installmentCount ?? readInstallmentCount(existingOrder?.notes) ?? 1)
+    : undefined;
+  const proposal = input.snapshot.proposal;
+  const briefing = input.snapshot.briefing ?? {};
+  const baseAmount = milestone.amount_cents / 100;
+  const customerCpfCnpj = optionalDigits(input.customerCpfCnpj) ?? optionalDigits(briefing.tax_id) ?? existingOrder?.customerCpfCnpj ?? undefined;
+  if (installmentCount && !customerCpfCnpj) {
+    throw new Error("Informe o CPF ou CNPJ do cliente para gerar o parcelamento.");
+  }
+  const cardQuote = installmentCount
+    ? await quoteProposalCardPayment(baseAmount, installmentCount)
+    : null;
   let canceledExistingCheckout = false;
   if (existingOrder && input.forceNew && !existingExpired && input.paymentMethod !== "BOLETO") {
-    if (!existingOrder.asaasCheckoutId) {
+    if (existingOrder.asaasPaymentId) {
+      await deleteAsaasPayment(existingOrder.asaasPaymentId);
+    } else if (existingOrder.asaasCheckoutId) {
+      await cancelAsaasCheckout(existingOrder.asaasCheckoutId);
+    } else {
       throw new Error("A cobrança atual não possui identificador para cancelamento.");
     }
-    await cancelAsaasCheckout(existingOrder.asaasCheckoutId);
     await updateOrder(existingOrder.id, { status: "CANCELED" });
     canceledExistingCheckout = true;
   }
 
-  const proposal = input.snapshot.proposal;
-  const briefing = input.snapshot.briefing ?? {};
   const orderId = crypto.randomUUID();
-  const amount = milestone.amount_cents / 100;
+  const amount = cardQuote?.totalValue ?? baseAmount;
   const externalReference = `firmant:proposal:${proposal.id}:milestone:${milestone.id}:${orderId}`;
   const order = await insertOrder({
     id: orderId,
@@ -71,7 +92,7 @@ export async function createProposalMilestoneCheckout(input: {
     customerEmail: proposal.client_email,
     customerPhone: digits(textValue(briefing.whatsapp)),
     customerCompany: optionalText(briefing.trade_name) ?? optionalText(briefing.legal_name) ?? null,
-    customerCpfCnpj: optionalDigits(briefing.tax_id) ?? null,
+    customerCpfCnpj: customerCpfCnpj ?? null,
     serviceSnapshot: JSON.stringify([{
       categoryId: "proposal",
       categoryTitle: `Proposta ${proposal.proposal_number}`,
@@ -108,6 +129,9 @@ export async function createProposalMilestoneCheckout(input: {
       province: optionalText(briefing.province),
       city: optionalText(briefing.city),
       state: optionalText(briefing.state),
+      installmentCount,
+      baseAmount,
+      cardQuote,
     }),
   });
   if (!order) throw new Error("Falha ao criar o pedido da proposta.");
@@ -123,20 +147,38 @@ export async function createProposalMilestoneCheckout(input: {
       externalReference,
       notificationEnabled: false,
     })
-    : await createAsaasCheckout(await buildCheckoutPayload({
+    : input.paymentMethod === "CREDIT_CARD" && cardQuote
+      ? await createCardInvoice({
+        snapshot: input.snapshot,
+        milestoneLabel: milestone.label,
+        orderId,
+        externalReference,
+        quote: cardQuote,
+        briefing,
+        customerCpfCnpj,
+      })
+      : await createAsaasCheckout(await buildCheckoutPayload({
       snapshot: input.snapshot,
       milestoneLabel: milestone.label,
       orderId,
       externalReference,
       amount,
     }));
-  const checkoutUrl = "url" in checkout
-    ? checkout.url
-    : await buildAsaasCheckoutUrl(checkout.id);
+  let checkoutUrl: string;
+  if ("url" in checkout) {
+    checkoutUrl = checkout.url;
+  } else if ("invoiceUrl" in checkout && checkout.invoiceUrl) {
+    checkoutUrl = checkout.invoiceUrl;
+  } else if (checkout.id) {
+    checkoutUrl = await buildAsaasCheckoutUrl(checkout.id);
+  } else {
+    throw new Error("O Asaas não retornou o link da cobrança.");
+  }
 
   await updateOrder(orderId, {
     status: "CHECKOUT_CREATED",
-    asaasCheckoutId: checkout.id,
+    asaasCheckoutId: "invoiceUrl" in checkout ? null : checkout.id,
+    asaasPaymentId: "invoiceUrl" in checkout ? checkout.id : null,
     checkoutUrl,
   });
   if (existingOrder) {
@@ -167,6 +209,44 @@ export async function createProposalMilestoneCheckout(input: {
     reused: false,
     replaced: Boolean(existingOrder),
   };
+}
+
+async function createCardInvoice(input: {
+  snapshot: ProposalSnapshot;
+  milestoneLabel: string;
+  orderId: string;
+  externalReference: string;
+  quote: Awaited<ReturnType<typeof quoteProposalCardPayment>>;
+  briefing: Record<string, unknown>;
+  customerCpfCnpj?: string;
+}) {
+  const proposal = input.snapshot.proposal;
+  const cpfCnpj = input.customerCpfCnpj;
+  if (!cpfCnpj) {
+    throw new Error("Informe o CPF ou CNPJ do cliente no briefing para gerar o parcelamento.");
+  }
+  const customer = await findOrCreateAsaasCustomer({
+    name: proposal.client_name,
+    email: proposal.client_email,
+    mobilePhone: optionalDigits(input.briefing.whatsapp),
+    cpfCnpj,
+    externalReference: `firmant:proposal-client:${proposal.client_email.toLowerCase()}`,
+  });
+  const count = input.quote.installmentCount;
+  const payment = await createAsaasDirectPayment({
+    customer: customer.id,
+    billingType: "CREDIT_CARD",
+    value: count === 1 ? input.quote.totalValue : input.quote.installmentValue,
+    dueDate: addDaysAsDateString(3),
+    description: buildDescription(input.snapshot, input.milestoneLabel),
+    externalReference: input.externalReference,
+    installmentCount: count > 1 ? count : undefined,
+    totalValue: count > 1 ? input.quote.totalValue : undefined,
+  });
+  if (!payment.id || !payment.invoiceUrl) {
+    throw new Error("O Asaas não retornou o link seguro do parcelamento.");
+  }
+  return payment;
 }
 
 async function buildCheckoutPayload(input: {
@@ -266,4 +346,20 @@ function buildCheckoutCustomerData(
     postalCode,
     province,
   };
+}
+
+function readInstallmentCount(notes?: string | null) {
+  if (!notes) return null;
+  try {
+    const value = Number((JSON.parse(notes) as Record<string, unknown>).installmentCount);
+    return Number.isInteger(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function addDaysAsDateString(days: number) {
+  const date = new Date();
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
 }

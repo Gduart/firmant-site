@@ -4,6 +4,30 @@ import type {
   AsaasPaymentPayload,
 } from "@/lib/payments/asaas/types";
 
+export type AsaasDirectPaymentRequest = {
+  customer: string;
+  billingType: "CREDIT_CARD";
+  value: number;
+  dueDate: string;
+  description: string;
+  externalReference: string;
+  installmentCount?: number;
+  totalValue?: number;
+};
+
+export async function createAsaasDirectPayment(payload: AsaasDirectPaymentRequest) {
+  return asaasRequest<AsaasPaymentPayload>("/v3/payments", {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export async function deleteAsaasPayment(paymentId: string) {
+  return asaasRequest(`/v3/payments/${encodeURIComponent(paymentId)}`, {
+    method: "DELETE",
+  });
+}
+
 export async function listAsaasPayments(params: {
   externalReference?: string | null;
   checkoutSession?: string | null;

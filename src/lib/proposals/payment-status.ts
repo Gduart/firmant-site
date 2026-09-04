@@ -14,10 +14,13 @@ export function isProposalCheckoutExpired(input: {
   createdAt?: string | null;
   paymentMethod?: string | null;
   checkoutUrl?: string | null;
+  asaasCheckoutId?: string | null;
+  asaasPaymentId?: string | null;
 }) {
   if (!input.checkoutUrl) return false;
   if (input.status && TERMINAL_ORDER_STATUSES.has(input.status)) return true;
   if (input.paymentMethod === "BOLETO") return false;
+  if (input.asaasPaymentId && !input.asaasCheckoutId) return false;
   if (input.status !== "CHECKOUT_CREATED" || !input.createdAt) return false;
   return new Date(input.createdAt).getTime() + ASAAS_CHECKOUT_TTL_MS <= Date.now();
 }
@@ -28,5 +31,7 @@ export function canReuseProposalCheckout(order: OrderRecord, paymentMethod: Chec
     createdAt: order.createdAt,
     paymentMethod,
     checkoutUrl: order.checkoutUrl,
+    asaasCheckoutId: order.asaasCheckoutId,
+    asaasPaymentId: order.asaasPaymentId,
   });
 }

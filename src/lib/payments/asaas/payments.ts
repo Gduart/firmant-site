@@ -7,11 +7,12 @@ import type {
 export type AsaasDirectPaymentRequest = {
   customer: string;
   billingType: "CREDIT_CARD";
-  value: number;
+  value?: number;
   dueDate: string;
   description: string;
   externalReference: string;
   installmentCount?: number;
+  installmentValue?: number;
   totalValue?: number;
 };
 

@@ -245,12 +245,12 @@ async function createCardInvoice(input: {
   const payment = await createAsaasDirectPayment({
     customer: customer.id,
     billingType: "CREDIT_CARD",
-    value: count === 1 ? input.quote.totalValue : input.quote.installmentValue,
+    value: count === 1 ? input.quote.totalValue : undefined,
     dueDate: addDaysAsDateString(3),
     description: buildDescription(input.snapshot, input.milestoneLabel),
     externalReference: input.externalReference,
     installmentCount: count > 1 ? count : undefined,
-    totalValue: count > 1 ? input.quote.totalValue : undefined,
+    installmentValue: count > 1 ? input.quote.installmentValue : undefined,
   });
   if (!payment.id || !payment.invoiceUrl) {
     throw new Error("O Asaas não retornou o link seguro do parcelamento.");

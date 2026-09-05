@@ -9,9 +9,9 @@
 - Primeira etapa cobrada pelo fluxo já existente de pedidos e Asaas; o webhook sincroniza a etapa e o projeto sem interromper pedidos antigos.
 - Pagamento de propostas fixado em duas etapas: entrada de 50% após o aceite e saldo de 50% após a aprovação, antes da entrega final. O projeto permanece bloqueado para produção até a confirmação da entrada.
 - Checkouts expirados são identificados no Admin e no link público. A regeneração cria uma nova cobrança, troca o link atual e preserva a cobrança substituída em um histórico somente para consulta.
-- O Checkout da proposta oferece Pix e cartão à vista. Parcelamento fica desabilitado para impedir parcelas sem juros configurados; uma cobrança ativa pode ser cancelada e substituída pelo Admin.
+- A proposta oferece Pix e cartão de 1x a 12x, com cálculo das taxas e simulação Asaas no backend. Cartão usa cobrança direta: `value` em 1x e `installmentCount` + `installmentValue` em 2x–12x. Uma cobrança ativa pode ser cancelada e substituída pelo Admin.
 - O Admin abre detalhes de proposta dentro da rota estática `/admin/propostas`, repetindo o hotfix já usado para briefings e evitando depender de uma nova navegação SSR dinâmica no Cloudflare.
-- O link público `/proposta/:token` redireciona para a página estática `/proposta?token=...`; os dados são buscados pela API depois do carregamento, evitando Error 1102 ao reativar links no Cloudflare.
+- O link público `/proposta/:token` redireciona para a página estática `/proposta.html?token=...`; os dados são buscados pela API depois do carregamento, reduzindo a execução do Worker principal ao abrir links. A interface React `/proposta?token=...` também permanece disponível.
 - Portal privado para aprovar imagem, carrossel e vídeo MP4, com comentários gerais, por slide ou timecode.
 - Aprovação e rodadas de revisão registradas por versão.
 
@@ -34,6 +34,16 @@ npm run deploy:proposal-edge
 ```
 
 ## Recursos Cloudflare necessários
+
+### Revisão após contratação do Workers Paid
+
+- A contratação e o alerta de orçamento foram informados pelo responsável pela conta; esta revisão local não consultou configurações ou métricas remotas.
+- Os arquivos Wrangler não fixam `limits.cpu_ms`. O padrão documentado do Paid é 30 segundos de CPU por requisição HTTP; não foi adicionado limite arbitrário nem aumentado para cinco minutos sem medição que justifique isso.
+- Preservar Static Assets, Worker público leve e upload por streaming ao R2: a memória continua limitada a 128 MB por isolate mesmo no plano pago.
+- Observabilidade já está habilitada nos Workers. Para avaliar recorrência de 1102, distinguir `exceededCpu` de `exceededMemory` nos logs/métricas; HTTP 200 isoladamente não homologa o fluxo completo.
+- O cliente Asaas lê o corpo de erro uma única vez. Respostas HTML, texto, vazias ou JSON inválido preservam o status e produzem mensagem controlada, sem repetir automaticamente operações financeiras.
+- Teste local sem rede ou cobrança: `node --test scripts/asaas-client.test.cjs`.
+- Referência: https://developers.cloudflare.com/workers/platform/limits/
 
 Antes do deploy, criar os buckets privados (caso ainda não existam):
 

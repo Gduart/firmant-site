@@ -35,12 +35,14 @@ export async function asaasRequest<T>(path: string, options: RequestOptions = {}
   });
 
   if (!response.ok) {
-    let details: unknown = null;
+    // Read once: json() consumes the body even when parsing fails (e.g. HTML 502).
+    const responseText = await response.text();
+    let details: unknown = responseText;
 
     try {
-      details = await response.json();
+      details = JSON.parse(responseText);
     } catch {
-      details = await response.text();
+      // Preserve non-JSON details for the log and use the controlled HTTP fallback.
     }
 
     console.error("Asaas API error", {

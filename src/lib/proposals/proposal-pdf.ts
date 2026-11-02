@@ -6,19 +6,33 @@ const MARGIN_X = 52;
 const CONTENT_TOP = 704;
 const CONTENT_BOTTOM = 64;
 
-type LineKind = "title" | "section" | "label" | "body" | "bullet" | "note" | "space" | "break";
+type LineKind = "title" | "section" | "label" | "body" | "bullet" | "note" | "space" | "break" | "investment";
 type PdfLine = { kind: LineKind; text: string };
+type CommercialBranding = { issuedAt: string; validity: string; total: string; deposit: string; balance: string };
 
 export function buildProposalPdf(snapshot: ProposalSnapshot) {
   const pages = paginate(expandLines(buildDocument(snapshot)));
+  return renderPages(pages, snapshot.proposal.proposal_number);
+}
+
+// Compartilha paginação, quebra de texto e serialização, preservando o PDF antigo.
+export function buildCommercialTextPdf(reference: string, sections: { heading: string; body: string; highlight?: boolean }[], branding?: CommercialBranding) {
+  const lines = sections.flatMap((section, index): PdfLine[] => [{ kind: index === 0 ? "title" : "section", text: section.heading },
+    ...section.body.split("\n").filter(Boolean).map((text): PdfLine => ({ kind: "body", text })), ...(section.highlight && branding ? [{ kind: "investment" as const, text: "" }] : []), space()]);
+  const expanded = lines.flatMap(item => item.kind === "space" || item.kind === "investment" ? [item] : commercialWrap(item.text, commercialStyle(item.kind, !!branding).size).map((text, index): PdfLine => ({ kind: index > 0 && item.kind !== "body" ? "body" : item.kind, text })));
+  return renderPages(paginate(expanded, !!branding), reference, true, branding);
+}
+
+function renderPages(pages: PdfLine[][], reference: string, navyGold = false, branding?: CommercialBranding) {
   const objects: string[] = [
     "<< /Type /Catalog /Pages 2 0 R >>",
     `<< /Type /Pages /Kids [${pages.map((_, i) => `${3 + i * 2} 0 R`).join(" ")}] /Count ${pages.length} >>`,
   ];
   pages.forEach((page, i) => {
     const pageObject = 3 + i * 2;
-    objects.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PAGE_WIDTH} ${PAGE_HEIGHT}] /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> /F2 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >> >> >> /Contents ${pageObject + 1} 0 R >>`);
-    objects.push(contentStream(page, i + 1, pages.length, snapshot.proposal.proposal_number));
+    const encoding = navyGold ? " /Encoding /WinAnsiEncoding" : "";
+    objects.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PAGE_WIDTH} ${PAGE_HEIGHT}] /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica${encoding} >> /F2 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold${encoding} >> >> >> /Contents ${pageObject + 1} 0 R >>`);
+    objects.push(branding ? commercialStream(page, i + 1, pages.length, reference, branding) : contentStream(page, i + 1, pages.length, reference, navyGold));
   });
   return new TextEncoder().encode(serialize(objects));
 }
@@ -114,20 +128,70 @@ function buildDocument(snapshot: ProposalSnapshot): PdfLine[] {
   ];
 }
 
-function contentStream(lines: PdfLine[], page: number, total: number, reference: string) {
+function contentStream(lines: PdfLine[], page: number, total: number, reference: string, navyGold = false) {
   const commands = ["0.965 0.965 0.94 rg", `0 0 ${PAGE_WIDTH} ${PAGE_HEIGHT} re f`, "0.055 0.082 0.063 rg", `0 ${PAGE_HEIGHT - 112} ${PAGE_WIDTH} 112 re f`, "0.62 0.78 0.38 rg", `0 ${PAGE_HEIGHT - 115} ${PAGE_WIDTH} 3 re f`, "BT", "/F2 25 Tf", "1 1 1 rg", `1 0 0 1 ${MARGIN_X} 790 Tm (FIRMANT) Tj`, "/F1 8 Tf", "0.72 0.78 0.73 rg", `1 0 0 1 ${MARGIN_X} 773 Tm (Proposta comercial personalizada) Tj`];
   let y = CONTENT_TOP;
   for (const item of lines) {
     const style = lineStyle(item.kind); y -= style.before;
-    if (item.kind !== "space") commands.push(`/${style.bold ? "F2" : "F1"} ${style.size} Tf`, style.color, `1 0 0 1 ${MARGIN_X + style.indent} ${y} Tm (${escapeText(item.text)}) Tj`);
+    if (item.kind !== "space") commands.push(`/${style.bold ? "F2" : "F1"} ${style.size} Tf`, style.color, `1 0 0 1 ${MARGIN_X + style.indent} ${y} Tm (${navyGold ? escapeCommercial(item.text) : escapeText(item.text)}) Tj`);
     y -= style.after;
   }
   commands.push("/F1 8 Tf", "0.25 0.36 0.27 rg", `1 0 0 1 ${MARGIN_X} 35 Tm (${escapeText(`${reference} | Pagina ${page} de ${total} | ag.firmant@gmail.com`)}) Tj`, "ET");
-  const stream = commands.join("\n"); return `<< /Length ${bytes(stream)} >>\nstream\n${stream}\nendstream`;
+  const original = commands.join("\n");
+  const stream = navyGold ? original.replaceAll("0.055 0.082 0.063 rg", "0.039 0.086 0.157 rg").replaceAll("0.62 0.78 0.38 rg", "0.788 0.659 0.298 rg").replaceAll("0.10 0.28 0.14 rg", "0.10 0.20 0.32 rg").replaceAll("0.965 0.965 0.94 rg", "1 1 1 rg") : original;
+  return `<< /Length ${bytes(stream)} >>\nstream\n${stream}\nendstream`;
 }
 
+function commercialStyle(kind: LineKind, premium: boolean) {
+  if (!premium) return lineStyle(kind);
+  if (kind === "investment") return { ...lineStyle("body"), before: 9, after: 141 };
+  const base = lineStyle(kind);
+  if (kind === "body") return { ...base, size: 9.5, after: 14.5, color: "0.17 0.22 0.29 rg" };
+  if (kind === "title") return { ...base, size: 16, after: 27, color: "0.039 0.086 0.157 rg" };
+  if (kind === "section") return { ...base, size: 11, before: 9, after: 19, color: "0.039 0.086 0.157 rg" };
+  return base;
+}
+function commercialStream(lines: PdfLine[], page: number, total: number, reference: string, branding: CommercialBranding) {
+  const commands: string[] = [];
+  const rect = (x: number, y: number, width: number, height: number, color: string) => commands.push(`${color} rg`, `${x} ${y} ${width} ${height} re f`);
+  const text = (value: string, x: number, y: number, size: number, bold = false, color = "0.039 0.086 0.157") => commands.push("BT", `/${bold ? "F2" : "F1"} ${size} Tf`, `${color} rg`, `1 0 0 1 ${x} ${y} Tm (${escapeCommercial(value)}) Tj`, "ET");
+  rect(0, 0, PAGE_WIDTH, PAGE_HEIGHT, "1 1 1");
+  rect(0, 748, PAGE_WIDTH, 94, "0.039 0.086 0.157");
+  rect(0, 746, PAGE_WIDTH, 2, "0.788 0.659 0.298");
+  text("FIRMANT", MARGIN_X, 801, 27, true, "1 1 1");
+  text("DESENVOLVIMENTO E AUTOMAÇÃO", MARGIN_X, 784, 7.5, false, "0.79 0.84 0.90");
+  text(reference, 345, 814, 9, true, "0.91 0.83 0.55");
+  text(`Emissão: ${branding.issuedAt}`, 345, 798, 8.5, false, "1 1 1");
+  text(`Validade: ${branding.validity}`, 345, 783, 8.5, false, "1 1 1");
+  text("50% DE SINAL NA ENTRADA  +  50% NA ENTREGA DO PROJETO", MARGIN_X, 762, 9, true, "0.91 0.83 0.55");
+  let y = 724;
+  for (const item of lines) {
+    const style = commercialStyle(item.kind, true);
+    y -= style.before;
+    if (item.kind === "investment") {
+      rect(MARGIN_X, y - 131, PAGE_WIDTH - MARGIN_X * 2, 131, "0.039 0.086 0.157");
+      rect(MARGIN_X, y - 131, 3, 131, "0.788 0.659 0.298");
+      text("INVESTIMENTO TOTAL DO PROJETO", MARGIN_X + 16, y - 20, 8, true, "0.91 0.83 0.55");
+      text(branding.total, MARGIN_X + 16, y - 47, 23, true, "1 1 1");
+      text("ENTRADA / SINAL - 50%", MARGIN_X + 16, y - 72, 8, true, "0.91 0.83 0.55");
+      text("NA ENTREGA DO PROJETO - 50%", MARGIN_X + 254, y - 72, 8, true, "0.91 0.83 0.55");
+      text(branding.deposit, MARGIN_X + 16, y - 93, 15, true, "1 1 1");
+      text(branding.balance, MARGIN_X + 254, y - 93, 15, true, "1 1 1");
+      text("PIX OU CARTÃO DE CRÉDITO", MARGIN_X + 16, y - 113, 8.5, true, "0.91 0.83 0.55");
+      text("À vista ou parcelado conforme condição aprovada.", MARGIN_X + 16, y - 125, 7.5, false, "1 1 1");
+    } else if (item.kind !== "space") {
+      text(item.text, MARGIN_X + style.indent, y, style.size, style.bold, style.color.replace(" rg", ""));
+    }
+    y -= style.after;
+  }
+  rect(MARGIN_X, 49, PAGE_WIDTH - MARGIN_X * 2, .7, "0.79 0.82 0.86");
+  text(`${reference}  |  ag.firmant@gmail.com`, MARGIN_X, 35, 7.5);
+  text(`Página ${page} de ${total}`, 475, 35, 7.5);
+  const stream = commands.join("\n");
+  return `<< /Length ${bytes(stream)} >>\nstream\n${stream}\nendstream`;
+}
 function expandLines(lines: PdfLine[]) { return lines.flatMap((item) => { if (item.kind === "break" || item.kind === "space") return [item]; const max = item.kind === "title" ? 52 : item.kind === "section" ? 70 : item.kind === "bullet" || item.kind === "note" ? 86 : 92; const prefix = item.kind === "bullet" ? "- " : ""; return wrap(item.text, max - prefix.length).map((text, i) => ({ kind: i > 0 && ["label", "section", "title"].includes(item.kind) ? "body" as const : item.kind, text: `${i === 0 ? prefix : item.kind === "bullet" ? "  " : ""}${text}` })); }); }
-function paginate(lines: PdfLine[]) { const pages: PdfLine[][] = []; let page: PdfLine[] = []; let used = 0; const available = CONTENT_TOP - CONTENT_BOTTOM; for (const item of lines) { if (item.kind === "break") { if (page.length) pages.push(trimSpaces(page)); page = []; used = 0; continue; } const height = lineHeight(item.kind); const keep = ["title", "section", "label"].includes(item.kind); if (page.length && used + height + (keep ? 13 : 0) > available) { pages.push(trimSpaces(page)); page = []; used = 0; } if (item.kind === "space" && page.length === 0) continue; page.push(item); used += height; } if (page.length) pages.push(trimSpaces(page)); return pages.length ? pages : [[]]; }
+function paginate(lines: PdfLine[], premium = false) { const pages: PdfLine[][] = []; let page: PdfLine[] = []; let used = 0; const available = (premium ? 724 : CONTENT_TOP) - CONTENT_BOTTOM; for (const item of lines) { if (item.kind === "break") { if (page.length) pages.push(trimSpaces(page)); page = []; used = 0; continue; } const height = premium ? commercialStyle(item.kind, true).before + commercialStyle(item.kind, true).after : lineHeight(item.kind); const keep = ["title", "section", "label"].includes(item.kind); if (page.length && used + height + (keep ? (premium ? 30 : 13) : 0) > available) { pages.push(trimSpaces(page)); page = []; used = 0; } if (item.kind === "space" && page.length === 0) continue; page.push(item); used += height; } if (page.length) pages.push(trimSpaces(page)); return pages.length ? pages : [[]]; }
 function lineStyle(kind: LineKind) { if (kind === "title") return { size: 16, bold: true, color: "0.08 0.19 0.11 rg", indent: 0, before: 0, after: 24 }; if (kind === "section") return { size: 10.5, bold: true, color: "0.10 0.28 0.14 rg", indent: 0, before: 6, after: 16 }; if (kind === "label") return { size: 8.7, bold: true, color: "0.10 0.16 0.11 rg", indent: 0, before: 2, after: 13 }; if (kind === "bullet") return { size: 8.2, bold: false, color: "0.12 0.15 0.13 rg", indent: 8, before: 0, after: 12 }; if (kind === "note") return { size: 7.8, bold: false, color: "0.30 0.36 0.31 rg", indent: 8, before: 0, after: 11 }; if (kind === "space") return { size: 8, bold: false, color: "0 0 0 rg", indent: 0, before: 0, after: 8 }; return { size: 8.3, bold: false, color: "0.12 0.15 0.13 rg", indent: 0, before: 0, after: 12.5 }; }
 function lineHeight(kind: LineKind) { const s = lineStyle(kind); return s.before + s.after; }
 function line(kind: LineKind, text = ""): PdfLine { return { kind, text: ascii(text) }; }
@@ -141,6 +205,27 @@ function serialize(objects: string[]) { const header = "%PDF-1.4\n"; const offse
 function wrap(value: string, max: number) { const words = ascii(value).split(/\s+/).filter(Boolean); const lines: string[] = []; let current = ""; for (const word of words) { const next = current ? `${current} ${word}` : word; if (next.length > max && current) { lines.push(current); current = word; } else current = next; } if (current) lines.push(current); return lines.length ? lines : [""]; }
 function ascii(value: string) { return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\x20-\x7E]/g, " "); }
 function escapeText(value: string) { return ascii(value).replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)"); }
+function escapeCommercial(value: string) {
+  return value.replace(/[–—−]/g, "-").replace(/[“”]/g, '"').replace(/[‘’]/g, "'").replace(/…/g, "...").split("").map(char => {
+    const code = char.charCodeAt(0);
+    if (char === "\\" || char === "(" || char === ")") return "\\" + char;
+    if (code >= 160 && code <= 255) return "\\" + code.toString(8).padStart(3, "0");
+    return code >= 32 && code < 127 ? char : " ";
+  }).join("");
+}
+function commercialWrap(value: string, size: number) {
+  const limit = PAGE_WIDTH - MARGIN_X * 2 - 12;
+  const lines: string[] = []; let current = "", width = 0;
+  // Larguras conservadoras em Helvetica; também quebra URLs e palavras longas.
+  const measure = (char: string) => size * (/\s/.test(char) ? .3 : /[MW@%]/.test(char) ? 1 : /[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ]/.test(char) ? .8 : /[il.,:;'!|]/.test(char) ? .35 : .66);
+  for (const word of value.split(/\s+/).filter(Boolean)) {
+    const wordWidth = [...word].reduce((sum, char) => sum + measure(char), 0);
+    if (current && width + measure(" ") + wordWidth > limit) { lines.push(current); current = ""; width = 0; }
+    if (current) { current += " "; width += measure(" "); }
+    for (const char of word) { if (width + measure(char) > limit && current) { lines.push(current); current = ""; width = 0; } current += char; width += measure(char); }
+  }
+  if (current) lines.push(current); return lines.length ? lines : [""];
+}
 function bytes(value: string) { return new TextEncoder().encode(value).length; }
 function parseList(value: string) { try { const parsed: unknown = JSON.parse(value); return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : []; } catch { return []; } }
 function money(cents: number) { return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents / 100); }

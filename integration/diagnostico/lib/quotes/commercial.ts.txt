@@ -1,0 +1,10 @@
+import { signCommercial } from "./signing";
+export async function commercialRequest(payload: object) {
+  const url = process.env.FIRMANT_COMMERCIAL_URL;
+  const secret = process.env.FIRMANT_COMMERCIAL_SECRET;
+  if (!url || !secret || secret.length < 32) throw new Error("A conexão comercial ainda não foi configurada. Defina FIRMANT_COMMERCIAL_URL e FIRMANT_COMMERCIAL_SECRET no servidor do Diagnóstico.");
+  const destination = new URL(url);
+  if (destination.protocol !== "https:" && !["127.0.0.1", "localhost"].includes(destination.hostname)) throw new Error("Destino comercial inválido.");
+  const body = JSON.stringify(payload), timestamp = String(Math.floor(Date.now() / 1000));
+  return fetch(destination, { method: "POST", headers: { "Content-Type": "application/json", "X-Firmant-Timestamp": timestamp, "X-Firmant-Signature": await signCommercial(body, timestamp, secret) }, body, redirect: "error", cache: "no-store", signal: AbortSignal.timeout(230_000) });
+}

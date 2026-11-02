@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Verificação de build isolada para manter a prévia de desenvolvimento aberta.
+  distDir: process.env.FIRMANT_VERIFY_DIST_DIR || ".next",
   async redirects() {
     return [
       {
@@ -53,5 +55,8 @@ const nextConfig: NextConfig = {
 export default nextConfig;
 
 if (process.env.NODE_ENV === "development") {
-  import("@opennextjs/cloudflare").then((m) => m.initOpenNextCloudflareForDev());
+  import("@opennextjs/cloudflare").then((m) => m.initOpenNextCloudflareForDev({
+    ...(process.env.FIRMANT_LOCAL_WRANGLER_CONFIG ? { configPath: process.env.FIRMANT_LOCAL_WRANGLER_CONFIG, remoteBindings: false } : {}),
+    ...(process.env.FIRMANT_LOCAL_WRANGLER_PERSIST ? { persist: { path: process.env.FIRMANT_LOCAL_WRANGLER_PERSIST.replaceAll("\\", "/") } } : {}),
+  }));
 }

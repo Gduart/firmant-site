@@ -1,0 +1,55 @@
+.section { background: var(--bg-primary); padding: clamp(64px, 7vw, 112px) 0; }
+.container { max-width: 1256px; padding: 0 clamp(20px, 4vw, 48px); margin: 0 auto; }
+.heading { max-width: 840px; margin-bottom: 44px; }
+.eyebrow { display: block; color: var(--accent-gold); font-size: 11px; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; margin-bottom: 20px; }
+.heading h2 { margin-bottom: 24px; }
+.heading > p { max-width: 700px; color: var(--text-secondary); font-size: 17px; line-height: 1.8; }
+.campaign { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; padding: 24px 0; border-top: 1px solid var(--border-primary); margin-bottom: 24px; }
+.campaignName { font-family: var(--font-heading); font-weight: 700; letter-spacing: .12em; }
+.campaignName > span { font-family: var(--font-body); font-weight: 400; font-size: 13px; letter-spacing: normal; margin-left: 16px; color: var(--text-secondary); }
+.demo { color: var(--text-secondary); font-size: 12px; border: 1px solid var(--border-primary); border-radius: 40px; padding: 8px 14px; }
+.grid { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 3fr); gap: 40px; align-items: start; }
+.imageColumn, .videoColumn { min-width: 0; }
+.formatControls, .videoLabel { min-height: 48px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+.formatControls button { padding: 12px 18px; border-radius: 40px; border: 1px solid var(--border-primary); color: var(--text-secondary); font-size: 13px; background: transparent; cursor: pointer; }
+.formatControls button[aria-pressed="true"] { color: var(--accent-gold-light); border-color: var(--accent-gold); background: rgba(201, 168, 76, .08); }
+.videoLabel { justify-content: space-between; font-size: 13px; color: var(--text-secondary); }
+.videoLabel > span:first-child { color: var(--text-primary); }
+.imageFrame, .videoFrame { position: relative; overflow: hidden; border-radius: 20px; border: 1px solid rgba(201, 168, 76, .2); background: #161c20; }
+.imageFrame { aspect-ratio: 4 / 5; }
+.videoFrame { aspect-ratio: 9 / 16; }
+.image, .videoFrame video { display: block; width: 100%; height: 100%; object-fit: contain; }
+.artworkCopy { position: absolute; inset: 0 0 auto; padding: clamp(24px, 3vw, 44px); padding-bottom: 80px; color: #fff; background: linear-gradient(180deg, rgba(18, 20, 18, .78), rgba(18, 20, 18, .48) 65%, transparent); pointer-events: none; }
+.wordmark { font-family: var(--font-heading); font-weight: 500; letter-spacing: .35em; font-size: 14px; }
+.artworkCopy p { font-family: var(--font-heading); font-size: clamp(26px, 3vw, 42px); line-height: 1.12; max-width: 390px; margin: 28px 0 20px; text-wrap: balance; }
+.signature { font-size: 10px; text-transform: uppercase; letter-spacing: .16em; }
+.videoCopy p { font-size: clamp(26px, 2.5vw, 36px); }
+.pageNumber { position: absolute; right: 20px; bottom: 20px; padding: 8px 12px; border-radius: 30px; color: #fff; background: rgba(10, 22, 40, .85); font-size: 12px; }
+.captionRow { display: flex; align-items: start; justify-content: space-between; gap: 20px; margin-top: 20px; }
+.captionRow figcaption, .videoCaption { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+.videoCaption { margin-top: 20px; }
+.arrows { display: flex; gap: 8px; flex-shrink: 0; }
+.arrows button { width: 44px; height: 44px; border: 1px solid var(--border-primary); border-radius: 50%; background: transparent; color: var(--accent-gold-light); font-size: 20px; cursor: pointer; }
+.playButton { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: grid; place-items: center; width: 80px; height: 80px; border-radius: 50%; background: rgba(10, 22, 40, .8); border: 1px solid rgba(255,255,255,.6); color: white; cursor: pointer; }
+.actions { display: flex; align-items: center; flex-wrap: wrap; gap: 24px 32px; margin-top: 48px; padding-top: 32px; border-top: 1px solid var(--border-primary); }
+.primaryAction { display: inline-flex; align-items: center; justify-content: center; gap: 16px; padding: 18px 28px; background: var(--accent-gold); color: var(--navy-950); border-radius: 40px; font-size: 13px; font-weight: 700; text-align: center; text-decoration: none; }
+.secondaryAction { color: var(--accent-gold-light); font-size: 14px; text-underline-offset: 6px; }
+.secondaryAction span { margin-left: 8px; }
+.section button:focus-visible, .section a:focus-visible, .section video:focus-visible { outline: 2px solid var(--accent-gold-light); outline-offset: 5px; }
+.error { margin-top: 16px; color: var(--text-secondary); font-size: 14px; line-height: 1.7; }
+.error a { color: var(--accent-gold-light); text-decoration: underline; }
+.srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+@media (max-width: 900px) {
+  .grid { grid-template-columns: minmax(0, 1fr); gap: 40px; }
+  .imageColumn { width: 100%; max-width: 640px; margin: 0 auto; }
+  .videoColumn { width: 100%; max-width: 480px; margin: 0 auto; }
+  .campaignName > span { display: block; margin: 8px 0 0; }
+}
+@media (max-width: 480px) {
+  .formatControls button { padding: 12px 14px; font-size: 12px; }
+  .captionRow { gap: 12px; flex-wrap: wrap; }
+  .artworkCopy { padding: 24px 24px 64px; }
+  .artworkCopy p { margin-top: 20px; }
+  .actions { flex-direction: column; align-items: stretch; }
+  .secondaryAction { align-self: center; }
+}

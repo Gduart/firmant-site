@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import styles from "./Navbar.module.css";
 
 // "Montar meu pacote digital" fica como CTA separado.
 const navLinks = [
@@ -16,6 +17,8 @@ const navLinks = [
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
@@ -24,8 +27,38 @@ export function Navbar() {
   }, []);
 
   useEffect(() => {
-    document.body.style.overflow = isMobileOpen ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
+    if (!isMobileOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const button = menuButtonRef.current;
+    const menu = mobileMenuRef.current;
+    const links = Array.from(menu?.querySelectorAll<HTMLAnchorElement>("a[href]") ?? []);
+    const controls = button ? [button, ...links] : links;
+    links[0]?.focus();
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setIsMobileOpen(false);
+      }
+      if (event.key !== "Tab" || !controls.length) return;
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      const outside = !controls.includes(document.activeElement as HTMLButtonElement | HTMLAnchorElement);
+      if (outside || (event.shiftKey && document.activeElement === first)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+      button?.focus();
+    };
   }, [isMobileOpen]);
 
   return (
@@ -115,9 +148,13 @@ export function Navbar() {
 
           {/* Hamburger mobile */}
           <button
-            className="nav-hamburger"
+            ref={menuButtonRef}
+            type="button"
+            className={`nav-hamburger ${styles.menuControl}`}
             onClick={() => setIsMobileOpen(!isMobileOpen)}
-            aria-label="Menu"
+            aria-label={isMobileOpen ? "Fechar menu" : "Abrir menu"}
+            aria-expanded={isMobileOpen}
+            aria-controls={isMobileOpen ? "mobile-navigation" : undefined}
             style={{
               background: "none",
               border: "none",
@@ -140,6 +177,8 @@ export function Navbar() {
       <AnimatePresence>
         {isMobileOpen && (
           <motion.div
+            ref={mobileMenuRef}
+            id="mobile-navigation"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
@@ -155,7 +194,7 @@ export function Navbar() {
               backgroundColor: "var(--bg-primary)",
             }}
           >
-            <nav style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "28px" }}>
+            <nav aria-label="Navegação principal no celular" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "28px" }}>
               {[...navLinks, { href: "/monte-seu-pacote", label: "Montar meu pacote digital" }].map((link, i) => (
                 <motion.div
                   key={link.href}
@@ -164,6 +203,8 @@ export function Navbar() {
                   transition={{ delay: i * 0.06, duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
                 >
                   <Link
+                    className={styles.menuControl}
+                    tabIndex={isMobileOpen ? 0 : -1}
                     href={link.href}
                     onClick={() => setIsMobileOpen(false)}
                     style={{

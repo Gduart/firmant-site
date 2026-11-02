@@ -18,10 +18,11 @@ function clientFor(response) {
     exports,
     require(name) {
       assert.equal(name, "@/lib/cloudflare-runtime");
-      return { getRequiredEnvValue: async () => "test-only" };
+      return { getRequiredEnvValue: async name => name === "ASAAS_API_BASE_URL" ? "https://api-sandbox.asaas.com" : "$aact_hmlg_test-only" };
     },
     fetch: async () => { calls++; return response; },
     console: { error() {} },
+    URL, AbortSignal, process: { env: { NODE_ENV: "test" } },
   });
   return { ...exports, calls: () => calls };
 }
@@ -68,4 +69,12 @@ test("successful JSON response is unchanged", async () => {
 test("204 does not attempt to parse an empty response", async () => {
   const client = clientFor(new Response(null, { status: 204 }));
   assert.equal(await client.asaasRequest("/payments/test", { method: "DELETE" }), undefined);
+});
+
+test("environment rejects mixed credentials and unofficial URLs", () => {
+  const client = clientFor(Response.json({}));
+  assert.equal(client.validateAsaasEnvironment("https://api-sandbox.asaas.com", "$aact_hmlg_test-only"), "sandbox");
+  assert.throws(() => client.validateAsaasEnvironment("https://api-sandbox.asaas.com", "$aact_prod_test-only"), /ambientes diferentes/);
+  assert.throws(() => client.validateAsaasEnvironment("https://api.asaas.com", "$aact_hmlg_test-only"), /ambientes diferentes/);
+  assert.throws(() => client.validateAsaasEnvironment("https://example.invalid", "$aact_hmlg_test-only"), /oficial/);
 });

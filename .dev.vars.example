@@ -16,3 +16,12 @@ GOOGLE_ADS_ID=
 META_PIXEL_ID=
 BRIEFING_LINK_TTL_DAYS=14
 REVIEW_LINK_TTL_DAYS=14
+
+# Briefings de desenvolvimento: integração servidor a servidor com o Diagnóstico
+DIAGNOSTICO_BRIEFING_URL=https://diagnostico.firmant.com.br/api/integrations/service-briefings
+# Mesmo valor de FIRMANT_SITE_BRIEFING_SECRET no Diagnóstico; mínimo 32 caracteres
+DIAGNOSTICO_BRIEFING_SECRET=
+
+# Central comercial do Diagnóstico: segredo distinto do recebimento público de briefings
+DIAGNOSTICO_COMMERCIAL_SECRET=
+OPENAI_API_KEY=

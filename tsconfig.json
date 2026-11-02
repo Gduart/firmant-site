@@ -34,9 +34,12 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
-    "**/*.mts"
+    "**/*.mts",
+    ".local-preview/build-verificacao/types/**/*.ts",
+    ".local-preview/build-verificacao/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    ".local-preview"
   ]
 }

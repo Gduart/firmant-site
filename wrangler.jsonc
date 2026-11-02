@@ -12,6 +12,7 @@
 	},
 	"vars": {
 		"APP_BASE_URL": "https://firmant.com.br",
+		"DIAGNOSTICO_BRIEFING_URL": "https://diagnostico.firmant.com.br/api/integrations/service-briefings",
 		"ASAAS_API_BASE_URL": "https://api.asaas.com",
 		"ASAAS_CANCEL_URL": "https://firmant.com.br/pagamento/cancelado",
 		"ASAAS_EXPIRED_URL": "https://firmant.com.br/pagamento/expirado",

@@ -1,0 +1,129 @@
+"use client";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { addBusinessDays, emptyQuoteSections, paymentPolicy, paymentSplit, quoteSections, totalCents, validateDeliveryRecipient, type QuoteDocument, type QuoteView } from "@/lib/quotes/model";
+import styles from "./LeadCommercial.module.css";
+
+type Payment = { id: string; revision: number; amount_cents: number; mode: string; installments: number; state: string; checkout_url: string | null; expires_at: string; order_status?: string | null };
+type History = { action: string; actor: string; revision: number; created_at: string; detail: string };
+function blank(title: string): QuoteDocument {
+  return { ...emptyQuoteSections(), title: title || "Projeto sob medida", startDate: "", endDate: "", productionDays: 1, validityDays: 10, items: [{ name: "Desenvolvimento", quantity: 1, unitPriceCents: 0 }], schedule: [{ phase: "Planejamento", days: 1, delivery: "Escopo a definir" }], sources: [] };
+}
+const money = (cents: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents / 100);
+export function LeadCommercial({ reference, service, name, phone, email }: { reference: string; service: string; name: string; phone: string; email: string }) {
+  const endpoint = `/api/admin/leads/${reference}/commercial`;
+  const [quote, setQuote] = useState<QuoteView | null>(null);
+  const [doc, setDoc] = useState<QuoteDocument>(() => blank(service));
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [history, setHistory] = useState<History[]>([]);
+  const [readiness, setReadiness] = useState({ email: false, payment: false, paymentEnvironment: "" });
+  const [dirty, setDirty] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState("");
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [deliveryEmail, setDeliveryEmail] = useState(email);
+  const [rate, setRate] = useState("");
+  const [capacity, setCapacity] = useState("6");
+  const [research, setResearch] = useState(true);
+  const [paymentStage, setPaymentStage] = useState("DEPOSIT");
+  const [deliveryConfirmed, setDeliveryConfirmed] = useState(false);
+  const [paymentMode, setPaymentMode] = useState("BOTH");
+  const [installments, setInstallments] = useState("1");
+  const [reason, setReason] = useState("");
+  const [regenerate, setRegenerate] = useState(false);
+  const [clock, setClock] = useState(() => Date.now());
+  useEffect(() => { const id = setInterval(() => setClock(Date.now()), 60_000); return () => clearInterval(id); }, []);
+  const notice = useRef<HTMLDivElement>(null);
+  const requestKeys = useRef(new Map<string, string>());
+  const load = useCallback(async () => {
+    try { const r = await fetch(endpoint, { cache: "no-store", signal: AbortSignal.timeout(30_000) }); const result = await r.json(); if (!r.ok) throw new Error(result.error || "Não foi possível abrir o orçamento.");
+      setError("");
+      setQuote(result.quote); if (result.quote) setDoc(result.quote.document);
+      if (result.readiness) setReadiness(result.readiness);
+      setPayments(result.payments || []); setHistory(result.events || []); setDirty(false);
+    } catch (e) { setError(e instanceof Error ? e.message : "Falha de conexão."); } finally { setLoading(false); }
+  }, [endpoint]);
+  useEffect(() => {
+    let active = true;
+    const controller = new AbortController();
+    fetch(endpoint, { cache: "no-store", signal: controller.signal }).then(async response => {
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Não foi possível abrir o orçamento.");
+      if (!active) return;
+      setError(""); setQuote(result.quote);
+      if (result.quote) setDoc(result.quote.document);
+      if (result.readiness) setReadiness(result.readiness);
+      setPayments(result.payments || []); setHistory(result.events || []); setDirty(false);
+    }).catch(e => { if (active) setError(e instanceof Error ? e.message : "Falha de conexão."); }).finally(() => { if (active) setLoading(false); });
+    return () => { active = false; controller.abort(); };
+  }, [endpoint]);
+  function edit(change: Partial<QuoteDocument>) { setDoc(current => ({ ...current, ...change })); setDirty(true); setMessage(""); }
+  async function operate(action: string, input: object = {}) {
+    if (busy) return;
+    if (action === "generate" && (quote || dirty) && !window.confirm("Gerar uma nova versão com IA? As alterações não salvas serão substituídas. Versões salvas permanecem no histórico.")) return;
+    setBusy(action); setError(""); setMessage("");
+    const key = JSON.stringify({ action, revision: quote?.revision ?? 0, input });
+    if (!requestKeys.current.has(key)) requestKeys.current.set(key, crypto.randomUUID());
+    try {
+      const response = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, revision: quote?.revision ?? 0, input, requestId: requestKeys.current.get(key) }), signal: AbortSignal.timeout(action === "generate" ? 240_000 : 90_000) });
+      const result = await response.json(); if (!response.ok) { if (result.safeToRetry === true) requestKeys.current.delete(key); throw new Error(result.error || "Operação não concluída."); }
+      requestKeys.current.delete(key);
+      if (result.quote) { setQuote(result.quote); setDoc(result.quote.document); setDirty(false); }
+      if (result.payments) setPayments(result.payments);
+      setMessage(result.message || (action === "approve" ? "Versão aprovada. PDF, e-mail e pagamento estão liberados." : action === "payment" ? "Link de pagamento criado. Confira valor e opções antes de compartilhar." : "Rascunho salvo. Revise todos os campos antes de aprovar."));
+    } catch (e) { setError(e instanceof Error && e.name === "TimeoutError" ? "O tempo de resposta terminou. Recarregue para conferir o resultado antes de repetir." : e instanceof Error ? e.message : "Falha de conexão."); }
+    finally { setBusy(""); requestAnimationFrame(() => notice.current?.focus()); }
+  }
+  const approved = quote?.status === "APPROVED" && !dirty;
+  let recipientError = "";
+  try { validateDeliveryRecipient(deliveryEmail); } catch (e) { recipientError = e instanceof Error ? e.message : "Informe o destinatário."; }
+  const split = paymentSplit(totalCents(doc));
+  const paymentAmount = paymentStage === "DEPOSIT" ? split.deposit : split.balance;
+  const digits = phone.replace(/\D/g, "");
+  return <section className={`admin-panel ${styles.panel}`} aria-labelledby="lead-quote-title">
+    <header className={styles.heading}><div><p className="admin-kicker">Proposta técnica e comercial</p><h2 id="lead-quote-title">Orçamento deste cliente</h2><p>{service || "Serviço a definir"} · {name}</p></div><span className={styles.badge}>{dirty ? "Alterações não salvas" : quote ? `Versão ${quote.revision} · ${approved ? "Aprovada" : "Rascunho"}` : "Ainda sem orçamento"}</span></header>
+    <p className={styles.note}>A IA usa o serviço e o briefing preenchidos. Campos vazios ficam como informações a confirmar. Valores, tecnologias e prazos são estimativas até sua revisão.</p>
+    <div ref={notice} tabIndex={-1} role={error ? "alert" : "status"}>{error && <p className="admin-alert error">{error}</p>}{message && <p className="admin-alert success">{message}</p>}</div>
+    <div className={styles.toolbar}><button type="button" onClick={() => { if (dirty && !window.confirm("Descartar alterações não salvas e recarregar?")) return; setLoading(true); void load(); }} disabled={!!busy || loading}>Recarregar orçamento</button>{loading && <span>Carregando…</span>}{busy && <span role="status">{busy === "generate" ? "Analisando o briefing; a pesquisa pode levar alguns minutos…" : "Processando…"}</span>}</div>
+    <fieldset disabled={!!busy || loading} className={styles.generator}><legend>Preparar orçamento com IA</legend><div className={styles.grid}>
+      <label>Valor da hora (R$)<input type="number" min="0.01" step="0.01" value={rate} onChange={e => setRate(e.target.value)} placeholder="Informe sua referência de preço" /></label>
+      <label>Horas disponíveis por dia útil<input type="number" min="1" max="12" step="0.5" value={capacity} onChange={e => setCapacity(e.target.value)} /></label>
+      <label>Início previsto (opcional)<input type="date" value={doc.startDate} onChange={e => edit({ startDate: e.target.value, endDate: e.target.value ? addBusinessDays(e.target.value, doc.productionDays) : "" })} /></label>
+      <label>Validade da proposta (dias)<input type="number" min="1" max="365" value={doc.validityDays} onChange={e => edit({ validityDays: Number(e.target.value) })} /></label>
+    </div><label className={styles.check}><input type="checkbox" checked={research} onChange={e => setResearch(e.target.checked)} />Consultar documentação atual para embasar a proposta.</label>
+      <button type="button" disabled={!rate || Number(rate) <= 0} onClick={() => operate("generate", { hourlyRateCents: Math.round(Number(rate) * 100), dailyHours: Number(capacity), validityDays: doc.validityDays, startDate: doc.startDate, research })}>Gerar orçamento com IA</button><p className={styles.note}>Você poderá revisar o escopo, o cronograma e os valores antes de aprovar.</p>
+    </fieldset>
+    <form onSubmit={e => { e.preventDefault(); void operate("save", { document: doc }); }}>
+      <fieldset disabled={!!busy || loading} className={styles.editor}><legend>Revise o orçamento completo</legend>
+        <label>Nome do projeto<input value={doc.title} required maxLength={180} onChange={e => edit({ title: e.target.value })} /></label>
+        {Object.entries(quoteSections).filter(([key]) => key !== "paymentTerms").map(([key,label]) => <label key={key}>{label}<textarea rows={4} maxLength={5000} value={doc[key as keyof typeof quoteSections]} onChange={e => edit({ [key]: e.target.value })} /></label>)}
+        <h3>Cronograma e datas previstas</h3><p className={styles.note}>Dias úteis de produção. As datas podem permanecer em aberto até o aceite; feriados e dependências precisam de conferência.</p>
+        <div className={styles.grid}><label>Dias úteis de produção<input type="number" min="1" max="2000" required value={doc.productionDays} onChange={e => edit({ productionDays: Number(e.target.value) })} /></label><label>Previsão de término<input type="date" value={doc.endDate} onChange={e => edit({ endDate: e.target.value })} /></label></div>
+        {doc.schedule.map((step,index) => <div className={styles.row} key={index}><label>Etapa {index+1}<input required value={step.phase} maxLength={180} onChange={e => edit({ schedule: doc.schedule.map((item,i) => i === index ? { ...item, phase: e.target.value } : item) })} /></label><label>Dias úteis<input type="number" required min="1" max="2000" value={step.days} onChange={e => edit({ schedule: doc.schedule.map((item,i) => i === index ? { ...item, days: Number(e.target.value) } : item) })} /></label><label>Entrega verificável<textarea required rows={2} maxLength={1200} value={step.delivery} onChange={e => edit({ schedule: doc.schedule.map((item,i) => i === index ? { ...item, delivery: e.target.value } : item) })} /></label><button type="button" onClick={() => edit({ schedule: doc.schedule.filter((_,i) => i !== index) })}>Remover etapa {index+1}</button></div>)}
+        <button type="button" onClick={() => edit({ schedule: [...doc.schedule, { phase: "", days: 1, delivery: "" }] })}>Adicionar etapa</button>
+        <button type="button" onClick={() => { const days = doc.schedule.reduce((sum,s) => sum + s.days, 0); edit({ productionDays: days, endDate: doc.startDate && days > 0 ? addBusinessDays(doc.startDate, days) : "" }); }}>Atualizar dias e término pelas etapas</button>
+        <h3>Entregas e investimento</h3>{doc.items.map((item,index) => <div className={styles.row} key={index}><label>Entrega {index+1}<input required maxLength={250} value={item.name} onChange={e => edit({ items: doc.items.map((it,i) => i === index ? { ...it, name: e.target.value } : it) })} /></label><label>Quantidade / horas<input type="number" min="0.01" step="0.01" required value={item.quantity} onChange={e => edit({ items: doc.items.map((it,i) => i === index ? { ...it, quantity: Number(e.target.value) } : it) })} /></label><label>Valor unitário (R$)<input type="number" min="0" step="0.01" required value={(item.unitPriceCents / 100).toString()} onChange={e => edit({ items: doc.items.map((it,i) => i === index ? { ...it, unitPriceCents: Math.round(Number(e.target.value) * 100) } : it) })} /></label><strong>{money(Math.round(item.quantity * item.unitPriceCents))}</strong><button type="button" onClick={() => edit({ items: doc.items.filter((_,i) => i !== index) })}>Remover entrega {index+1}</button></div>)}
+        <button type="button" onClick={() => edit({ items: [...doc.items, { name: "", quantity: 1, unitPriceCents: 0 }] })}>Adicionar entrega</button>
+        <div className={styles.investment}><p className={styles.total}>Investimento total: {money(totalCents(doc))}</p><div className={styles.grid}><p><strong>50% de sinal de entrada</strong><br />{money(split.deposit)}</p><p><strong>50% na entrega do projeto</strong><br />{money(split.balance)}</p></div><p>{paymentPolicy}</p></div>
+        {doc.sources.length > 0 && <details className={styles.sources}><summary>Fontes da pesquisa · consulta interna ({doc.sources.length})</summary><p className={styles.note}>Não aparecem no PDF do cliente.</p><ul>{doc.sources.map((source,index) => <li key={index}><a href={source.url} target="_blank" rel="noreferrer">{source.title}</a><button type="button" onClick={() => edit({ sources: doc.sources.filter((_,i) => i !== index) })}>Remover fonte {index+1}</button></li>)}</ul></details>}
+        <div className={styles.actions}><button type="submit">Salvar rascunho / nova versão</button><button type="button" disabled={dirty || !quote || approved} onClick={() => operate("approve")}>Aprovar versão revisada</button></div>
+      </fieldset>
+    </form>
+    <div className={styles.delivery}><h3>PDF e envio ao cliente</h3><p>Cada alteração no orçamento exige salvar e aprovar uma nova versão.</p><label>Destinatário deste envio<input type="email" required maxLength={160} value={deliveryEmail} disabled={!!busy} aria-invalid={!!recipientError} aria-describedby={recipientError ? "quote-recipient-error" : undefined} onChange={e => setDeliveryEmail(e.target.value)} /></label>{recipientError && <p id="quote-recipient-error" className={styles.pending}>{recipientError}</p>}{!approved && <p>Salve e aprove esta versão para liberar o PDF.</p>}{!readiness.email && <p className={styles.pending}>Envio automático pendente: falta configurar a autenticação do Gmail neste ambiente. Você já pode baixar o PDF aprovado e anexá-lo pelo botão “Abrir Gmail”.</p>}<div className={styles.actions}>{approved ? <a href={`${endpoint}?action=pdf&revision=${quote.revision}`} download>Gerar e baixar PDF</a> : <button type="button" disabled>Gerar e baixar PDF</button>}<button type="button" disabled={!approved || !!busy || !readiness.email || !!recipientError} onClick={() => operate("send-pdf", { recipient: deliveryEmail.trim() })}>Gerar PDF e enviar por e-mail</button></div></div>
+    {!readiness.payment && <p className={styles.pending}>Pagamento indisponível: falta configurar a chave do Asaas neste ambiente. Nenhuma nova cobrança será criada até a configuração.</p>}
+    <fieldset disabled={!approved || !!busy || loading || !readiness.payment} className={styles.generator}><legend>Link de pagamento Asaas{readiness.paymentEnvironment ? ` · ${readiness.paymentEnvironment}` : ""}</legend><div className={styles.grid}>
+      <label>Etapa da cobrança<select value={paymentStage} onChange={e => { setPaymentStage(e.target.value); setDeliveryConfirmed(false); }}><option value="DEPOSIT">Sinal de entrada · 50%</option><option value="BALANCE">Entrega do projeto · 50%</option></select></label>
+      <label>Valor desta etapa (R$)<input type="number" readOnly value={(paymentAmount / 100).toFixed(2)} /></label>
+      <label>Formas disponíveis<select value={paymentMode} onChange={e => setPaymentMode(e.target.value)}><option value="BOTH">Pix e cartão</option><option value="PIX">Somente Pix</option><option value="CARD">Somente cartão</option></select></label>
+      <label>Cartão: máximo de parcelas<select value={installments} disabled={paymentMode === "PIX"} onChange={e => setInstallments(e.target.value)}>{Array.from({length:12},(_,i) => <option key={i+1} value={i+1}>{i+1 === 1 ? "À vista" : `À vista ou até ${i+1} parcelas`}</option>)}</select></label>
+      <label>Identificação / motivo do valor<input maxLength={500} value={reason} onChange={e => setReason(e.target.value)} placeholder="Ex.: total do projeto ou entrada de 50%" /></label>
+    </div><p className={styles.note}>O valor corresponde à metade do orçamento aprovado, sem acréscimo automático de taxas. Custos do cartão seguem sua conta Asaas. Link com validade de 3 horas; a confirmação depende do webhook. Para alterar o total, revise e aprove uma nova versão do orçamento.</p>{paymentStage === "BALANCE" && <label className={styles.check}><input type="checkbox" checked={deliveryConfirmed} onChange={e => setDeliveryConfirmed(e.target.checked)} />Confirmo que o projeto foi entregue para cobrar os 50% restantes.</label>}<label className={styles.check}><input type="checkbox" checked={regenerate} onChange={e => setRegenerate(e.target.checked)} />Conferi as cobranças anteriores no Asaas e autorizo novo link para saldo ou substituição de link expirado.</label><button type="button" disabled={paymentStage === "BALANCE" && !deliveryConfirmed} onClick={() => operate("payment", { amountCents: paymentAmount, stage: paymentStage, deliveryConfirmed, mode: paymentMode, installments: Number(installments), reason: reason || (paymentStage === "DEPOSIT" ? "Sinal de entrada de 50%" : "Saldo de 50% na entrega do projeto"), regenerate })}>Gerar link de pagamento</button></fieldset>
+    <h3>Pagamentos gerados</h3>{payments.length ? payments.map(p => {
+      const shareable = approved && p.revision === quote?.revision && p.state === "READY" && Date.parse(p.expires_at) > clock && !["PAYMENT_CONFIRMED", "PAYMENT_RECEIVED", "CANCELED", "REFUNDED", "FAILED"].includes(p.order_status || "");
+      const state = p.order_status === "FAILED" ? "Tentativa encerrada sem link ativo" : p.order_status === "CANCELED" ? "Cobrança cancelada" : p.order_status === "REFUNDED" ? "Pagamento estornado" : p.state === "READY" ? "Link criado" : p.state === "CREATING" ? "Aguardando criação" : "Conferir no Asaas";
+      const mode = p.mode === "BOTH" ? "Pix e cartão" : p.mode === "PIX" ? "Pix" : "Cartão";
+      return <div key={p.id} className={styles.payment}><strong>{money(p.amount_cents)} · versão {p.revision} · {mode} · até {p.installments}x</strong><p>{state} · {p.order_status === "PAYMENT_RECEIVED" || p.order_status === "PAYMENT_CONFIRMED" ? "Pago" : "Consulte o status no Asaas"} · expira em {new Date(p.expires_at).toLocaleString("pt-BR")}</p>{p.checkout_url && <><a href={p.checkout_url} target="_blank" rel="noreferrer">Abrir pagamento no Asaas</a><div className={styles.actions}><button type="button" disabled={!!busy || !shareable || !readiness.email || !!recipientError} onClick={() => operate("send-payment", { paymentId: p.id, recipient: deliveryEmail.trim() })}>Enviar link por e-mail</button>{digits && shareable && <a href={`https://wa.me/${digits.startsWith("55") ? digits : "55"+digits}?text=${encodeURIComponent(`Olá, ${name}. Segue o link de pagamento FIRMANT de ${money(p.amount_cents)}: ${p.checkout_url}`)}`} target="_blank" rel="noreferrer">Preparar WhatsApp com link</a>}</div></>}</div>;
+    }) : <p className={styles.note}>Nenhuma cobrança criada para este lead.</p>}
+    <details><summary>Histórico das operações comerciais</summary><p className={styles.note}>Use “Recarregar orçamento” para atualizar este histórico.</p>{history.map((item,index) => <p className={styles.history} key={index}>V{item.revision} · {item.action} · {item.actor} · {new Date(item.created_at).toLocaleString("pt-BR")}<br />{item.detail}</p>)}</details>
+  </section>;
+}

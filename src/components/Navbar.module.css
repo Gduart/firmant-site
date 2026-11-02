@@ -1,0 +1,5 @@
+.menuControl:focus-visible {
+  outline: 2px solid var(--accent-gold-light);
+  outline-offset: 6px;
+  border-radius: 4px;
+}

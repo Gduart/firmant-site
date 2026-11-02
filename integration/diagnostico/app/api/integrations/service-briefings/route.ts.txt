@@ -1,0 +1,50 @@
+import { eq } from "drizzle-orm";
+import { getDb } from "@/db";
+import { outboxEvents } from "@/db/schema";
+import { createLead, attemptOutboxDelivery } from "@/lib/leads/repository";
+import { serviceBriefingLeadSchema, verifyBriefingRequest } from "@/lib/integrations/service-briefing";
+
+export const runtime = "nodejs";
+
+export async function POST(request: Request) {
+  const secret = process.env.FIRMANT_SITE_BRIEFING_SECRET;
+  if (!secret || secret.length < 32) return Response.json({ error: "Integração indisponível." }, { status: 503 });
+  if (!request.headers.get("content-type")?.includes("application/json")) return Response.json({ error: "Formato inválido." }, { status: 415 });
+  const reader = request.body?.getReader();
+  if (!reader) return Response.json({ error: "Dados ausentes." }, { status: 400 });
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      size += value.byteLength;
+      if (size > 32000) { await reader.cancel(); return Response.json({ error: "Solicitação muito grande." }, { status: 413 }); }
+      chunks.push(value);
+    }
+  } finally { reader.releaseLock(); }
+  const bytes = new Uint8Array(size);
+  let offset = 0;
+  for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+  const text = new TextDecoder().decode(bytes);
+  if (!verifyBriefingRequest(text, secret, request.headers.get("x-firmant-timestamp") ?? "", request.headers.get("x-firmant-signature") ?? "")) return Response.json({ error: "Não autorizado." }, { status: 401 });
+  let payload;
+  try {
+    payload = serviceBriefingLeadSchema.parse(JSON.parse(text));
+    payload.privacyPolicyVersion = process.env.PRIVACY_POLICY_VERSION?.trim() || "2026-04";
+  } catch { return Response.json({ error: "Briefing inválido." }, { status: 400 }); }
+  try {
+    // A transação existente salva o lead e o evento de notificação juntos.
+    const result = await createLead(payload, {});
+    let eventId: string | null = result.outboxId;
+    if (!eventId) {
+      const [existing] = await getDb().select({ id: outboxEvents.id }).from(outboxEvents).where(eq(outboxEvents.aggregateId, result.id)).limit(1);
+      eventId = existing?.id ?? null;
+    }
+    if (!eventId) return Response.json({ ok: true, reference: result.reference, automation: "queued" }, { status: 200, headers: { "Cache-Control": "no-store" } });
+    // Falha de e-mail nunca desfaz o lead. A outbox mantém a tentativa pendente.
+    let automation: "delivered" | "queued" = "queued";
+    try { automation = await attemptOutboxDelivery(eventId); } catch { /* A fila persistida permite nova tentativa. */ }
+    return Response.json({ ok: true, reference: result.reference, automation }, { status: result.created ? 201 : 200, headers: { "Cache-Control": "no-store" } });
+  } catch { return Response.json({ error: "Não foi possível registrar o briefing." }, { status: 503 }); }
+}

@@ -1,0 +1,40 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { serviceBriefingLeadSchema, verifyBriefingRequest } from "../lib/integrations/service-briefing";
+import { signWebhookPayload } from "../lib/integrations/signed-webhook";
+import workflow from "../n8n/workflows/01-firmant-leads-gmail.json";
+
+const sample = {
+  idempotencyKey: "4ff6752b-e1aa-4afd-9b33-53f74fa05da9", requestType: "complete",
+  name: "Teste local", company: "Empresa exemplo", email: "TESTE@EXAMPLE.COM", phone: "11999999999",
+  service: "Automação de processos", details: "Contexto do briefing para teste local. ".repeat(180) + "Última resposta do briefing.",
+  privacyAcknowledged: true, privacyPolicyVersion: "2026-11", marketingConsent: false, website: "",
+  tracking: { source: "firmant-site/dev/automacao-de-processos" },
+};
+test("briefing completo conserva respostas longas e origem", () => {
+  const result = serviceBriefingLeadSchema.parse(sample);
+  assert.equal(result.details, sample.details);
+  assert.equal(result.email, "teste@example.com");
+  assert.equal(result.tracking.source, sample.tracking.source);
+});
+test("não aceita troca de serviço, ausência de consentimento ou honeypot", () => {
+  for (const change of [{ service: "Outro" }, { privacyAcknowledged: false }, { website: "spam" }]) assert.equal(serviceBriefingLeadSchema.safeParse({ ...sample, ...change }).success, false);
+});
+test("assinatura vincula corpo e timestamp e rejeita replay vencido", () => {
+  const secret = "local-test-secret-12345678901234567890";
+  const body = JSON.stringify(sample), timestamp = "1793500000";
+  const signature = `sha256=${signWebhookPayload(body, secret, timestamp)}`;
+  const now = Number(timestamp) * 1000;
+  assert.equal(verifyBriefingRequest(body, secret, timestamp, signature, now), true);
+  assert.equal(verifyBriefingRequest(body + " ", secret, timestamp, signature, now), false);
+  assert.equal(verifyBriefingRequest(body, secret, timestamp, signature, now + 301000), false);
+  assert.equal(verifyBriefingRequest(body, secret, timestamp, "sha256=xyz", now), false);
+});
+test("workflow de e-mail preserva todas as respostas do briefing", () => {
+  const validator = workflow.nodes.find(node => node.name === "Validar e normalizar lead")!;
+  const result = Function("$json", validator.parameters.jsCode!)({ eventType: "lead.created", eventId: sample.idempotencyKey, lead: { ...sample, reference: sample.idempotencyKey, source: sample.tracking.source, createdAt: "2026-11-01T12:00:00Z" } });
+  assert.equal(result[0].json.details, sample.details);
+  assert.equal(result[0].json.journeyLabel, "Briefing de desenvolvimento");
+  const team = workflow.nodes.find(node => node.name === "Avisar equipe FIRMANT")!;
+  assert.equal(team.parameters.sendTo, "ag.firmant@gmail.com");
+});

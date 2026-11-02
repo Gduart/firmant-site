@@ -5,6 +5,15 @@ type RequestOptions = {
   body?: unknown;
 };
 
+export function validateAsaasEnvironment(baseUrl: string, apiKey: string) {
+  const url = new URL(baseUrl);
+  if (url.protocol !== "https:" || !["api-sandbox.asaas.com", "api.asaas.com"].includes(url.hostname) || url.username || url.password || (url.pathname !== "/" && url.pathname !== "")) throw new Error("Configure a URL base oficial do Asaas, sem o sufixo /v3.");
+  const sandbox = url.hostname === "api-sandbox.asaas.com";
+  if ((sandbox && apiKey.startsWith("$aact_prod_")) || (!sandbox && apiKey.startsWith("$aact_hmlg_"))) throw new Error("A chave Asaas e a URL pertencem a ambientes diferentes. Use a chave correspondente ao ambiente.");
+  if (process.env.NODE_ENV === "development" && process.env.FIRMANT_LOCAL_WRANGLER_CONFIG && !sandbox) throw new Error("Esta prévia local permite somente o Asaas sandbox.");
+  return sandbox ? "sandbox" : "production";
+}
+
 export class AsaasApiError extends Error {
   status: number;
   details: unknown;
@@ -22,6 +31,7 @@ export async function asaasRequest<T>(path: string, options: RequestOptions = {}
     getRequiredEnvValue("ASAAS_API_BASE_URL"),
     getRequiredEnvValue("ASAAS_API_KEY"),
   ]);
+  validateAsaasEnvironment(baseUrl, apiKey);
 
   const response = await fetch(`${baseUrl}${path}`, {
     method: options.method ?? "GET",
@@ -32,6 +42,7 @@ export async function asaasRequest<T>(path: string, options: RequestOptions = {}
     },
     body: options.body ? JSON.stringify(options.body) : undefined,
     cache: "no-store",
+    signal: AbortSignal.timeout(30_000),
   });
 
   if (!response.ok) {

@@ -1518,3 +1518,133 @@ Build Next.js e TypeScript: OK
 Proposta FIR-2026-1D2F3A3C: DRAFT, sem projeto e sem mídia (estado esperado)
 Deploy produção: e964a948-db26-4d6c-8329-6e143c7c60e5
 ```
+
+---
+
+## 21. Simplificação da página principal — revisão local em 2026-10-27
+
+Status: implementação local, aguardando aprovação visual e autorização de publicação.
+
+- Primeira tela com título e descrição curtos, CTA principal e secundário discreto; indicação de rolagem removida.
+- Tipografia, margens, serviços e espaçamentos ajustados para celular.
+- Onze cards substituídos por três benefícios e uma condição comercial única. Detalhes e cinco perguntas operacionais transferidos para a página de gestão de redes sociais.
+- Home com cinco perguntas de contratação; apresentação da abordagem resumida em três etapas.
+- WhatsApp flutuante da home aparece após a saída dos botões iniciais; acesso às preferências de cookies preservado.
+- Vídeo de fundo, overlays, mídias, cursor personalizado e rolagem global preservados.
+
+Verificação visual realizada em desktop de 1440 px e celulares de 390 e 320 px, incluindo FAQ, modal, link para os detalhes do serviço e exibição condicional do WhatsApp. Lint aprovado. Capturas de revisão salvas em `C:\Users\gduar\.codex\visualizations\2026\10\25\01a1710c-eef9-7721-b9ab-c5d106b999c6`.
+
+Build final confirmado em 2026-10-27: compilação, TypeScript e geração das 39 páginas concluídos com código de saída 0. `git diff --check` aprovado.
+
+Nenhum commit, push ou deploy realizado nesta etapa. Publicação depende da aprovação explícita do usuário.
+
+### Continuidade — parte 2
+
+Subfrase da home ampliada para incluir aplicações web. Menu móvel com indicação de estado expandido, identificação da navegação, foco inicial no primeiro link, ciclo de Tab incluindo o botão de fechamento, Escape, retorno de foco e destaque visual de foco. O bloqueio de rolagem restaura o valor anterior ao fechar.
+
+Refatoração de JavaScript adiada. Após aprovação, os indicadores “3 nichos de atuação” e “2 horas” foram substituídos por “Soluções integradas — Vídeos, redes sociais, sites e aplicações web.” e “Sob medida — Escopo definido conforme os objetivos da sua marca.”. Mantidos os cards de IA e revisão humana, as cores, animações e disposição em quatro cards; tipografia dos dois novos textos adaptada a títulos e descrições. Efeitos premium preservados. A verificação pendente do menu foi concluída em 2026-10-28: foco inicial no primeiro link, Shift+Tab para o fechamento, Escape e retorno ao botão confirmados no navegador. Conferência visual específica dos novos cards da home ainda pendente.
+
+## 22. Vitrine de Redes Sociais — 2026-10-28
+
+Bloco “Investimento” substituído por vitrine demonstrativa da marca fictícia AURIA, com publicação, carrossel de três páginas, composição tipográfica e vídeo vertical fornecido pelo usuário. Identificação de demonstração com IA visível, sem alegação de cliente real. Imagens grandes lado a lado com o vídeo no desktop; formatos empilhados no celular. Valores acessíveis no montador; CTA de proposta abre WhatsApp com mensagem contextual. A lista “O que está incluído” foi preservada em “O que fazemos”.
+
+Vídeo H.264/AAC de 1080 × 1920 px, 7,979 segundos e 9.179.943 bytes: reprodução por clique, capa estática, controles nativos e `preload="none"`. Reprodução completa confirmada sem erro. Carrossel testado nas três páginas, com retorno e ativação por teclado. Dimensões próximas de 640 × 800 px e 480 × 853 px no desktop de 1440 px. Layout conferido em 390 e 320 px. Corrigido overflow preexistente do título principal com fonte mínima e margens responsivas locais.
+
+Lint global e build da integração aprovados, incluindo TypeScript e geração das 39 páginas. Correção responsiva subsequente conferida no navegador e submetida a lint dos componentes alterados. Nenhuma mudança nos componentes de cursor, Lenis, layout ou CSS global e nas mídias do fundo da home. Sem commit, push ou deploy; ajustes acumulados para commit único ao final.
+
+### Substituição do vídeo AURIA — 2026-10-29
+
+Usuário aprovou e forneceu `Woman_opening_curtain_in_livingroom_efe13953_1080p.mp4`. Arquivo copiado para `public/videos/redes-sociais/auria/auria-apresentacao-v2.mp4` (6.659.690 bytes, H.264/AAC, 1080 × 1920 px, 7,979 s), com hash conferido e decodificação completa sem erros. Player e links alternativos atualizados para a V2; capa extraída do novo vídeo em `public/images/redes-sociais/auria/video-capa-v2.webp`. O antigo `auria-apresentacao.mp4` foi excluído do projeto conforme solicitação explícita do usuário. Arquivo original em Downloads preservado.
+
+## 23. Desenvolvimento Web e briefing por serviço — 2026-11-01
+
+Implementação local autorizada após alinhamento: quatro cards grandes substituem o catálogo anterior. Serviços: Automação de processos; Automação + 1 agente de IA no Telegram; Sistemas e aplicações web sob medida; Landing Page de Conversão + Assistente IA no Telegram + Mini CRM. Cada card abre uma página própria com descrição, recursos, exemplos por nicho e briefing específico ao final. Mantidas todas as categorias enviadas; removida a tabela de nichos duplicada no material do agente Telegram. Textos absolutos de resultado foram ajustados para possibilidades de entrega definidas no escopo.
+
+Removidos os dois CTAs do hero de Desenvolvimento. Valores fixos substituídos por “Como definimos seu projeto”, explicando objetivo, integrações, etapas e continuidade. Mudanças limitadas a esta área; montador global e efeitos premium preservados.
+
+O briefing coleta contato, empresa, segmento, objetivo, cinco perguntas próprias do serviço, prazo e investimento opcionais e ciência da privacidade. Validação no navegador e servidor, honeypot, corpo limitado, proteção de origem e assinatura HMAC entre servidores. A tela não afirma recebimento sem confirmação do Diagnóstico; em falha preserva campos e direciona foco à mensagem.
+
+Integração implementada também no checkout local `C:/Projetos_Python/firmant-landing-v2`: novo endpoint autenticado reutiliza a transação de lead/outbox, jornada `complete`, origem e serviço identificados e descrição completa no painel existente. Workflow de e-mail local preserva até 16.000 caracteres dos briefings e mantém o alerta para `ag.firmant@gmail.com`. Nenhuma migração ou alteração do banco foi necessária. Pacote reproduzível e instruções de ativação/reversão em `integration/README.md`; sem segredos no código.
+
+Validações concluídas:
+
+- Site: lint global, cinco testes de catálogo/validação e build com TypeScript aprovados; 44 páginas geradas, incluindo os quatro serviços.
+- Diagnóstico: lint, typecheck, 64 testes e build aprovados. Após correção de reaplicação do instalador, quatro testes específicos de integração executados novamente e aprovados.
+- Navegador: quatro páginas e perguntas específicas conferidas; desktop, 390 e 320 px sem overflow lateral, navegação por card e retorno, foco de teclado e erro de configuração com dados mantidos no formulário.
+- API local: origem externa → 403; corpo excessivo → 413; dados incompletos → 400. Configuração ausente não retorna sucesso.
+
+Pendente para ativação: configurar o segredo compartilhado e a URL entre servidores, publicar receptor/site e aplicar a mudança no workflow ativo após autorização; então confirmar um briefing real no painel e o e-mail recebido. Não houve envio de lead/e-mail, acesso ao banco ou mudança no n8n de produção. Nenhum commit, push ou deploy; alterações anteriores preservadas para a consolidação final.
+
+## 24. Orçamento com IA dentro do lead — 2026-11-01
+
+Após autorização do usuário, implementada a central de orçamento no detalhe do lead do Diagnóstico. A seção permite gerar rascunho com `gpt-6-luna`, revisar todos os textos, quantidades, preços, cronograma, datas e condições, salvar novas versões e aprovar explicitamente antes de gerar/baixar PDF, enviar PDF anexo por e-mail ou criar link Asaas.
+
+A IA recebe somente serviço e briefing preenchidos, descartando os campos sem resposta. Histórico interno e contatos não são enviados ao agente; a pesquisa web opcional usa apenas categoria genérica do serviço. Modelo confirmado na documentação oficial. A estimativa usa o valor-hora e a disponibilidade informados pelo administrador; não há tabela de preço inventada. Tecnologias, segurança, privacidade, hospedagem, suporte, propriedade, aceite, exclusões e lacunas são campos de revisão próprios.
+
+Conexão autenticada entre Diagnóstico e site por HMAC, com sessão do Admin validada antes da consulta do lead no PostgreSQL. Identidade do cliente vem do banco, não do navegador. O site mantém as versões comerciais no D1 por meio da nova migração `0011_lead_quotes.sql`, ainda não aplicada a nenhum banco real. Aprovação de uma versão não se transfere para a seguinte.
+
+Reutilizados checkout, pedidos, webhook Asaas, SMTP Gmail e primitivas de PDF existentes. PDF específico de orçamento técnico com A4, navy/dourado, acentos preservados e quebra de textos/URLs longos; condições fixas de audiovisual do PDF anterior não são copiadas. Pagamento com Pix, cartão à vista ou até 12 parcelas, valor manual sem acréscimo automático de taxas, identificação para valores parciais e consideração dos recebimentos já confirmados. Reservas persistidas evitam repetição da mesma cobrança; resultados incertos exigem conferência. Histórico dos links preservado. WhatsApp abre mensagem para envio manual.
+
+Validação local: regras de preenchimento, cálculos, datas, aprovação, HMAC e tamanho de corpo; chamadas OpenAI simuladas; migração e reservas testadas em SQLite em memória, com concorrência, timeout, pagamento confirmado, expiração, entrada/saldo e limites do total. Interface testada com dados fictícios: geração simulada, edição de preço, salvamento, aprovação, download real do PDF e bloqueio após nova edição. Celular de 390 px sem overflow e navegação por teclado conferidos. PDF de teste renderizado e inspecionado nas três páginas. Harness temporário removido.
+
+O Diagnóstico passou por lint, TypeScript, 64 testes e build incluindo o novo endpoint administrativo; ajustes posteriores do componente passaram por lint e TypeScript direcionados. O site passou por lint global e 20 testes; após ajuste de entrada/saldo, os seis testes financeiros foram executados e aprovados. Build final do site aprovado, incluindo TypeScript, o novo endpoint e a geração das 45 páginas. Conferência de whitespace aprovada.
+
+Pacote local reproduzível em `integration/apply-commercial.cjs`; instruções de uso, configuração, homologação e reversão em `integration/COMMERCIAL.md`. Pendente: configurar segredos e chave OpenAI nos servidores, aplicar a migração D1 autorizada, publicar os dois aplicativos e homologar geração real, e-mail recebido, checkout sandbox e webhook. Sem chamadas pagas à OpenAI, envios reais de e-mail, cobranças reais, migrações de produção, commit, push ou deploy. Vídeo de fundo, cursor e demais alterações aprovadas preservados.
+
+## 25. Chave OpenAI e Admin local utilizável — 2026-11-01
+
+Usuário inseriu diretamente sua chave em `.env.local`, sem enviá-la no chat. Arquivo confirmado como ignorado pelo Git. A chave foi validada com HTTP 200 para `gpt-6-luna`; depois, uma geração real foi executada pelo botão do editor, com pesquisa técnica habilitada e briefing exclusivamente fictício. Rascunho V1 salvo no D1 local e recuperado após recarregar a tela. Nenhuma chave ou cookie foi registrado nos logs de verificação.
+
+Admin real do Diagnóstico iniciado em `http://127.0.0.1:3001/admin/leads`, com autenticação e lead de demonstração persistido. Login conferido no navegador. Detalhe de teste: `/admin/leads/a10c0001-1000-4000-8000-000000000001`. Faixa no Admin identifica a prévia local e a ausência de leads de produção. Credenciais de demonstração ficam em `.local-preview/ACESSO.txt`, sem a chave OpenAI.
+
+Ambiente isolado: PostgreSQL WASM/PGlite em loopback 54329 e D1 local em `.local-preview/cloudflare/v3`. As 11 migrações do site foram aplicadas apenas nesse D1 de teste. Segredos de conexão gerados localmente; site e Diagnóstico conectados por HMAC. O site continua na porta 3000. Processos iniciados em segundo plano para manter os links disponíveis. Banco local com comando de parada limpa, após correção de marcador remanescente de encerramento de teste.
+
+Scripts de preparação, banco, validação e instruções em `scripts/local-leads/`. Dependências do banco instaladas somente na pasta privada da prévia, sem alterar dependências de produção. `.local-preview/` excluída do Git, lint e TypeScript. Proxy Cloudflare de desenvolvimento aceita configuração/persistência locais explícitas e desativa bindings remotos nesse modo. Cadeia de certificados do Windows usada, sem desativar TLS.
+
+Validações: lint dos scripts e da configuração; acesso ao modelo; login; listagem; consulta comercial; geração real e persistência após recarregamento. E-mail e Asaas não ativados com credenciais reais. Ambiente publicado permanece inalterado. Sem commit, push ou deploy. Efeitos premium e alterações anteriores preservados.
+
+## 26. Gmail, PDF profissional, pagamento 50/50 e formulário enxuto — 2026-11-01
+
+Aplicadas localmente as mudanças que antes estavam somente analisadas. No detalhe do lead, os links mailto foram substituídos por composição no Gmail com a conta ag.firmant@gmail.com. O botão de envio automático identifica explicitamente a geração e o anexo do PDF e fica indisponível quando faltam credenciais. A ausência de chave Asaas é verificada antes de criar pedido/reserva; a interface mostra a pendência e o ambiente. Nenhum e-mail ou cobrança real foi enviado.
+
+PDF comercial com cabeçalho navy/dourado compacto, referência, data brasileira, validade e destaque de 50% de sinal + 50% na entrega em todas as páginas. Quadros financeiros na abertura e no investimento mostram total, entrada e saldo em reais, Pix e cartão. Remove o prefixo de rascunho do título no documento e a lista de URLs técnicas. Fontes permanecem preservadas no orçamento e recolhidas para consulta interna no Admin, sem vários campos ocupando espaço.
+
+Política 50/50 compartilhada entre geração, salvamento, tela e PDF. Cobrança por etapa calculada em centavos; saldo exige confirmação de entrega e entrada recebida. A soma permanece exata com centavos ímpares. SMTP no desenvolvimento local usa TLS Node com verificação de certificado; o transporte Cloudflare de produção permanece o existente.
+
+Prévia aplicada no checkout local do Diagnóstico, porta 3001, no lead fictício a10c0001-1000-4000-8000-000000000001. Download realizado pelo botão real e seis páginas A4 do PDF renderizadas e conferidas. Fontes recolhidas e ausência de campos de URL verificadas no navegador. Suite do site: 23 testes; Diagnóstico: 64 testes. Lint e TypeScript aprovados; builds isolados para preservar os servidores de desenvolvimento. Credenciais de Gmail e Asaas permanecem pendentes. Sem commit, push ou deploy; alterações anteriores e arquivo de relatório do usuário preservados.
+
+## 27. Preparação da autenticação Gmail — 2026-11-01
+
+Verificada a ausência da senha de app nas configurações locais, sem revelar valores privados. Preparados GMAIL_SMTP_USER=ag.firmant@gmail.com e o campo vazio GMAIL_SMTP_APP_PASSWORD no .env.local ignorado pelo Git; chave OpenAI e demais configurações preservadas. Solicitado ao usuário salvar a senha de app diretamente no arquivo privado, nunca no chat.
+
+SMTP recebeu verificação de autenticação sem envio de mensagem e tratamento de respostas fragmentadas/multilinha, evitando interpretar um código antes do fim da linha. Script scripts/local-leads/check-gmail.ts autentica e encerra sem destinatário e sem imprimir credenciais. Testes validam autenticação isolada, senha recusada e integridade do PDF anexo em mensagem MIME. Suite completa: 26 testes aprovados. Ativação real e teste de autenticação ainda dependem da senha de app da conta Google; nenhum e-mail foi enviado nesta etapa.
+
+## 28. Gmail autenticado e prévia recuperada — 2026-11-01
+
+Após o usuário salvar a senha de app diretamente no arquivo privado, a tentativa local de TLS na porta 465 foi rejeitada antes da autenticação. O certificado apresentado era emitido por Norton Web/Mail Shield Untrusted Root, sem cadeia confiável. Não foi desabilitada a validação de certificados nem alterado o antivírus. A conexão oficial STARTTLS na porta 587 passou pela validação de certificado; implementado esse transporte somente quando NODE_ENV=development e GMAIL_SMTP_PORT=587. A autenticação real na conta ag.firmant@gmail.com foi confirmada sem enviar mensagens. Senha não exibida nem copiada para documentação. Produção mantém o transporte Cloudflare existente na porta 465.
+
+Servidores locais encontrados parados e reiniciados em segundo plano. O diretório original postgres-session recusava a criação do arquivo de bloqueio; criada cópia integral postgres-recovery, recuperada e encerrada corretamente antes da abertura do servidor. Original preservado. O settings.json privado seleciona databaseDirectory=postgres-recovery; helper valida o nome e normaliza o caminho Windows. Banco local disponível em 54329, site em 3000 e Admin em 3001.
+
+Verificação no navegador: detalhe do lead fictício recuperado, orçamento aprovado V4 preservado, download do PDF disponível e botão Gerar PDF e enviar por e-mail habilitado. Nenhuma mensagem enviada; o endereço do lead de demonstração continua fictício. Três testes SMTP aprovados; lint dos arquivos alterados aprovado. Sem commit, push, deploy ou mudanças no banco de produção.
+
+## 29. Correção efetiva do envio pelo painel — 2026-11-01
+
+Reproduzido o erro no próprio endpoint autenticado do Admin. O teste isolado de autenticação funcionava, porém o servidor Next.js falhava antes do envio com Cannot read properties of undefined (reading toWeb). Causa identificada: importação dinâmica de node:stream no empacotamento do Next retornava Duplex pelo módulo default. Corrigida a resolução para streamModule.default ?? streamModule nos dois transportes locais. Verificação dentro do servidor passou; em seguida o usuário autorizou explicitamente um único e-mail de teste para ag.firmant@gmail.com, usando apenas o orçamento fictício V4.
+
+Envio real efetuado pela rota administrativa, com geração e anexo do PDF: HTTP 200, Enviado para ag.firmant@gmail.com. Histórico persistido confirma o envio às 20:44 de 01/11/2026 (America/Sao_Paulo). Tentativa anterior falhou antes da mensagem e foi classificada como não enviada; não houve repetição após o sucesso. Não foi confirmada a caixa de entrada pelo conector de leitura, indisponível nesta sessão; a confirmação obtida foi a aceitação SMTP e o registro do servidor.
+
+Também corrigida a experiência de teste: destinatário do envio é editável, endereços fictícios como cliente@example.invalid são bloqueados antes do SMTP, e o botão é habilitado após um destino válido. Os dados originais do lead e o orçamento aprovado são preservados. E-mail do destinatário passa por validação no servidor; falhas por autenticação, remetente, destinatário e confirmação são diferenciadas. Só falhas comprovadamente anteriores à aceitação liberam nova tentativa; resultado incerto preserva proteção contra duplicidade. Queda durante QUIT depois do 250 não desfaz a confirmação.
+
+Testes do site: 33 aprovados, incluindo anexo íntegro, respostas fragmentadas, recusa de destinatário, interrupção após DATA, sessão STARTTLS, queda no QUIT e endereço fictício. Diagnóstico: 64 testes e lint aprovados. Builds e TypeScript dos dois aplicativos aprovados em pastas isoladas. Prévia atualizada e validação do formulário no navegador. Sem commit, push ou deploy.
+
+## 30. Sandbox Asaas conectado e checkout de entrada criado — 2026-11-01
+
+Usuário recuperou o acesso ao Sandbox e salvou a chave na configuração privada. Consulta autenticada de leitura retornou HTTP 200. Prefixo da chave preservado no dotenv; nenhum segredo exposto. Prévia local conferida com site, conexão comercial, login e lead fictício acessíveis. Nenhuma alteração de produção, commit ou push.
+
+Configurado webhook exclusivo de homologação por relay temporário restrito a POST autenticado e retornos fixos. Admin retorna 404 pelo túnel, requisição sem token retorna 401. Executável Cloudflare oficial com assinatura válida na pasta privada; conexão QUIC com validação TLS. Configuração e IDs privados em .local-preview/asaas-homologation.json. ASAAS_CALLBACK_BASE_URL opcional permite retorno sem alterar APP_BASE_URL.
+
+Teste real identificou limite de 30 caracteres no nome do item Asaas; corrigido, preservando título completo na descrição e orçamento original. Recusa explícita do provedor agora informa a causa e encerra o pedido local como FAILED. Resultado incerto mantém proteção contra duplicidade. Histórico preservado, incluindo reconciliação auditada da tentativa legada sem credencial e sem ID ou link remoto. Interface atualizada no Diagnóstico; pedidos encerrados não podem ser compartilhados.
+
+Checkout Sandbox da V4 criado com entrada de R$ 4.800,00 (50% de R$ 9.600,00), Pix e cartão à vista ou até seis parcelas. Página conferida no navegador; Admin mostra link e não mostra mais aviso de chave ausente. CHECKOUT_CREATED enviado pelo Asaas foi recebido com HTTP 200 e persistido como PROCESSED. Checkout mantido aberto para o teste do usuário. Pagamento não foi concluído: CHECKOUT_PAID e geração do saldo após entrega continuam pendentes. Não tratar o fluxo inteiro como homologado.
+
+Validação: 37 testes do site, 64 do Diagnóstico e 12 do cliente/webhook Asaas aprovados. Builds isolados dos dois projetos aprovados, incluindo TypeScript. Documentação operacional em integration/COMMERCIAL.md e scripts/local-leads/README.md. Manter relay e túnel ativos para receber a simulação; antes de desligar o túnel, desabilitar somente o webhook de homologação indicado no estado privado.

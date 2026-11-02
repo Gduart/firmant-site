@@ -3,6 +3,8 @@
 import { motion, type Variants, useInView } from "framer-motion";
 import { useRef } from "react";
 import Link from "next/link";
+import { SocialMediaShowcase } from "@/components/SocialMediaShowcase";
+import { socialMediaCapabilities, socialMediaFaqs } from "@/lib/social-media-content";
 
 // ─── Animation variants ───────────────────────────────────────────────────────
 
@@ -43,7 +45,7 @@ function AnimatedSection({ children, style }: { children: React.ReactNode; style
 const inner: React.CSSProperties = {
   maxWidth: 1280,
   margin: "0 auto",
-  padding: "0 48px",
+  padding: "0 clamp(20px, 4vw, 48px)",
 };
 
 // ─── Checkmark icon ───────────────────────────────────────────────────────────
@@ -102,6 +104,7 @@ function HeroSection() {
               color: "var(--text-primary)",
               marginBottom: 32,
               maxWidth: 860,
+              fontSize: "clamp(1.8rem, 7vw, 5.5rem)",
             }}
           >
             Gestão de redes sociais com{" "}
@@ -175,16 +178,7 @@ function HeroSection() {
   );
 }
 
-// ─── 2. PRICE ─────────────────────────────────────────────────────────────────
-
-const priceCards = [
-  { posts: "4 posts/mês", price: "R$ 397/mês", unit: "R$ 99/post", popular: false },
-  { posts: "8 posts/mês", price: "R$ 697/mês", unit: "R$ 87/post", popular: false },
-  { posts: "12 posts/mês", price: "R$ 997/mês", unit: "R$ 83/post", popular: true },
-  { posts: "16 posts/mês", price: "R$ 1.297/mês", unit: "R$ 81/post", popular: false },
-  { posts: "20 posts/mês", price: "R$ 1.597/mês", unit: "R$ 79/post", popular: false },
-  { posts: "24+ posts/mês", price: "R$ 1.897/mês", unit: "R$ 79/post", popular: false },
-];
+// ─── Escopo apresentado junto aos serviços ─────────────────────────────────
 
 const included = [
   "Planejamento editorial com calendário organizado",
@@ -193,183 +187,19 @@ const included = [
   "Acompanhamento com relatórios e visão mais clara dos resultados",
 ];
 
-function PriceSection() {
+function IncludedServices() {
   return (
-    <section
-      style={{
-        backgroundColor: "var(--bg-primary)",
-        paddingTop: 80,
-        paddingBottom: 80,
-      }}
-    >
-      <div style={inner}>
-        <AnimatedSection>
-          <motion.h2
-            variants={fadeInUp}
-            style={{
-              fontFamily: "var(--font-heading)",
-              color: "var(--text-primary)",
-              marginBottom: 48,
-            }}
-          >
-            Investimento
-          </motion.h2>
-          <motion.p
-            variants={fadeInUp}
-            style={{
-              maxWidth: 720,
-              fontSize: "1.05rem",
-              lineHeight: 1.85,
-              color: "var(--text-secondary)",
-              fontFamily: "var(--font-body)",
-              marginBottom: 48,
-            }}
-          >
-            Mais clareza no processo. Mais facilidade na aprovação. Mais consistência na presença digital.
-          </motion.p>
-        </AnimatedSection>
-
-        <AnimatedSection>
-          <motion.div
-            variants={fadeInUp}
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-              gap: 20,
-              marginBottom: 24,
-            }}
-          >
-            {priceCards.map((card) => (
-              <div
-                key={card.posts}
-                style={{
-                  position: "relative",
-                  borderRadius: 16,
-                  border: card.popular
-                    ? "1px solid rgba(201,168,76,0.5)"
-                    : "1px solid var(--border-primary)",
-                  backgroundColor: card.popular ? "rgba(201,168,76,0.05)" : "var(--bg-card)",
-                  padding: "28px 24px",
-                }}
-              >
-                {card.popular && (
-                  <span
-                    style={{
-                      position: "absolute",
-                      top: -12,
-                      left: "50%",
-                      transform: "translateX(-50%)",
-                      backgroundColor: "var(--accent-gold)",
-                      color: "var(--navy-950)",
-                      fontSize: 10,
-                      fontWeight: 700,
-                      letterSpacing: "0.15em",
-                      textTransform: "uppercase",
-                      padding: "4px 12px",
-                      borderRadius: 999,
-                      fontFamily: "var(--font-body)",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    MAIS POPULAR
-                  </span>
-                )}
-                <p
-                  style={{
-                    fontFamily: "var(--font-body)",
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: "var(--text-secondary)",
-                    marginBottom: 12,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.08em",
-                  }}
-                >
-                  {card.posts}
-                </p>
-                <p
-                  style={{
-                    fontFamily: "var(--font-heading)",
-                    fontSize: "clamp(1.4rem, 2.5vw, 1.8rem)",
-                    fontWeight: 700,
-                    color: card.popular ? "var(--accent-gold)" : "var(--text-primary)",
-                    marginBottom: 8,
-                    lineHeight: 1.1,
-                  }}
-                >
-                  {card.price}
-                </p>
-                <p
-                  style={{
-                    fontFamily: "var(--font-body)",
-                    fontSize: 12,
-                    color: "var(--text-muted)",
-                  }}
-                >
-                  {card.unit}
-                </p>
-              </div>
-            ))}
+    <AnimatedSection style={{ marginTop: 48 }}>
+      <motion.h3 variants={fadeInUp} style={{ fontFamily: "var(--font-heading)", fontSize: "clamp(1.2rem, 2vw, 1.5rem)", marginBottom: 24 }}>O que está incluído</motion.h3>
+      <div style={{ display: "grid", gap: 14 }}>
+        {included.map(item => (
+          <motion.div key={item} variants={fadeInUp} style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+            <CheckIcon />
+            <span style={{ color: "var(--text-secondary)", fontSize: 15, lineHeight: 1.6 }}>{item}</span>
           </motion.div>
-        </AnimatedSection>
-
-        <AnimatedSection>
-          <motion.p
-            variants={fadeInUp}
-            style={{
-              fontFamily: "var(--font-body)",
-              fontSize: 13,
-              color: "var(--text-muted)",
-              marginBottom: 48,
-              lineHeight: 1.7,
-            }}
-          >
-            Contratos trimestrais: 5% de desconto adicional. Semestrais: 10%.
-          </motion.p>
-        </AnimatedSection>
-
-        <AnimatedSection>
-          <motion.h3
-            variants={fadeInUp}
-            style={{
-              fontFamily: "var(--font-heading)",
-              color: "var(--text-primary)",
-              marginBottom: 24,
-              fontSize: "clamp(1.2rem, 2vw, 1.5rem)",
-            }}
-          >
-            O que está incluído
-          </motion.h3>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 14,
-            }}
-          >
-            {included.map((item) => (
-              <motion.div
-                key={item}
-                variants={fadeInUp}
-                style={{ display: "flex", alignItems: "flex-start", gap: 12 }}
-              >
-                <CheckIcon />
-                <span
-                  style={{
-                    fontFamily: "var(--font-body)",
-                    fontSize: 15,
-                    color: "var(--text-secondary)",
-                    lineHeight: 1.6,
-                  }}
-                >
-                  {item}
-                </span>
-              </motion.div>
-            ))}
-          </div>
-        </AnimatedSection>
+        ))}
       </div>
-    </section>
+    </AnimatedSection>
   );
 }
 
@@ -473,6 +303,7 @@ function WhatWeDoSection() {
             ))}
           </div>
         </AnimatedSection>
+        <IncludedServices />
       </div>
     </section>
   );
@@ -481,51 +312,21 @@ function WhatWeDoSection() {
 // ─── 4. GESTÃO PROFISSIONAL ──────────────────────────────────────────────────
 
 const professionalAdvantages = [
-  {
-    title: "Gestão centralizada",
-    desc: "Centralizamos a operação para facilitar acompanhamento, padronização e mais clareza sobre o que está sendo produzido para a sua marca.",
-  },
-  {
-    title: "Agendamento em múltiplos formatos e redes",
-    desc: "Sua comunicação pode ser organizada com antecedência e adaptada para diferentes formatos e canais, com mais consistência e menos correria.",
-  },
+  ...socialMediaCapabilities.map((item) => ({ title: item.title, desc: item.description })),
   {
     title: "Calendário de planejamento",
     desc: "Com um calendário estruturado, sua marca ganha ritmo de produção, alinhamento mais fácil e uma presença digital mais profissional.",
   },
   {
-    title: "Aprovação por e-mail ou link",
-    desc: "A validação dos conteúdos acontece de forma simples, reduzindo atrito e acelerando o andamento das publicações.",
-  },
-  {
-    title: "Aprovação via WhatsApp",
-    desc: "A aprovação entra com mais facilidade na rotina do cliente, tornando o processo mais rápido e funcional no dia a dia.",
-  },
-  {
-    title: "Relatórios personalizados",
-    desc: "Os resultados são apresentados de forma mais clara e alinhada ao contexto da sua marca, facilitando interpretação e acompanhamento.",
-  },
-  {
     title: "Relatórios em PDF ou link",
     desc: "Compartilhamos as informações em formatos práticos, com apresentação mais organizada e leitura mais acessível.",
-  },
-  {
-    title: "Dashboard online",
-    desc: "Uma forma mais visual e dinâmica de acompanhar a evolução da presença digital da sua marca.",
-  },
-  {
-    title: "Portal do Cliente",
-    desc: "Cada cliente pode acompanhar suas informações em um ambiente organizado, reservado e mais profissional.",
-  },
-  {
-    title: "Melhores dias e horários para postar",
-    desc: "As decisões de publicação passam a considerar janelas mais favoráveis, ajudando a dar mais direção ao planejamento.",
   },
 ];
 
 function ProfessionalManagementSection() {
   return (
     <section
+      id="gestao-profissional"
       style={{
         backgroundColor: "var(--bg-primary)",
         paddingTop: 80,
@@ -555,7 +356,7 @@ function ProfessionalManagementSection() {
               marginBottom: 56,
             }}
           >
-            Mais do que publicar conteúdo, o objetivo é criar uma operação que funcione com clareza, previsibilidade e acompanhamento. Isso reduz ruído, acelera decisões e melhora a percepção de profissionalismo da sua marca.
+Em contratações acima de 8 posts mensais, sua marca recebe uma análise detalhada do Instagram e os recursos de gestão abaixo.
           </motion.p>
         </AnimatedSection>
 
@@ -882,17 +683,34 @@ function CTASection() {
   );
 }
 
+function OperationalFAQSection() {
+  return (
+    <section style={{ padding: "64px 0", backgroundColor: "var(--bg-primary)" }}>
+      <div style={{ ...inner, maxWidth: 900 }}>
+        <h2 style={{ marginBottom: 32 }}>Como acompanhar sua operação</h2>
+        {socialMediaFaqs.map((faq) => (
+          <details key={faq.question} style={{ padding: "22px 0", borderTop: "1px solid var(--border-primary)" }}>
+            <summary style={{ cursor: "pointer", fontWeight: 600, color: "var(--text-primary)" }}>{faq.question}</summary>
+            <p style={{ marginTop: 16, lineHeight: 1.8, color: "var(--text-secondary)" }}>{faq.answer}</p>
+          </details>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 // ─── PAGE ─────────────────────────────────────────────────────────────────────
 
 export default function GestaoRedesSociaisPage() {
   return (
     <>
       <HeroSection />
-      <PriceSection />
+      <SocialMediaShowcase />
       <WhatWeDoSection />
       <ProfessionalManagementSection />
       <HowItWorksSection />
       <WhyFirmantSection />
+      <OperationalFAQSection />
       <CTASection />
     </>
   );

@@ -46,6 +46,7 @@ export function mapAsaasEventToOrderStatus(
       return "AWAITING_PAYMENT";
     case "PAYMENT_APPROVED_BY_RISK_ANALYSIS":
     case "PAYMENT_CONFIRMED":
+    case "CHECKOUT_PAID":
       return "PAYMENT_CONFIRMED";
     case "PAYMENT_RECEIVED":
       return hasSubscription ? "SUBSCRIPTION_ACTIVE" : "PAYMENT_RECEIVED";

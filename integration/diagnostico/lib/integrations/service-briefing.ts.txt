@@ -1,0 +1,31 @@
+import { createHmac, timingSafeEqual } from "node:crypto";
+import { z } from "zod";
+
+export const briefingServices = {
+  "automacao-de-processos": "Automação de processos",
+  "agente-ia-telegram": "Automação + 1 agente de IA no Telegram",
+  "sistemas-web-sob-medida": "Sistemas e aplicações web sob medida",
+  "landing-page-ia-mini-crm": "Landing Page de Conversão + Assistente IA no Telegram + Mini CRM",
+} as const;
+
+export const serviceBriefingLeadSchema = z.object({
+  idempotencyKey: z.string().uuid(), requestType: z.literal("complete"),
+  name: z.string().trim().min(2).max(100), company: z.string().trim().min(2).max(120),
+  email: z.string().trim().email().max(160).transform(value => value.toLowerCase()),
+  phone: z.string().trim().min(10).max(40).refine(value => /^[+\d\s().-]+$/.test(value) && value.replace(/\D/g, "").length >= 10 && value.replace(/\D/g, "").length <= 15),
+  service: z.string().max(160), details: z.string().trim().min(20).max(16000),
+  privacyAcknowledged: z.literal(true), privacyPolicyVersion: z.string().min(1).max(32),
+  marketingConsent: z.literal(false), website: z.literal(""),
+  tracking: z.object({ source: z.string().max(80) }).strict(),
+}).strict().superRefine((value, context) => {
+  const slug = value.tracking.source.replace(/^firmant-site\/dev\//, "");
+  if (value.tracking.source !== `firmant-site/dev/${slug}` || briefingServices[slug as keyof typeof briefingServices] !== value.service) {
+    context.addIssue({ code: "custom", path: ["service"], message: "Serviço e origem não reconhecidos." });
+  }
+});
+
+export function verifyBriefingRequest(body: string, secret: string, timestamp: string, signature: string, now = Date.now()) {
+  if (secret.length < 32 || !/^\d{10}$/.test(timestamp) || Math.abs(now / 1000 - Number(timestamp)) > 300 || !/^sha256=[0-9a-f]{64}$/i.test(signature)) return false;
+  const expected = createHmac("sha256", secret).update(`${timestamp}.${body}`).digest();
+  return timingSafeEqual(expected, Buffer.from(signature.slice(7), "hex"));
+}

@@ -1,4 +1,4 @@
-import { getRequiredEnvValue } from "@/lib/cloudflare-runtime";
+import { getEnvValue } from "@/lib/cloudflare-runtime";
 import {
   mapAsaasEventToOrderStatus,
   mapAsaasPaymentStatusToOrderStatus,
@@ -22,20 +22,22 @@ import type { OrderStatus } from "@/lib/payments/types";
 import { syncMilestoneFromOrder } from "@/lib/proposals/repository";
 
 export async function validateAsaasWebhookToken(token?: string | null) {
-  const expectedToken = await getRequiredEnvValue("ASAAS_WEBHOOK_AUTH_TOKEN");
-
-  return token === expectedToken;
+  const expectedToken = await getEnvValue("ASAAS_WEBHOOK_AUTH_TOKEN");
+  if (!expectedToken || !token || token.length !== expectedToken.length) return false;
+  let difference = 0;
+  for (let index = 0; index < expectedToken.length; index++) difference |= token.charCodeAt(index) ^ expectedToken.charCodeAt(index);
+  return difference === 0;
 }
 
 export async function processAsaasWebhook(payload: AsaasWebhookPayload) {
   const providerEventId = buildProviderEventId(payload);
   const existingEvent = await getWebhookEventByProviderEventId(providerEventId);
 
-  if (existingEvent) {
+  if (existingEvent?.processedAt && existingEvent.processingResult !== "FAILED") {
     return { duplicate: true };
   }
 
-  await insertWebhookEvent({
+  if (!existingEvent) await insertWebhookEvent({
     id: crypto.randomUUID(),
     provider: "asaas",
     providerEventId,
@@ -45,6 +47,7 @@ export async function processAsaasWebhook(payload: AsaasWebhookPayload) {
     processingResult: "RECEIVED",
   });
 
+  try {
   const order = await findMatchingOrder(payload);
 
   if (!order) {
@@ -127,6 +130,11 @@ export async function processAsaasWebhook(payload: AsaasWebhookPayload) {
     processed: true,
     orderId: order.id,
   };
+  } catch (error) {
+    // Eventos recebidos com erro transitório devem poder ser reprocessados.
+    await markWebhookEventProcessed(providerEventId, "FAILED").catch(() => undefined);
+    throw error;
+  }
 }
 
 async function findMatchingOrder(payload: AsaasWebhookPayload) {

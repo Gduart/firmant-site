@@ -1,0 +1,38 @@
+import { getAdminSession } from "@/lib/admin/auth";
+import { getAdminLead } from "@/lib/admin/leads";
+import { commercialRequest } from "@/lib/quotes/commercial";
+import { boundedText } from "@/lib/quotes/signing";
+
+export const runtime = "nodejs";
+const privateHeaders = { "Cache-Control": "private, no-store", "X-Robots-Tag": "noindex, nofollow" };
+type Context = { params: Promise<{ reference: string }> };
+async function execute(request: Request, context: Context, action?: string) {
+  const session = await getAdminSession();
+  if (!session) return Response.json({ error: "Não autorizado." }, { status: 401, headers: privateHeaders });
+  if (request.method === "POST") {
+    const origin = request.headers.get("origin");
+    const url = new URL(request.url), host = request.headers.get("host");
+    // O proxy de produção conserva o domínio público em Host/X-Forwarded-Proto.
+    const publicOrigin = `${request.headers.get("x-forwarded-proto") === "https" ? "https:" : url.protocol}//${host}`;
+    if (!origin || ![url.origin, publicOrigin].includes(origin)) return Response.json({ error: "Origem não autorizada." }, { status: 403, headers: privateHeaders });
+    if (!request.headers.get("content-type")?.includes("application/json")) return Response.json({ error: "Formato inválido." }, { status: 415, headers: privateHeaders });
+  }
+  const { reference } = await context.params;
+  if (!/^[0-9a-f-]{36}$/i.test(reference)) return Response.json({ error: "Lead inválido." }, { status: 400, headers: privateHeaders });
+  const lead = await getAdminLead(reference);
+  if (!lead) return Response.json({ error: "Lead não encontrado." }, { status: 404, headers: privateHeaders });
+  try {
+    const input = request.method === "POST" ? JSON.parse(await boundedText(request, 150_000)) : {};
+    const url = new URL(request.url);
+    const response = await commercialRequest({ action: action || input.action, revision: request.method === "GET" ? Number(url.searchParams.get("revision") ?? 0) : input.revision,
+      requestId: input.requestId, input: input.input,
+      actor: session.email,
+      // Identidade e contexto vêm do banco autenticado, nunca do JSON enviado pelo navegador.
+      lead: { reference: lead.reference, name: lead.name, company: lead.company, email: lead.email, phone: lead.phone || "", service: lead.service || "", details: lead.details || "" },
+    });
+    const contentType = response.headers.get("content-type") || "application/json";
+    return new Response(response.body, { status: response.status, headers: { ...privateHeaders, "Content-Type": contentType, ...(contentType.includes("application/pdf") ? { "Content-Disposition": response.headers.get("content-disposition") || 'attachment; filename="orcamento-firmant.pdf"' } : {}) } });
+  } catch (error) { return Response.json({ error: error instanceof Error ? error.message : "A central comercial está indisponível." }, { status: 503, headers: privateHeaders }); }
+}
+export async function GET(request: Request, context: Context) { return execute(request, context, new URL(request.url).searchParams.get("action") === "pdf" ? "pdf" : "get"); }
+export async function POST(request: Request, context: Context) { return execute(request, context); }

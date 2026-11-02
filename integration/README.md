@@ -1,6 +1,6 @@
 # Briefing de Desenvolvimento → Diagnóstico Leads
 
-Estado: implementação local. Este pacote não publica serviços, não configura segredos e não altera o banco de produção.
+Estado: publicado em produção em 2026-11-02. Os instaladores deste pacote, isoladamente, não publicam serviços nem alteram o banco de produção.
 
 ## Fluxo implementado
 
@@ -51,7 +51,7 @@ Para testes locais, o remetente aceita HTTP somente em `127.0.0.1` ou `localhost
 5. Enviar um briefing de homologação autorizado e conferir o mesmo protocolo no painel, o serviço correto, a última resposta completa e o recebimento em `ag.firmant@gmail.com`.
 6. Reenviar a mesma chave para confirmar que o lead não duplica; em homologação, simular falha do webhook para conferir persistência e reprocessamento pela outbox existente.
 
-Não foi executado teste com banco, n8n ou Gmail de produção. A ativação e essa verificação integrada ainda são necessárias. Os checks automatizados locais não substituem a confirmação do recebimento real.
+Receptor, segredos e workflow de produção publicados em 2026-11-02. Assinatura do receptor conferida com corpo inválido, sem criar lead ou disparar e-mail. A geração de um novo briefing real e a confirmação de seu alerta na caixa de entrada não foram repetidas durante a publicação.
 
 ## Reversão
 

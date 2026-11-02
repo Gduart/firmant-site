@@ -1648,3 +1648,13 @@ Teste real identificou limite de 30 caracteres no nome do item Asaas; corrigido,
 Checkout Sandbox da V4 criado com entrada de R$ 4.800,00 (50% de R$ 9.600,00), Pix e cartão à vista ou até seis parcelas. Página conferida no navegador; Admin mostra link e não mostra mais aviso de chave ausente. CHECKOUT_CREATED enviado pelo Asaas foi recebido com HTTP 200 e persistido como PROCESSED. Checkout mantido aberto para o teste do usuário. Pagamento não foi concluído: CHECKOUT_PAID e geração do saldo após entrega continuam pendentes. Não tratar o fluxo inteiro como homologado.
 
 Validação: 37 testes do site, 64 do Diagnóstico e 12 do cliente/webhook Asaas aprovados. Builds isolados dos dois projetos aprovados, incluindo TypeScript. Documentação operacional em integration/COMMERCIAL.md e scripts/local-leads/README.md. Manter relay e túnel ativos para receber a simulação; antes de desligar o túnel, desabilitar somente o webhook de homologação indicado no estado privado.
+
+## 31. Publicação concluída — 2026-11-02
+
+Atualizações aprovadas publicadas no site e no Diagnóstico. Worker Cloudflare c7ae6c05-4fce-48aa-8020-0b78f1b00ef4 ativo em 100% do tráfego; imagem ghcr.io/gduart/firmant-landing:sha-3518623 na VPS. Migração D1 0011 aplicada após backup; PostgreSQL preservado e copiado antes da troca. Segredos HMAC entre serviços e chave OpenAI configurados; credenciais Asaas e Gmail existentes preservadas. Nenhuma configuração Sandbox ou chave privada incorporada ao pacote.
+
+Workflow de leads publicado com alteração pontual de limite de briefing e rótulo, mantendo ID e credenciais. Backup da versão publicada anterior guardado na VPS. Reiniciado somente n8n para carregar a alteração, com prontidão confirmada; bancos preservados.
+
+Na validação real, corrigida expressão do patch de cloudflare:sockets que não reconhecia o wrapper minificado com use strict. Testes de regressão do patch aprovados e nova versão Worker ativada. Quatorze verificações de produção passaram, incluindo Gmail autenticado sem enviar mensagem, HMAC/D1, receptor de briefings, proteção do Admin/webhook, páginas e vídeo com hash idêntico ao aprovado. Navegação pelo card e formulário publicados conferidos no navegador em 319 px, sem overflow e sem erros de console. Nenhum novo lead, e-mail ou cobrança real foi criado nesses checks.
+
+Webhook temporário Sandbox desativado; túnel e relay encerrados. Usuário confirmou exit na sessão root; cliente SSH administrativo ausente na conferência local e agente temporário encerrado. Provas e backups privados em .local-preview/production; detalhes de reversão em integration/COMMERCIAL.md. Documentos particulares não relacionados à entrega preservados.

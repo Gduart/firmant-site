@@ -1,6 +1,6 @@
 # Orçamento no detalhe do lead
 
-Implementação local, ainda sem ativação nos servidores. O orçamento é operado na tela `Diagnóstico → Admin → Leads → Abrir`, sem exigir acesso ao Admin comercial do site.
+Publicado em produção em 2026-11-02. O orçamento é operado na tela `Diagnóstico → Admin → Leads → Abrir`, sem exigir acesso ao Admin comercial do site.
 
 Atualização de homologação local: em 2026-11-01 a chave foi inserida pelo usuário em `.env.local`, validada com HTTP 200 para o modelo e usada em uma geração real de orçamento para o lead fictício. O rascunho foi persistido no D1 local e recuperado após recarregar o detalhe do lead. A prévia real do Diagnóstico está em `http://127.0.0.1:3001/admin/leads`; operação local documentada em `scripts/local-leads/README.md`. Banco de produção, envios de e-mail e cobranças reais continuam sem ativação nesta etapa.
 
@@ -12,7 +12,7 @@ Atualização de homologação local: em 2026-11-01 a chave foi inserida pelo us
 4. Ajuste cronograma, início/fim, quantidades e preços de cada entrega. O total é calculado no servidor em centavos. O valor-hora informado serve de referência inicial; o agente estima horas, sem inventar uma tabela de preços da FIRMANT. Datas são previsões em dias úteis, sem feriados, condicionadas a aceite, disponibilidade, materiais e aprovações. Use **Atualizar dias e término pelas etapas** depois de mudar as etapas.
 5. **Salvar rascunho / nova versão** preserva a versão anterior. **Aprovar versão revisada** libera PDF, envio e pagamentos. Campos essenciais, preço positivo, datas coerentes e soma dos dias das etapas são verificados no servidor. Editar novamente exige salvar e aprovar a nova versão.
 6. **Gerar e baixar PDF** baixa o arquivo autenticado. **Enviar PDF por e-mail** envia o PDF como anexo ao e-mail do lead, pelo serviço Gmail já existente no site. Não abre apenas um `mailto:`. O envio é uma ação explícita do administrador, nunca da IA.
-7. Para pagamento, informe o valor total efetivamente cobrado, selecione Pix, cartão ou ambos e até 12 parcelas. Se o valor diferir do orçamento, identifique a condição, por exemplo entrada ou saldo. Não há acréscimo automático de taxas. O pagador fornece documento e cartão diretamente no Asaas.
+7. Para pagamento, selecione entrada ou saldo na entrega; o valor corresponde aos 50% calculados sobre o total aprovado. O saldo exige entrada recebida e confirmação da entrega. Selecione Pix, cartão ou ambos e até 12 parcelas. Não há acréscimo automático de taxas. O pagador fornece documento e cartão diretamente no Asaas.
 8. O link criado pode ser enviado por e-mail ou levado ao WhatsApp com mensagem preenchida. O envio no WhatsApp é concluído pelo administrador. Links expirados, de versão anterior, pagos ou cancelados não são oferecidos para compartilhamento. O pagamento depende da confirmação por webhook, não do retorno do cliente à página.
 
 Se um envio de e-mail tiver resultado incerto, confira o Gmail e o histórico antes de tentar novamente. A mesma requisição não é reenviada automaticamente. Após conferência, recarregar a seção permite uma nova solicitação manual de envio.
@@ -107,3 +107,15 @@ Manter relay e túnel ativos durante o teste; o endereço temporário muda se o 
 Depois do build completo OpenNext e de scripts/patch-opennext-worker-sockets.cjs, executar node scripts/prepare-production-worker.cjs antes de upload/deploy. O OpenNext gera next-env.mjs a partir dos arquivos dotenv: o preparador mantém somente NEXT_PUBLIC_* e verifica que valores privados não foram incorporados em outros arquivos. Segredos e URLs do servidor devem vir dos bindings da Cloudflare; nunca publicar chave Sandbox, callback temporário ou configuração de banco local.
 
 O banco D1 exige backup e a migração aditiva 0011. A configuração Asaas/Gmail existente deve ser preservada. O Diagnóstico recebe seus segredos de conexão no arquivo privado da VPS e mantém o PostgreSQL existente; não copiar o banco nem credenciais da prévia. Publicar o receptor e o Admin antes de ativar a nova versão do site. Guardar referência da imagem e versão Worker anteriores para reversão, sem excluir tabelas ou leads.
+
+## Publicação concluída — 2026-11-02
+
+Site: https://firmant.com.br. Admin: https://diagnostico.firmant.com.br/admin/leads. Worker ativo em 100%: c7ae6c05-4fce-48aa-8020-0b78f1b00ef4. Diagnóstico: ghcr.io/gduart/firmant-landing:sha-3518623. Migração 0011 aplicada após backup D1; PostgreSQL preservado com backup na VPS. Segredos comerciais configurados nos dois serviços; Asaas e Gmail existentes preservados.
+
+O workflow existente de e-mail recebeu somente o limite de 16.000 caracteres para briefings de desenvolvimento e o rótulo da jornada. Sua versão publicada foi exportada antes da alteração; ID, credenciais e demais fluxos preservados. O container n8n foi reiniciado para carregar a publicação e passou na verificação de prontidão.
+
+Quatorze verificações de produção aprovadas: páginas, vídeo com hash idêntico ao aprovado, proteção do Admin, saúde do Diagnóstico, conexão comercial HMAC/D1, autenticação do receptor, proteção do webhook e autenticação SMTP Gmail. Navegação por card e briefing conferidos no navegador em 319 px, sem overflow e sem erros de console. Não foram criados leads, enviados e-mails ou geradas cobranças reais nesses testes.
+
+Corrigida incompatibilidade do wrapper minificado com use strict no patch de cloudflare:sockets. Dois testes de regressão verificam a exportação de connect e a reaplicação sem duplicar imports. A correção altera o empacotamento, sem exigir nova configuração Gmail.
+
+Reversão coordenada: restaurar a configuração /opt/backups/firmant-landing/release-20261101/env.before e a imagem anterior sha-fbb7a3d na VPS; na Cloudflare, ativar a versão anterior 3adfe467-9a12-4734-83b5-65a9f6897012. O backup do workflow fica no mesmo diretório de release na VPS. Preservar tabelas, leads e registros financeiros; uma reversão de código não exige restaurar o banco inteiro.

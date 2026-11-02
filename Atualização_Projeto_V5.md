@@ -1658,3 +1658,11 @@ Workflow de leads publicado com alteração pontual de limite de briefing e rót
 Na validação real, corrigida expressão do patch de cloudflare:sockets que não reconhecia o wrapper minificado com use strict. Testes de regressão do patch aprovados e nova versão Worker ativada. Quatorze verificações de produção passaram, incluindo Gmail autenticado sem enviar mensagem, HMAC/D1, receptor de briefings, proteção do Admin/webhook, páginas e vídeo com hash idêntico ao aprovado. Navegação pelo card e formulário publicados conferidos no navegador em 319 px, sem overflow e sem erros de console. Nenhum novo lead, e-mail ou cobrança real foi criado nesses checks.
 
 Webhook temporário Sandbox desativado; túnel e relay encerrados. Usuário confirmou exit na sessão root; cliente SSH administrativo ausente na conferência local e agente temporário encerrado. Provas e backups privados em .local-preview/production; detalhes de reversão em integration/COMMERCIAL.md. Documentos particulares não relacionados à entrega preservados.
+
+## 32. Correção do cronograma da IA — 2026-11-02
+
+Corrigida a divergência entre schema de geração e validação que permitia à IA retornar zero dias e bloqueava o rascunho com Valor inválido: dias da etapa. O schema agora exige 1 a 12 etapas com duração inteira de 1 a 2000 dias. Instruções orientam omitir etapas não aplicáveis. A validação continua rejeitando valores inválidos, identificando a etapa como falha da resposta da IA. Não há ajuste silencioso de duração nem repetição automática de chamadas pagas.
+
+Agente passou a distinguir audiovisual/UGC, redes sociais, automação, Telegram, sistemas web e combo landing/IA/Mini CRM. Pesquisa e cronograma foram alinhados ao serviço, mantendo análise somente dos campos preenchidos e exclusão dos contatos do cliente. Modelo gpt-6-luna preservado.
+
+Concluídos 51 testes do site, incluindo 16 do agente, lint e build Next/OpenNext com TypeScript. Uma geração real com briefing fictício de vídeo confirmou aceitação do schema, etapas pertinentes e durações válidas. Publicado Worker 3b708428-9098-49a6-b561-56c814805689 em 100% do tráfego; 14 verificações de produção aprovadas. Reversão específica para c7ae6c05-4fce-48aa-8020-0b78f1b00ef4. Sem alteração da VPS, esquema de banco, envio de mensagens ou geração de cobrança real nesta correção.

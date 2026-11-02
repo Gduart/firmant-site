@@ -119,3 +119,13 @@ Quatorze verificações de produção aprovadas: páginas, vídeo com hash idên
 Corrigida incompatibilidade do wrapper minificado com use strict no patch de cloudflare:sockets. Dois testes de regressão verificam a exportação de connect e a reaplicação sem duplicar imports. A correção altera o empacotamento, sem exigir nova configuração Gmail.
 
 Reversão coordenada: restaurar a configuração /opt/backups/firmant-landing/release-20261101/env.before e a imagem anterior sha-fbb7a3d na VPS; na Cloudflare, ativar a versão anterior 3adfe467-9a12-4734-83b5-65a9f6897012. O backup do workflow fica no mesmo diretório de release na VPS. Preservar tabelas, leads e registros financeiros; uma reversão de código não exige restaurar o banco inteiro.
+
+## Correção do cronograma gerado pela IA — 2026-11-02
+
+Worker atualizado para 3b708428-9098-49a6-b561-56c814805689, ativo em 100%. Reversão específica desta correção: versão c7ae6c05-4fce-48aa-8020-0b78f1b00ef4, sem trocar a imagem do Diagnóstico ou restaurar bancos.
+
+O schema exige de 1 a 12 etapas, cada uma com duração inteira entre 1 e 2000 dias, correspondendo à validação do servidor. Etapas não aplicáveis devem ser omitidas pela IA. Durações inválidas continuam sendo rejeitadas, com mensagem identificando a resposta da IA e a etapa; não há conversão automática de zero para um prazo inventado nem nova chamada automática ao modelo.
+
+Pesquisa e instruções de cronograma usam perfis próprios para audiovisual/UGC, redes sociais, automações, agente Telegram, sistemas web e combo landing/IA/Mini CRM. Serviço indefinido usa orientação geral de serviços digitais. Somente serviço e briefing preenchidos seguem ao modelo; contatos permanecem excluídos da análise e o modelo continua gpt-6-luna.
+
+Validações: 51 testes do site, incluindo 16 do agente; lint; build Next/OpenNext com TypeScript; uma geração real com briefing audiovisual exclusivamente fictício, com schema aceito e durações válidas; 14 verificações de produção. Nenhum novo lead, e-mail ou cobrança criado por esses testes. Na página do cliente, recarregar e selecionar Gerar orçamento com IA para uma nova tentativa.

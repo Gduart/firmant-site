@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import test from "node:test";
+import test, { type TestContext } from "node:test";
 import { generateQuote } from "../src/lib/lead-quotes/agent";
 import { checkoutPayload } from "../src/lib/lead-quotes/payment";
 import { quoteSections, totalCents, type QuoteView } from "../src/lib/lead-quotes/model";
@@ -24,6 +24,56 @@ test("agente usa modelo solicitado, pesquisa sem contatos e retorna preço calcu
   assert.ok(!String(requests[1].input).includes("Não informado"));
   assert.equal(totalCents(result), 120000); assert.equal(result.productionDays, 2); assert.equal(result.endDate, "2026-11-09");
   assert.equal(result.sources[0].url, "https://core.telegram.org/bots/api");
+  const format = requests[1].text as { format: { schema: { properties: { schedule: { minItems: number; maxItems: number; items: { properties: { days: { type: string; minimum: number; maximum: number } } } } } } } };
+  assert.deepEqual(format.format.schema.properties.schedule.items.properties.days, { type: "integer", minimum: 1, maximum: 2000 });
+  assert.equal(format.format.schema.properties.schedule.minItems, 1);
+  assert.equal(format.format.schema.properties.schedule.maxItems, 12);
+});
+
+function mockDraft(t: TestContext, days: unknown = 1, empty = false) {
+  const beforeKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "key-only-for-local-mock";
+  t.after(() => { if (beforeKey === undefined) delete process.env.OPENAI_API_KEY; else process.env.OPENAI_API_KEY = beforeKey; });
+  const requests: Record<string, unknown>[] = [];
+  const generated = { ...Object.fromEntries(Object.keys(quoteSections).map(key => [key, "Estimativa sujeita à revisão."])), title: "Projeto", items: [{ name: "Produção", hours: 6 }], schedule: empty ? [] : [{ phase: "Produção", days, delivery: "Material revisado" }] };
+  t.mock.method(globalThis, "fetch", async (_url: unknown, options: RequestInit) => {
+    const body = JSON.parse(String(options.body)); requests.push(body);
+    return Response.json({ status: "completed", output: [{ type: "message", content: [{ type: "output_text", text: body.tools ? "Documentação oficial pertinente ao serviço." : JSON.stringify(generated) }] }] });
+  });
+  return requests;
+}
+
+for (const [service, category, stage] of [
+  ["Conteúdo, vídeos e UGC", "produção audiovisual", "roteiro"],
+  ["Gestão de Redes Sociais", "gestão de redes sociais", "planejamento editorial"],
+  ["Automação de processos", "automação empresarial com WhatsApp", "desenho dos fluxos"],
+  ["Automação + 1 agente de IA no Telegram", "bot Telegram", "desenho do atendimento"],
+  ["Sistemas e aplicações web sob medida", "aplicações web empresariais", "implementação"],
+  ["Landing Page de Conversão + Assistente IA no Telegram + Mini CRM", "landing page de conversão", "Mini CRM"],
+  ["Serviço a definir", "serviços digitais", "definição do escopo"],
+]) {
+  test(`pesquisa e cronograma correspondem a ${service}`, async t => {
+    const requests = mockDraft(t);
+    await generateQuote({ ...lead, service }, { hourlyRateCents: 10000, dailyHours: 6, validityDays: 10, research: true });
+    assert.equal(requests.length, 2);
+    assert.ok(String(requests[0].input).includes(category));
+    assert.ok(String(requests[1].instructions).includes(stage));
+    assert.ok(String(requests[1].instructions).includes("omita essa etapa"));
+    assert.ok(!JSON.stringify(requests).includes(lead.email));
+    assert.ok(!String(requests[0].input).includes("Agendar visitas"));
+  });
+}
+
+for (const days of [0, -1, 0.5, 2001, "1", null]) {
+  test(`duração inválida ${JSON.stringify(days)} é identificada como resposta da IA, sem inventar prazo`, async t => {
+    mockDraft(t, days);
+    await assert.rejects(generateQuote(lead, { hourlyRateCents: 10000, dailyHours: 6, validityDays: 10 }), /IA retornou uma duração inválida.*Produção/);
+  });
+}
+
+test("cronograma vazio é rejeitado antes de calcular datas", async t => {
+  mockDraft(t, 1, true);
+  await assert.rejects(generateQuote(lead, { hourlyRateCents: 10000, dailyHours: 6, validityDays: 10 }), /IA retornou entregas ou etapas incompletas/);
 });
 test("checkout oferece Pix e cartão à vista/parcelado sem mudar valor", () => {
   const quote = { document: { title: "Sistema sob medida" }, lead_reference: lead.reference, revision: 1 } as QuoteView;
